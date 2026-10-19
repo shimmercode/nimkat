@@ -31,3 +31,6 @@ Thumbs.db
 # --- Local tooling ---
 .cache/
 coverage/
+
+# --- Runtime database (auto-seeded on first run) ---
+backend/data/
