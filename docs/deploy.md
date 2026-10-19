@@ -102,8 +102,9 @@ server {
 
 ## ۴) روش ج: دیپلوی خودکار با GitHub Actions (پیشنهادی)
 
-فایل `.github/workflows/ci.yml` همین مخزن، با هر push فرانت‌اند را بیلد می‌کند و
-خروجی `dist` را به‌صورت artifact نگه می‌دارد. برای انتشار خودکار روی VPS، یک
+فایل نمونهٔ `docs/ci.yml.example` را در مسیر `.github/workflows/ci.yml` کپی کنید
+تا با هر push فرانت‌اند بیلد شود و خروجی `dist` به‌صورت artifact نگه داشته شود.
+برای انتشار خودکار روی VPS، یک
 workflow جدا (مثل `deploy.yml`) بسازید که فقط پس از موفقیت CI اجرا شود:
 
 ```yaml

@@ -26,9 +26,9 @@ nimkat/
 │   │   ├── utils/        # ابزارهای اعداد فارسی
 │   │   └── assets/       # تصاویر
 │   └── vite.config.js
-├── docs/
-│   └── deploy.md      # راهنمای انتشار روی سرور
-└── .github/workflows/ci.yml   # بیلد و بررسی خودکار با هر push
+└── docs/
+    ├── deploy.md       # راهنمای انتشار روی سرور
+    └── ci.yml.example  # نمونهٔ workflow برای CI (برای فعال‌سازی ببینید README)
 ```
 
 بک‌اند (Laravel + MySQL) هنوز به مخزن اضافه نشده و در مرحلهٔ بعدی به‌صورت پوشهٔ
@@ -65,8 +65,10 @@ npm run preview    # پیش‌نمایش نسخهٔ بیلدشده
 راهنمای کامل سه روش (VPS با Nginx، هاست اشتراکی cPanel، و دیپلوی خودکار با
 GitHub Actions) در [`docs/deploy.md`](docs/deploy.md) آمده است.
 
-با هر push به شاخهٔ اصلی، workflow فایل `ci.yml` فرانت‌اند را بیلد می‌کند تا
-خرابی‌ها قبل از انتشار دیده شوند.
+فایل `docs/ci.yml.example` یک workflow آمادهٔ CI است (بیلد فرانت‌اند با هر push و
+نگه‌داشتن خروجی `dist` به‌صورت artifact). برای فعال‌سازی، آن را در مسیر
+`.github/workflows/ci.yml` کپی کنید؛ چون دسترسی push این جلسه مجوز تغییر
+workflowها را ندارد، این فایل عمدتاً بیرون از `.github` نگه داشته شده است.
 
 ## وضعیت پروژه
 
