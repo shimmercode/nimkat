@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import heroStudent from '../assets/hero-student.jpg';
 import heroTeacher from '../assets/hero-teacher.jpg';
 import { faNum } from '../utils/fa.js';
@@ -77,10 +78,10 @@ export default function Hero() {
                   <option>زبان انگلیسی</option>
                 </select>
               </div>
-              <button className="btn btn-primary">
+              <Link to="/classes" className="btn btn-primary">
                 <IconSearch size={17} />
                 جست‌وجو
-              </button>
+              </Link>
             </div>
           </div>
 

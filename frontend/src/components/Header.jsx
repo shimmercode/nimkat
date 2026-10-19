@@ -1,13 +1,14 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { IconBench, IconSearch, IconUser, IconMenu } from './icons.jsx';
 
 const NAV = [
-  { label: 'کلاس‌ها و اساتید', href: '#teachers', active: true },
-  { label: 'کلاس‌های گروهی', href: '#classes' },
-  { label: 'نیم‌چت', href: '#club' },
-  { label: 'نیمکت کلاب', href: '#club' },
-  { label: 'ویژه والدین', href: '#parents' },
-  { label: 'مجله', href: '#faq' },
+  { label: 'کلاس‌ها و اساتید', to: '/classes', active: true },
+  { label: 'کلاس‌های گروهی', to: '/classes' },
+  { label: 'نیم‌چت', to: '/panel/chat' },
+  { label: 'نیمکت کلاب', to: '/panel/club' },
+  { label: 'ویژه والدین', to: '/#parents' },
+  { label: 'مجله', to: '/#faq' },
 ];
 
 export default function Header() {
@@ -16,7 +17,7 @@ export default function Header() {
   return (
     <header className={`header${open ? ' open' : ''}`}>
       <div className="container header-inner">
-        <a className="brand" href="#top">
+        <Link className="brand" to="/">
           <span className="brand-logo">
             <IconBench size={26} />
           </span>
@@ -25,25 +26,25 @@ export default function Header() {
             <br />
             <span className="brand-tag">پلتفرم آموزش آنلاین و حضوری</span>
           </span>
-        </a>
+        </Link>
 
         <nav className="nav" onClick={() => setOpen(false)}>
           {NAV.map((item) => (
-            <a key={item.label} href={item.href} className={item.active ? 'active' : ''}>
+            <Link key={item.label} to={item.to} className={item.active ? 'active' : ''}>
               {item.label}
-            </a>
+            </Link>
           ))}
         </nav>
 
         <div className="header-actions">
-          <button className="icon-btn" aria-label="جست‌وجو">
+          <Link className="icon-btn" to="/classes" aria-label="جست‌وجو">
             <IconSearch size={19} />
-          </button>
-          <button className="btn btn-outline">
+          </Link>
+          <Link className="btn btn-outline" to="/login">
             <IconUser size={17} />
             ورود / ثبت‌نام
-          </button>
-          <button className="btn btn-primary">استاد شوید</button>
+          </Link>
+          <Link className="btn btn-primary" to="/teachers/1">استاد شوید</Link>
           <button
             className="icon-btn burger"
             aria-label="منو"

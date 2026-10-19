@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { faNum, faPrice } from '../utils/fa.js';
 import {
   IconUser,
@@ -107,7 +108,7 @@ export default function GroupClasses() {
                   onClick={() => setSelectedClass(c.id)}
                 >
                   <div className="class-top">
-                    <span className="class-title">{c.title}</span>
+                    <Link className="class-title" to={`/classes/${c.id}`}>{c.title}</Link>
                     <span className={`seat-badge${full ? ' full' : ''}`}>
                       {full ? 'تکمیل ظرفیت' : `${faNum(c.seatsLeft)} جای خالی`}
                     </span>

@@ -1,21 +1,29 @@
 /* ============ Nimkat design tokens ============ */
 :root {
-  --green-600: #1b7a57;
-  --green-700: #15664a;
-  --green-800: #0e5138;
-  --green-900: #0a4433;
-  --green-950: #16211c;
-  --ink: #182420;
-  --muted: #5c6b64;
-  --orange: #f0862b;
-  --orange-600: #e2761b;
-  --orange-soft: #fce8d5;
+  /* Nimkat system design tokens (SYSTEM DESIGN.pdf) */
+  --green-600: #21a878;   /* Fresh Green / secondary */
+  --green-700: #0a6847;   /* Deep Nimkat Green / primary */
+  --green-800: #085239;
+  --green-900: #053d29;   /* Primary 900 - dark sections */
+  --green-950: #17211e;   /* Neutral 900 - footer */
+  --ink: #17211e;         /* Neutral 900 */
+  --muted: #46514d;       /* Neutral 700 */
+  --orange: #f28a3d;      /* Nimkat Orange / accent */
+  --orange-600: #d9772f;
+  --orange-soft: #fdeee2; /* Accent 50 */
+  --accent-50: #fdeee2;
+  --accent-800: #9c4f14;
+  --secondary-50: #e3f4ec;
+  --error: #b42a48;
+  --error-50: #fde1e7;
+  --n50: #f3f6f4;
+  --n200: #d9e1de;
   --peach: #f8e7da;
-  --bg: #f6f8f7;
-  --bg-gray: #eef0ed;
-  --mint: #dcede2;
+  --bg: #f3f6f4;          /* Neutral 50 */
+  --bg-gray: #edf1ef;
+  --mint: #e3f4ec;
   --card: #ffffff;
-  --border: #e3e8e4;
+  --border: #e0e7e3;
   --radius: 18px;
   --shadow-sm: 0 1px 2px rgba(23, 37, 32, 0.06);
   --shadow-md: 0 14px 34px -16px rgba(23, 37, 32, 0.22);

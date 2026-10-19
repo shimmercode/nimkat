@@ -1,0 +1,18 @@
+{
+  "name": "nimkat-backend",
+  "version": "1.0.0",
+  "description": "Nimkat platform API - Express + SQLite (auth/OTP, teachers, classes, bookings, chat, club, wallets, panels)",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "keywords": ["nimkat", "education", "api"],
+  "author": "Nimkat Team",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "better-sqlite3": "^13.0.3",
+    "cors": "^2.8.6",
+    "express": "^5.3.0"
+  }
+}

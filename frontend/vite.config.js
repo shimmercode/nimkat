@@ -10,6 +10,10 @@ export default defineConfig({
     host: true,
     port: 5173,
     allowedHosts: true,
+    proxy: {
+      // forward API calls to the local Nimkat backend
+      '/api': { target: 'http://localhost:8000', changeOrigin: true },
+    },
   },
   preview: {
     host: true,

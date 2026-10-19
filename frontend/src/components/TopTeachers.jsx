@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { faNum } from '../utils/fa.js';
 import { IconStar, IconArrowLeft, IconArrowRight } from './icons.jsx';
 
@@ -152,9 +153,9 @@ export default function TopTeachers() {
                   </span>
                 </div>
 
-                <button className="btn btn-outline-green btn-block">
+                <Link className="btn btn-outline-green btn-block" to={`/teachers/${t.id}`}>
                   مشاهده پروفایل
-                </button>
+                </Link>
               </article>
             ))}
           </div>
