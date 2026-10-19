@@ -232,3 +232,12 @@ export const IconCap = (p) => (
     <path d="M6 12v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5" />
   </I>
 );
+
+/* Re-export panel glyphs used inside public pages */
+export { IconChatPlaceholder, IconVideo, IconCalendar, IconWallet } from '../panelIcons.jsx';
+
+export const IconChevronDown = (p) => (
+  <svg viewBox="0 0 24 24" width={p.size || 16} height={p.size || 16} fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className={p.className} style={p.style}>
+    <path d="M6 9l6 6 6-6" />
+  </svg>
+);

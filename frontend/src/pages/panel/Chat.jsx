@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { api } from '../../api.js';
 import { faNum } from '../../utils/fa.js';
 import { IconPin2, IconSend2, IconLock2, IconFile } from '../../panelIcons.jsx';
-import { IconHeadset } from '../../components/icons.jsx';
+import { IconHeadset, IconClock as IconClock72 } from '../../components/icons.jsx';
 
 export default function Chat() {
   const [chats, setChats] = useState(null);
@@ -144,7 +144,14 @@ export default function Chat() {
       </section>
 
       <aside className="chat-info">
-        <div className="card">
+        <div className="card limit-card">
+          <span className="lc-icon"><IconClock72 size={18} /></span>
+          <span>
+            <b>فعال تا ۷۲ ساعت بعد از جلسهٔ آخر</b>
+            <em className="muted">مانده: ۲ روز و ۱۴ ساعت · پس از آن گروه بایگانی می‌شود</em>
+          </span>
+        </div>
+        <div className="card" style={{ marginTop: 12 }}>
           <b>قوانین ارسال پیام</b>
           <p className="muted" style={{ marginTop: 8 }}>
             فقط شرکت‌کننده‌های کلاس پیام می‌فرستند. تا ۷۲ ساعت بعد از جلسهٔ آخر فعال است.
