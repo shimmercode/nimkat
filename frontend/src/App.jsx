@@ -11,6 +11,8 @@ import StudentHome from './pages/panel/StudentHome.jsx';
 import TeacherHome from './pages/panel/TeacherHome.jsx';
 import Chat from './pages/panel/Chat.jsx';
 import Club from './pages/panel/Club.jsx';
+import Editor from './editor/Editor.jsx';
+import CustomPage from './pages/CustomPage.jsx';
 
 function Guard({ need, children }) {
   const { user, loading } = useAuth();
@@ -28,7 +30,9 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/editor/:slug" element={<Editor />} />
           <Route element={<SiteLayout />}>
+            <Route path="/p/:slug" element={<CustomPage />} />
             <Route path="/" element={<Home />} />
             <Route path="/teachers/:id" element={<TeacherProfile />} />
             <Route path="/classes" element={<ClassesSearch />} />

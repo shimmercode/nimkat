@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import PageRenderer from '../render/PageRenderer.jsx';
 import { Link } from 'react-router-dom';
 import heroStudent from '../assets/hero-student.png';
 import heroTeacher from '../assets/hero-teacher.png';
@@ -240,6 +241,10 @@ function SeatGrid({ selected, onSelect, taken = [1, 2, 4, 5, 6, 9, 10, 12], book
 
 /* ---------------- page ---------------- */
 export default function Home() {
+  const [pubSchema, setPubSchema] = useState(null);
+  useEffect(() => {
+    api('/pages/home').then((d) => { if (d.page?.schema) setPubSchema(d.page.schema); }).catch(() => {});
+  }, []);
   const [subject, setSubject] = useState('همه');
   const [faqOpen, setFaqOpen] = useState(0);
   const [seat, setSeat] = useState(7);
@@ -265,6 +270,8 @@ export default function Home() {
   const perSession = 1500000;
   const discount = sessions >= 8 ? 0.1 : 0;
   const total = perSession * sessions * (1 - discount);
+
+  if (pubSchema) return <PageRenderer schema={pubSchema} />;
 
   return (
     <>
