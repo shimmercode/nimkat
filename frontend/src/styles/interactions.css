@@ -1,0 +1,20 @@
+/* UI/UX Pro Max: meaningful feedback, visible focus, reduced-motion support. */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 4px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .btn { transition: transform 180ms ease-out, box-shadow 180ms ease-out, background-color 180ms ease-out; }
+  .btn:active:not(:disabled) { transform: translateY(1px) scale(.98); }
+  @media (hover: hover) {
+    .btn:hover:not(:disabled) { box-shadow: 0 5px 16px rgb(5 61 41 / .13); }
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}

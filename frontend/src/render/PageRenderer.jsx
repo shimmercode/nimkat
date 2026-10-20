@@ -1,4 +1,6 @@
 /* PageRenderer — renders a page schema (public site + editor canvas) */
+import { useEffect, useState } from 'react';
+import { motion, useReducedMotion } from 'motion/react';
 import { registry, getIn } from '../blocks/registry.js';
 
 const STYLE_KEYS = ['background', 'backgroundColor', 'color', 'paddingTop', 'paddingBottom', 'paddingLeft', 'paddingRight',
@@ -48,7 +50,8 @@ function NodeView({ node, vw, edit, selectedId, onSelect }) {
 }
 
 function EditWrap({ edit, node, selectedId, onSelect, children }) {
-  if (!edit) return children;
+  const reduce = useReducedMotion();
+  if (!edit) return <motion.div initial={reduce ? false : { opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.05 }} transition={{ duration: reduce ? 0 : .35 }}>{children}</motion.div>;
   const selected = selectedId === node.id;
   return (
     <div
@@ -61,13 +64,19 @@ function EditWrap({ edit, node, selectedId, onSelect, children }) {
   );
 }
 
-export default function PageRenderer({ schema, edit = false, selectedId, onSelect, viewport = 1440 }) {
+export default function PageRenderer({ schema, edit = false, selectedId, onSelect, viewport }) {
+  const [width, setWidth] = useState(() => typeof window === 'undefined' ? 1440 : window.innerWidth);
+  useEffect(() => {
+    const resize = () => setWidth(window.innerWidth);
+    window.addEventListener('resize', resize);
+    return () => window.removeEventListener('resize', resize);
+  }, []);
   const root = schema?.root;
   if (!root) return null;
   return (
     <div className="pb-page">
       {(root.children || []).map((c) => (
-        <NodeView key={c.id} node={c} vw={viewport} edit={edit} selectedId={selectedId} onSelect={onSelect} />
+        <NodeView key={c.id} node={c} vw={viewport ?? width} edit={edit} selectedId={selectedId} onSelect={onSelect} />
       ))}
     </div>
   );
