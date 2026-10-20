@@ -9,7 +9,7 @@ import { useAuth } from '../auth.jsx';
 import { useEditorStore } from './store.js';
 import Inspector from './Inspector.jsx';
 import PageRenderer from '../render/PageRenderer.jsx';
-import { api, getToken } from '../api.js';
+import { api } from '../api.js';
 import { toast } from '../utils/toast.js';
 import './editor.css';
 

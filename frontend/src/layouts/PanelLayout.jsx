@@ -156,8 +156,11 @@ export default function PanelLayout({ variant, children }) {
             </div>
           ))}
 
-          <button type="button" className="side-link" style={{ marginTop: 12, color: 'var(--error)' }} onClick={logout}>
+          <button type="button" className="side-link" style={{ marginTop: 12, color: 'var(--error)' }} onClick={() => logout()}>
             <IconLogout size={19} /> خروج از حساب
+          </button>
+          <button type="button" className="side-link" style={{ color: 'var(--n700)', fontSize: 12 }} onClick={() => logout(true)}>
+            <IconLogout size={17} /> خروج از همه دستگاه‌ها
           </button>
         </aside>
 

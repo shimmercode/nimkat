@@ -7,16 +7,22 @@ const cases = [
   { slug: 'class-detail', href: '/classes/5', key: 'descriptionTitle', text: 'توضیحات قابل ویرایش کلاس' },
   { slug: 'club', href: '/club', key: 'title', text: 'باشگاه قابل ویرایش نیمکت' },
 ];
-let token: string;
+let sessionCookies: Awaited<ReturnType<import('@playwright/test').APIRequestContext['storageState']>>['cookies'];
+let authHeaders: Record<string, string>;
 const originals = new Map<string, any>();
 
 test.beforeAll(async ({ request }) => {
   const otp = await (await request.post('/api/auth/otp/request', { data: { mobile: '09120000000' } })).json();
   if (!otp.devCode) throw new Error('E2E tests require development OTP mode.');
   const login = await (await request.post('/api/auth/otp/verify', { data: { mobile: '09120000000', code: otp.devCode } })).json();
-  token = login.token;
+  expect(login.token).toBeUndefined();
+  sessionCookies = (await request.storageState()).cookies;
+  authHeaders = {
+    Cookie: sessionCookies.map((c) => `${c.name}=${c.value}`).join('; '),
+    'X-CSRF-Token': sessionCookies.find((c) => c.name === 'nk_csrf')!.value,
+  };
   for (const row of cases) {
-    const res = await request.get(`/api/pages/${row.slug}?preview=1`, { headers: { Authorization: `Bearer ${token}` } });
+    const res = await request.get(`/api/pages/${row.slug}?preview=1`, { headers: authHeaders });
     originals.set(row.slug, (await res.json()).page);
   }
 });
@@ -24,7 +30,7 @@ test.afterAll(async ({ request }) => {
   // Restore content/status of existing pages. Test-created drafts remain unpublished.
   for (const row of cases) {
     const old = originals.get(row.slug);
-    const headers = { Authorization: `Bearer ${token}` };
+    const headers = authHeaders;
     if (old) await request.put(`/api/pages/${row.slug}`, { headers, data: { schema: old.schema, title: old.title } });
     await request.post(`/api/pages/${row.slug}/${old?.status === 'published' ? 'publish' : 'unpublish'}`, { headers, data: {} });
   }
@@ -34,7 +40,7 @@ for (const row of cases) {
   test(`${row.slug}: live edit → draft → publish → SSR and browser`, async ({ page, request }) => {
     const errors: string[] = [];
     page.on('pageerror', (e) => errors.push(e.message));
-    await page.addInitScript((t) => localStorage.setItem('nimkat_token', t), token);
+    await page.context().addCookies(sessionCookies);
     await page.goto(`/editor/${row.slug}`);
     await expect(page.locator('.layer-row').first()).toBeVisible();
     await page.locator('.layer-row').first().click();
@@ -76,7 +82,7 @@ test('public pages have real SSR content and RTL, without JavaScript', async ({ 
 test('student cannot use the page editor', async ({ page, request }) => {
   const otp = await (await request.post('/api/auth/otp/request', { data: { mobile: '09123334455' } })).json();
   const login = await (await request.post('/api/auth/otp/verify', { data: { mobile: '09123334455', code: otp.devCode } })).json();
-  await page.addInitScript((t) => localStorage.setItem('nimkat_token', t), login.token);
+  await page.context().addCookies((await request.storageState()).cookies);
   await page.goto('/editor/classes');
   await expect(page.locator('.container[role=alert]')).toContainText('فقط برای مدیر');
   await expect(page.getByRole('button', { name: 'انتشار', exact: true })).toHaveCount(0);
@@ -84,7 +90,7 @@ test('student cannot use the page editor', async ({ page, request }) => {
 
 test('saving and restoring drafts never leaks changes to the published page', async ({ request }) => {
   const slug = 'e2e-publication';
-  const headers = { Authorization: `Bearer ${token}` };
+  const headers = authHeaders;
   const schema = (text: string) => ({ root: { id: 'root', type: 'page', props: {}, style: {}, children: [
     { id: 'heading', type: 'heading', props: { title: text }, style: {}, children: [] },
   ] } });
@@ -119,4 +125,32 @@ test('five public pages stay within mobile, tablet and desktop widths', async ({
       expect(scroll, `${path} overflows viewport ${width}`).toBeLessThanOrEqual(width + 1);
     }
   }
+});
+
+test('OTP form uses cookies, survives reload and logout revokes the session', async ({ page, request }) => {
+  await page.goto('/login?next=/panel');
+  await page.getByLabel('شماره موبایل', { exact: true }).fill('۰۹۱۲۵۵۵۰۱۲۳');
+  const otpResult = page.waitForResponse((r) => r.url().endsWith('/api/auth/otp/request') && r.request().method() === 'POST');
+  await page.getByRole('button', { name: 'ارسال کد تأیید', exact: true }).click();
+  const otp = await (await otpResult).json();
+  expect(otp.devCode).toMatch(/^\d{5}$/);
+  const inputs = page.locator('.otp-boxes input');
+  for (let i = 0; i < 5; i++) await inputs.nth(i).fill('۰۱۲۳۴۵۶۷۸۹'[Number(otp.devCode[i])]);
+  await page.getByRole('button', { name: 'تأیید و ورود', exact: true }).click();
+  await expect(page).toHaveURL(/\/panel$/);
+  await expect(page.getByRole('button', { name: 'خروج از حساب', exact: true })).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole('button', { name: 'خروج از حساب', exact: true })).toBeVisible();
+  expect(await page.evaluate(() => localStorage.getItem('nimkat_token'))).toBeNull();
+  const documentCookie = await page.evaluate(() => document.cookie);
+  expect(documentCookie).not.toContain('nk_access=');
+  expect(documentCookie).not.toContain('nk_refresh=');
+  const session = (await page.context().cookies()).filter((c) => ['nk_access', 'nk_refresh'].includes(c.name));
+  expect(session).toHaveLength(2);
+  expect(session.every((c) => c.httpOnly)).toBeTruthy();
+  const capturedCookie = session.map((c) => `${c.name}=${c.value}`).join('; ');
+  await page.getByRole('button', { name: 'خروج از حساب', exact: true }).click();
+  await expect(page).toHaveURL(/\/login/);
+  const replay = await request.get('/api/panel/student', { headers: { Cookie: capturedCookie } });
+  expect(replay.status()).toBe(401);
 });

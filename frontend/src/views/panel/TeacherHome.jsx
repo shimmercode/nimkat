@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
-import { api, getToken } from '../../api.js';
+import { api } from '../../api.js';
+import { useAuth } from '../../auth.jsx';
 import { toast } from '../../utils/toast.js';
 import {
   IconWallet, IconBook, IconStar, IconUsers, IconBulb, IconUpload, IconPlus,
@@ -50,6 +51,7 @@ const SETTLEMENTS = [
 ];
 
 export default function TeacherHome() {
+  const { user } = useAuth();
   const [tipOpen, setTipOpen] = useState(true);
   const [reqStatus, setReqStatus] = useState('پیش‌نویس');
   const [replied, setReplied] = useState({});
@@ -65,7 +67,7 @@ export default function TeacherHome() {
   });
 
   const submitRequest = async (status) => {
-    if (!getToken()) { toast('برای ثبت درخواست اول وارد شوید', 'err'); return; }
+    if (!user) { toast('برای ثبت درخواست اول وارد شوید', 'err'); return; }
     try {
       await api('/teacher/course-requests', {
         method: 'POST',

@@ -1,94 +1,25 @@
 /* Nimkat backend - Express API server */
 const express = require('express');
-const crypto = require('crypto');
 const db = require('./db');
 
 const app = express();
+// Configure only for a controlled reverse proxy that overwrites forwarded headers.
+if (process.env.TRUST_PROXY) app.set('trust proxy', process.env.TRUST_PROXY);
 const PORT = process.env.PORT || 8000;
-const SECRET = process.env.NIMKAT_SECRET || 'nimkat-dev-secret';
 
-app.use(express.json());
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
-  if (req.method === 'OPTIONS') return res.sendStatus(204);
-  next();
-});
+app.use(express.json({ limit: '256kb' }));
 
 /* ---------- helpers ---------- */
 const J = (s, fallback = null) => {
   try { return JSON.parse(s); } catch { return fallback; }
 };
-const sign = (payload) => {
-  const body = Buffer.from(JSON.stringify(payload)).toString('base64url');
-  const sig = crypto.createHmac('sha256', SECRET).update(body).digest('base64url');
-  return `${body}.${sig}`;
-};
-const verify = (token) => {
-  try {
-    const [body, sig] = token.split('.');
-    const expect = crypto.createHmac('sha256', SECRET).update(body).digest('base64url');
-    if (sig !== expect) return null;
-    const payload = JSON.parse(Buffer.from(body, 'base64url').toString());
-    if (payload.exp < Date.now()) return null;
-    return payload;
-  } catch { return null; }
-};
-const auth = (req, res, next) => {
-  const header = req.headers.authorization || '';
-  const token = header.startsWith('Bearer ') ? header.slice(7) : null;
-  const payload = token && verify(token);
-  if (!payload) return res.status(401).json({ error: 'نیاز به ورود دارید' });
-  req.user = db.prepare('SELECT * FROM users WHERE id=?').get(payload.uid);
-  if (!req.user) return res.status(401).json({ error: 'کاربر پیدا نشد' });
-  next();
-};
-const requireRole = (...roles) => (req, res, next) => {
-  if (!roles.includes(req.user.role)) return res.status(403).json({ error: 'دسترسی برای این نقش مجاز نیست' });
-  next();
-};
+const { auth, requireRole } = require('./modules/auth')(app, { db });
+
 const teacherIdFor = (user) =>
   db.prepare('SELECT id FROM teachers WHERE name=?').get(user.name)?.id || null;
 const faPrice = (n) => Math.round(n).toLocaleString('en-US');
 
 const tierDiscount = (sessions) => (sessions >= 16 ? 0.15 : sessions >= 8 ? 0.1 : sessions >= 4 ? 0.05 : 0);
-
-/* ---------- auth (OTP) ---------- */
-app.post('/api/auth/otp/request', (req, res) => {
-  const { mobile } = req.body || {};
-  if (!/^09\d{9}$/.test(String(mobile))) return res.status(400).json({ error: 'شماره موبایل ۱۱ رقم است' });
-  const code = String(Math.floor(10000 + Math.random() * 90000));
-  db.prepare('INSERT INTO otp (mobile, code, expires_at, attempts) VALUES (?,?,?,0) ON CONFLICT(mobile) DO UPDATE SET code=excluded.code, expires_at=excluded.expires_at, attempts=0')
-    .run(mobile, code, Date.now() + 2 * 60 * 1000);
-  console.log(`[OTP] ${mobile} -> ${code}`);
-  res.json({ ok: true, devCode: code, expires_in: 120, max_attempts: 5 });
-});
-
-app.post('/api/auth/otp/verify', (req, res) => {
-  const { mobile, code, role } = req.body || {};
-  const row = db.prepare('SELECT * FROM otp WHERE mobile=?').get(mobile);
-  if (!row) return res.status(400).json({ error: 'اول کد را درخواست کنید' });
-  if (row.expires_at < Date.now()) return res.status(400).json({ error: 'کد منقضی شده؛ دوباره ارسال کنید' });
-  if (row.attempts >= 5) return res.status(400).json({ error: 'حداکثر ۵ بار می‌توانید کد را وارد کنید' });
-  if (row.code !== String(code)) {
-    db.prepare('UPDATE otp SET attempts=attempts+1 WHERE mobile=?').run(mobile);
-    return res.status(400).json({ error: 'کد تأیید درست نیست' });
-  }
-  db.prepare('DELETE FROM otp WHERE mobile=?').run(mobile);
-
-  let user = db.prepare('SELECT * FROM users WHERE mobile=?').get(mobile);
-  if (!user) {
-    const chosen = ['student', 'teacher', 'parent'].includes(role) ? role : 'student';
-    const info = db.prepare('INSERT INTO users (mobile, name, role, subtitle, letter) VALUES (?,?,?,?,?)')
-      .run(mobile, 'کاربر نیمکت', chosen, 'پروفایل کامل نشده', 'ک');
-    user = db.prepare('SELECT * FROM users WHERE id=?').get(info.lastInsertRowid);
-  }
-  const token = sign({ uid: user.id, exp: Date.now() + 7 * 24 * 3600 * 1000 });
-  res.json({ ok: true, token, user });
-});
-
-app.get('/api/auth/me', auth, (req, res) => res.json({ user: req.user }));
 
 /* ---------- teachers ---------- */
 const teacherCard = (t) => ({
@@ -283,7 +214,7 @@ app.post('/api/callback', (req, res) => {
 });
 
 /* ---------- content module: pages, versions and templates ---------- */
-require('./modules/content/routes')(app, { db, auth, requireRole, verify, J });
+require('./modules/content/routes')(app, { db, auth, requireRole, J });
 
 /* ---------- student panel ---------- */
 app.get('/api/panel/student', auth, requireRole('student', 'parent'), (req, res) => {

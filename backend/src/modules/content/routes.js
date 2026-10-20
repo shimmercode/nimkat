@@ -1,6 +1,6 @@
 /* Content domain: transport routes; DB/auth helpers injected by the application. */
 const { validSchema } = require('./schema');
-module.exports = function registerContentRoutes(app, { db, auth, requireRole, verify, J }) {
+module.exports = function registerContentRoutes(app, { db, auth, requireRole, J }) {
 /* ---------- page builder ---------- */
 const validSlug = (x) => /^[a-z0-9][a-z0-9-]{1,63}$/.test(String(x || ''));
 
@@ -14,12 +14,10 @@ app.get('/api/pages/:slug', (req, res) => {
   const row = db.prepare('SELECT * FROM pages WHERE slug=?').get(slug);
   const wantsDraft = req.query.preview === '1';
   if (wantsDraft) {
-    const header = req.headers.authorization || '';
-    const token = header.startsWith('Bearer ') ? header.slice(7) : null;
-    const payload = token && verify(token);
-    const user = payload && db.prepare('SELECT role FROM users WHERE id=?').get(payload.uid);
-    if (!user || user.role !== 'admin') return res.status(403).json({ error: 'پیش‌نمایش پیش‌نویس فقط برای مدیر' });
-    return res.json({ page: row ? { slug: row.slug, title: row.title, schema: J(row.schema_json, {}), status: row.status, updated_at: row.updated_at } : null });
+    return auth(req, res, () => {
+      if (req.user.role !== 'admin') return res.status(403).json({ error: 'پیش‌نمایش پیش‌نویس فقط برای مدیر' });
+      return res.json({ page: row ? { slug: row.slug, title: row.title, schema: J(row.schema_json, {}), status: row.status, updated_at: row.updated_at } : null });
+    });
   }
   if (!row || row.status !== 'published') return res.json({ page: null });
   res.json({ page: { slug: row.slug, title: row.published_title, schema: J(row.published_schema_json, {}), status: row.status, updated_at: row.updated_at } });

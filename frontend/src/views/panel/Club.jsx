@@ -6,7 +6,8 @@ import {
   IconSparkle, IconInfo,
 } from '../../components/icons.jsx';
 import { faNum } from '../../utils/fa.js';
-import { api, getToken } from '../../api.js';
+import { api } from '../../api.js';
+import { useAuth } from '../../auth.jsx';
 import { toast } from '../../utils/toast.js';
 
 const LEVELS = [
@@ -70,6 +71,7 @@ const MEDALS = [
 ];
 
 export default function Club({ content = {}, preview = false } = {}) {
+  const { user } = useAuth();
   const [likes, setLikes] = useState({});
   const [claimed, setClaimed] = useState({});
   const [walletCoins, setWalletCoins] = useState(1120);
@@ -77,7 +79,7 @@ export default function Club({ content = {}, preview = false } = {}) {
   const toggleLike = (i) => setLikes((l) => ({ ...l, [i]: !l[i] }));
 
   const claimReward = async (r) => {
-    if (!getToken()) { toast('برای دریافت جایزه اول وارد شوید', 'err'); return; }
+    if (!user) { toast('برای دریافت جایزه اول وارد شوید', 'err'); return; }
     try {
       await api(`/club/rewards/${r.id}/claim`, { method: 'POST', body: {} });
       setClaimed((c) => ({ ...c, [r.id]: true }));

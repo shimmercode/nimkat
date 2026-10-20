@@ -5,7 +5,9 @@
 فرانت‌اند از Vite/React Router به **Next.js 16 App Router + React 19** منتقل شد.
 entryها، routeها، layoutهای ریشه، helperهای سرور و قرارداد اسکیما TypeScript هستند؛
 کامپوننت‌های قدیمی JSX با allowJs حفظ شده‌اند و هنوز همه به TS تبدیل نشده‌اند.
-بک‌اند همچنان Express/SQLite است، نه PostgreSQL/Redis.
+بک‌اند همچنان Express/SQLite است، نه PostgreSQL/Redis. مرحلهٔ بعدی امنیت نشست نیز
+پیاده شده است: HttpOnly، refresh rotation، revoke، CSRF و محدودسازی OTP. جزئیات
+و تصمیم استفاده از توکن opaque در `AUTH-SESSIONS.md` است.
 متن PDF در برخی تیترها نویسه‌های خراب دارد؛ موارد ناخوانای تصاویر جلسه قبل از
 تبدیل به معیار پذیرش باید تطبیق داده شوند.
 
@@ -32,7 +34,7 @@ entryها، routeها، layoutهای ریشه، helperهای سرور و قرا�
 5. اولویت محتوای اختصاصی teacher-ID/class-ID نسبت به قالب عمومی؛ پنل و مسیر عمومی کلاب.
 6. جداسازی snapshot منتشرشده از پیش‌نویس با migration افزایشی، تراکنش save/publish
    و snapshot؛ validation ساختاری محدود به عمق/تعداد و ID یکتا.
-7. استخراج دامنه content در بک‌اند؛ سایر دامنه‌ها هنوز یکپارچه در server.js هستند.
+7. استخراج دامنه‌های content و auth در بک‌اند؛ سایر دامنه‌ها هنوز در server.js هستند.
 8. کنترل دسترسی ویرایشگر، preview غیرتعاملی برای widgetهای مالی، return-to پس از ورود.
 9. تست‌های Vitest، Node test و Playwright برای انتشار/SSR/دسترسی و استقلال پیش‌نویس.
 
@@ -40,7 +42,8 @@ entryها، routeها، layoutهای ریشه، helperهای سرور و قرا�
 
 - مهاجرت تمام JSX و مدل‌های مالی به TypeScript و تکمیل اعتبارسنجی دامنه.
 - PostgreSQL/Redis، migration و انتقال داده و modularization تمام بک‌اند.
-- امنیت production نشست/OTP، HttpOnly refresh/revoke، rate limit و audit.
+- اتصال پیامک واقعی، انتقال session/limiter به Redis، audit و ممیزی مستقل امنیتی؛
+  HttpOnly، refresh/revoke و محدودسازی OTP در SQLite انجام شده‌اند.
 - پیامک/درگاه/کلاس واقعی، ledger، تست همزمانی رزرو و reconciliation.
 - Query/store/forms مطابق سند، تقویم شمسی، realtime، PWA، object storage و رصد خطا.
 - تکمیل پنل مستقل والدین و ماژول‌های باقی‌مانده سند و تست‌های پذیرش آن‌ها.

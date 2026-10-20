@@ -15,6 +15,7 @@ export default function Login() {
   const [mobile, setMobile] = useState('');
   const [code, setCode] = useState(['', '', '', '', '']);
   const [err, setErr] = useState('');
+  const [busy, setBusy] = useState(false);
   const [devCode, setDevCode] = useState('');
   const [timer, setTimer] = useState(0);
   const [role, setRole] = useState(params?.get('mode') === 'teacher' ? 'teacher' : 'student');
@@ -31,16 +32,18 @@ export default function Login() {
   }, [timer]);
 
   const send = async () => {
+    if (busy) return;
+    setBusy(true);
     setErr('');
     try {
       const d = await requestOtp(mobile);
       setDevCode(d.devCode || '');
-      setTimer(120);
+      setTimer(d.retry_after || 120);
       setStep(2);
       setTimeout(() => boxes.current[0]?.focus(), 80);
     } catch (e) {
       setErr(e.message);
-    }
+    } finally { setBusy(false); }
   };
 
   const setDigit = (i, v) => {
@@ -52,6 +55,8 @@ export default function Login() {
   };
 
   const verify = async () => {
+    if (busy) return;
+    setBusy(true);
     setErr('');
     try {
       const joined = code.join('');
@@ -59,7 +64,7 @@ export default function Login() {
       navigate(safeNext || (u.role === 'teacher' ? '/teacher' : u.role === 'admin' ? '/editor/home' : '/panel'), { replace: true });
     } catch (e) {
       setErr(e.message);
-    }
+    } finally { setBusy(false); }
   };
 
   const ready = code.every((c) => c);
@@ -162,13 +167,14 @@ export default function Login() {
               </p>
 
               <div className="field" style={{ marginTop: 26 }}>
-                <label className="field-label">شماره موبایل</label>
+                <label className="field-label" htmlFor="login-mobile">شماره موبایل</label>
                 <input
+                  id="login-mobile" inputMode="tel" autoComplete="tel"
                   className="input num"
                   style={{ direction: 'ltr', textAlign: 'right', fontSize: 17 }}
                   placeholder="۰۹۱۲ ۰۰۰ ۰۰۰۰"
                   value={mobile}
-                  onChange={(e) => setMobile(e.target.value.replace(/\D/g, '').slice(0, 11))}
+                  onChange={(e) => setMobile(e.target.value.replace(/[۰-۹]/g, (d) => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d))).replace(/\D/g, '').slice(0, 11))}
                   onKeyDown={(e) => e.key === 'Enter' && mobile.length === 11 && send()}
                 />
                 <div className={`field-hint ${err ? 'is-error' : ''}`}>
@@ -191,7 +197,7 @@ export default function Login() {
                 </div>
               </div>
 
-              <button className="btn btn-primary btn-lg btn-block" style={{ marginTop: 22 }} disabled={mobile.length !== 11} onClick={send}>
+              <button className="btn btn-primary btn-lg btn-block" style={{ marginTop: 22 }} disabled={busy || mobile.length !== 11} onClick={send}>
                 ارسال کد تأیید
               </button>
             </>
@@ -217,10 +223,15 @@ export default function Login() {
                 {code.map((c, i) => (
                   <input
                     key={i}
-                    ref={(el) => (boxes.current[i] = el)}
+                    ref={(el) => { boxes.current[i] = el; }}
                     value={c ? faNum(c) : ''}
                     onChange={(e) => setDigit(i, e.target.value)}
-                    inputMode="numeric"
+                    inputMode="numeric" aria-label={`رقم ${faNum(i + 1)} کد تأیید`}
+                    autoComplete={i === 0 ? 'one-time-code' : 'off'}
+                    onPaste={(e) => {
+                      const digits = e.clipboardData.getData('text').replace(/[۰-۹]/g, (d) => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d))).replace(/\D/g, '').slice(0, 5);
+                      if (digits.length === 5) { e.preventDefault(); setCode(digits.split('')); boxes.current[4]?.focus(); }
+                    }}
                   />
                 ))}
               </div>
@@ -232,7 +243,7 @@ export default function Login() {
                 <button
                   type="button"
                   style={{ color: timer > 0 ? 'var(--n500)' : 'var(--primary)', fontWeight: 800, fontSize: 13.5 }}
-                  disabled={timer > 0}
+                  disabled={busy || timer > 0}
                   onClick={send}
                 >
                   ارسال دوباره‌ی کد
@@ -244,7 +255,7 @@ export default function Login() {
               <button
                 className={`btn btn-lg btn-block ${ready ? 'btn-primary' : 'disabled'}`}
                 style={{ marginTop: 22 }}
-                disabled={!ready}
+                disabled={busy || !ready}
                 onClick={verify}
               >
                 تأیید و ورود

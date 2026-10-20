@@ -67,9 +67,8 @@ export default function Header() {
               </Link>
               <button
                 className="btn btn-ghost btn-sm"
-                onClick={() => {
-                  logout();
-                  navigate('/');
+                onClick={async () => {
+                  if (await logout()) navigate('/');
                 }}
               >
                 خروج

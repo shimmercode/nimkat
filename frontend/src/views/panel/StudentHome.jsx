@@ -1,7 +1,8 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { Link } from '../../routing/navigation';
-import { api, getToken } from '../../api.js';
+import { api } from '../../api.js';
+import { useAuth } from '../../auth.jsx';
 import { toast } from '../../utils/toast.js';
 import {
   IconCrown, IconWallet, IconCheck, IconCalendar, IconLink, IconBell, IconFile,
@@ -65,6 +66,7 @@ const FILES = [
 ];
 
 export default function StudentHome() {
+  const { user } = useAuth();
   const [notifs, setNotifs] = useState(NOTIFS.map((n, i) => ({ ...n, id: i + 1 })));
   const [upcoming, setUpcoming] = useState(UPCOMING);
   const [balance, setBalance] = useState(1240000);
@@ -74,15 +76,15 @@ export default function StudentHome() {
   const [chargeAmount, setChargeAmount] = useState('500000');
 
   useEffect(() => {
-    if (!getToken()) return;
+    if (!user) return;
     api('/panel/student').then((d) => {
       if (typeof d.wallet === 'number') setBalance(d.wallet);
     }).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [user]);
 
   const cancelNotif = async (id) => {
-    if (!getToken()) { toast('برای این کار اول وارد شوید', 'err'); return; }
+    if (!user) { toast('برای این کار اول وارد شوید', 'err'); return; }
     try {
       await api(`/notifications/${id}/cancel`, { method: 'POST' });
       setNotifs((ns) => ns.filter((n) => n.id !== id));
@@ -100,7 +102,7 @@ export default function StudentHome() {
   const chargeWallet = async () => {
     const amount = Number(String(chargeAmount).replace(/[^\d]/g, ''));
     if (!amount || amount < 10000) { toast('مبلغ معتبر وارد کنید (حداقل ۱۰٬۰۰۰)', 'err'); return; }
-    if (!getToken()) { toast('برای شارژ اول وارد شوید', 'err'); return; }
+    if (!user) { toast('برای شارژ اول وارد شوید', 'err'); return; }
     try {
       const r = await api('/wallet/charge', { method: 'POST', body: { amount } });
       setBalance(typeof r.balance === 'number' ? r.balance : balance + amount);

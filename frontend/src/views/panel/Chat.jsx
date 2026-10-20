@@ -5,7 +5,8 @@ import {
   IconFlag, IconUsers, IconChat, IconBell, IconCheck,
 } from '../../components/icons.jsx';
 import { faNum } from '../../utils/fa.js';
-import { api, getToken } from '../../api.js';
+import { api } from '../../api.js';
+import { useAuth } from '../../auth.jsx';
 import { toast } from '../../utils/toast.js';
 
 const CONVS = [
@@ -74,6 +75,7 @@ const INITIAL = [
 ];
 
 export default function Chat() {
+  const { user } = useAuth();
   const [msgs, setMsgs] = useState(INITIAL);
   const [text, setText] = useState('');
   const [conv, setConv] = useState(1);
@@ -90,7 +92,7 @@ export default function Chat() {
     const t = text.trim();
     if (!t) return;
     setMsgs((m) => [...m.filter((x) => x.kind !== 'typing'), { kind: 'me', time: 'همین حالا', text: t }]);
-    if (getToken()) {
+    if (user) {
       api(`/chats/${conv || 1}/messages`, { method: 'POST', body: { text: t } }).catch(() => {});
     }
     setText('');

@@ -7,7 +7,8 @@ import {
   IconStar, IconChevronDown, IconVideo,
 } from '../components/icons.jsx';
 import { faNum, faPrice } from '../utils/fa.js';
-import { api, getToken } from '../api.js';
+import { api } from '../api.js';
+import { useAuth } from '../auth.jsx';
 import { toast } from '../utils/toast.js';
 import { useInitialEntity } from '../render/EntityContext.jsx';
 
@@ -29,6 +30,7 @@ const CHAPTERS = [
 ];
 
 export default function ClassDetail({ content = {}, preview = false, entityId } = {}) {
+  const { user } = useAuth();
   const initialEntity = useInitialEntity();
   const params = useParams();
   const id = entityId || params.id;
@@ -93,7 +95,7 @@ export default function ClassDetail({ content = {}, preview = false, entityId } 
   };
 
   const payNow = async () => {
-    if (!getToken()) {
+    if (!user) {
       toast('برای پرداخت اول وارد شوید', 'err');
       navigate('/login');
       return;
