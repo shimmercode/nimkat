@@ -34,3 +34,8 @@ coverage/
 
 # --- Runtime database (auto-seeded on first run) ---
 backend/data/
+
+# Python tooling
+__pycache__/
+*.pyc
+.coverage
