@@ -44,6 +44,12 @@ const auth = (req, res, next) => {
   if (!req.user) return res.status(401).json({ error: 'کاربر پیدا نشد' });
   next();
 };
+const requireRole = (...roles) => (req, res, next) => {
+  if (!roles.includes(req.user.role)) return res.status(403).json({ error: 'دسترسی برای این نقش مجاز نیست' });
+  next();
+};
+const teacherIdFor = (user) =>
+  db.prepare('SELECT id FROM teachers WHERE name=?').get(user.name)?.id || null;
 const faPrice = (n) => Math.round(n).toLocaleString('en-US');
 
 const tierDiscount = (sessions) => (sessions >= 16 ? 0.15 : sessions >= 8 ? 0.1 : sessions >= 4 ? 0.05 : 0);
@@ -114,7 +120,7 @@ app.get('/api/teachers/:id', (req, res) => {
     },
     reviews: db.prepare('SELECT * FROM reviews WHERE teacher_id=?').all(t.id),
     questions: db.prepare('SELECT * FROM questions WHERE teacher_id=?').all(t.id),
-    groupClasses: db.prepare('SELECT id,title,days,time,sessions,capacity,taken,price FROM classes WHERE teacher_id=? AND kind!="private"').all(t.id),
+    groupClasses: db.prepare("SELECT id,title,days,time,sessions,capacity,taken,price FROM classes WHERE teacher_id=? AND kind!='private'").all(t.id),
   });
 });
 
@@ -183,7 +189,6 @@ app.post('/api/bookings', auth, (req, res) => {
   const { classId, sessions = 1, people = 1, friends = [], coupon, seats = [] } = req.body || {};
   const c = db.prepare('SELECT * FROM classes WHERE id=?').get(classId);
   if (!c) return res.status(404).json({ error: 'کلاس پیدا نشد' });
-  const q = app._router ? null : null;
   const gross = c.price * sessions * people;
   const tier = tierDiscount(sessions);
   const tierOff = gross * tier;
@@ -198,6 +203,11 @@ app.post('/api/bookings', auth, (req, res) => {
 
   const info = db.prepare('INSERT INTO bookings (user_id,class_id,sessions,people,seats,friends,gross,discount,total,per_person,coupon) VALUES (?,?,?,?,?,?,?,?,?,?,?)')
     .run(req.user.id, classId, sessions, people, JSON.stringify(seats), JSON.stringify(friends), gross, tierOff + friendOff + couponOff, total, per, coupon || null);
+  const walletBefore = db.prepare('SELECT COALESCE(SUM(amount),0) s FROM wallet_tx WHERE user_id=?').get(req.user.id).s;
+  if (walletBefore < per) {
+    db.prepare('INSERT INTO wallet_tx (user_id,desc,amount,date_label) VALUES (?,?,?,?)')
+      .run(req.user.id, 'پرداخت آنلاین (درگاه شبیه‌سازی‌شده)', per, 'امروز');
+  }
   db.prepare('INSERT INTO wallet_tx (user_id,desc,amount,date_label) VALUES (?,?,?,?)')
     .run(req.user.id, `رزرو ${sessions} جلسه ${c.title}`, -per, 'امروز');
   db.prepare('INSERT INTO club_history (user_id,desc,amount,date_label) VALUES (?,?,?,?)')
@@ -232,11 +242,11 @@ app.get('/api/club', auth, (req, res) => {
   const balance = db.prepare('SELECT COALESCE(SUM(amount),0) s FROM club_history WHERE user_id=?').get(req.user.id).s;
   res.json({
     balance,
-    level: { name: 'نیمکت نقره‌ای', next: 'نیمکت طلایی', coins_to_next: Math.max(0, 1500 - balance) },
+    level: { name: 'نیمکت نقره‌ای', next: 'نیمکت طلایی', coins_to_next: Math.max(0, 3000 - balance) },
     levels: [
       { name: 'نیمکت برنزی', range: '۰ تا ۴۹۹ سکه', perks: ['۵٪ تخفیف کلاس گروهی'], state: 'passed' },
-      { name: 'نیمکت نقره‌ای', range: '۵۰۰ تا ۱٬۴۹۹ سکه', perks: ['۱۰٪ تخفیف کلاس گروهی', 'اولویت در گپ‌های اختصاصی'], state: 'current' },
-      { name: 'نیمکت طلایی', range: '۱۵۰۰ تا ۳٬۹۹۹ سکه', perks: ['دو جلسهٔ رایگان با برترین استاد', 'پک لوازم‌التحریر نیمکت', 'مشاورهٔ تحصیلی رایگان'], state: 'next' },
+      { name: 'نیمکت نقره‌ای', range: '۵۰۰ تا ۲٬۹۹۹ سکه', perks: ['۱۰٪ تخفیف کلاس گروهی', 'اولویت در گپ‌های اختصاصی'], state: 'current' },
+      { name: 'نیمکت طلایی', range: '۳٬۰۰۰ تا ۴٬۹۹۹ سکه', perks: ['دو جلسه‌ی رایگان با برترین استاد', 'لوح تقدیر', 'مشاوره رایگان'], state: 'next' },
       { name: 'نیمکت پلاتینیوم', range: 'از ۴٬۰۰۰ سکه', perks: ['شارژ ۵۰۰ هزار تومانی کیف پول', 'کارت نخبگان نیمکت'], state: 'locked' },
     ],
     earn: [
@@ -256,13 +266,24 @@ app.post('/api/club/rewards/:id/claim', auth, (req, res) => {
   if (r.locked) return res.status(400).json({ error: 'این جایزه ویژهٔ سطح طلایی است' });
   const balance = db.prepare('SELECT COALESCE(SUM(amount),0) s FROM club_history WHERE user_id=?').get(req.user.id).s;
   if (balance < r.cost) return res.status(400).json({ error: 'سکهٔ کافی ندارید' });
+  const already = db.prepare('SELECT id FROM club_history WHERE user_id=? AND desc=?').get(req.user.id, `دریافت ${r.title}`);
+  if (already) return res.status(400).json({ error: 'این جایزه قبلاً دریافت شده است' });
   db.prepare('INSERT INTO club_history (user_id,desc,amount,date_label) VALUES (?,?,?,?)')
     .run(req.user.id, `دریافت ${r.title}`, -r.cost, 'امروز');
+  res.json({ ok: true, claimed: r.title, cost: r.cost });
+});
+
+/* ---------- callback request ---------- */
+app.post('/api/callback', (req, res) => {
+  const { phone, name } = req.body || {};
+  const digits = String(phone || '').replace(/[^0-9]/g, '');
+  if (digits.length !== 11 || !digits.startsWith('09')) return res.status(400).json({ error: 'شماره موبایل ۱۱ رقمی معتبر وارد کنید' });
+  db.prepare('INSERT INTO callback_requests (phone, name) VALUES (?,?)').run(digits, String(name || ''));
   res.json({ ok: true });
 });
 
 /* ---------- student panel ---------- */
-app.get('/api/panel/student', auth, (req, res) => {
+app.get('/api/panel/student', auth, requireRole('student', 'parent'), (req, res) => {
   const uid = req.user.id;
   const wallet = db.prepare('SELECT COALESCE(SUM(amount),0) s FROM wallet_tx WHERE user_id=?').get(uid).s;
   const club = db.prepare('SELECT COALESCE(SUM(amount),0) s FROM club_history WHERE user_id=?').get(uid).s;
@@ -300,7 +321,8 @@ app.post('/api/wallet/charge', auth, (req, res) => {
   if (!amount || amount < 10000) return res.status(400).json({ error: 'حداقل شارژ ۱۰٬۰۰۰ تومان است' });
   db.prepare('INSERT INTO wallet_tx (user_id,desc,amount,date_label) VALUES (?,?,?,?)')
     .run(req.user.id, 'شارژ کیف پول (درگاه شبیه‌سازی‌شده)', amount, 'امروز');
-  res.json({ ok: true });
+  const balance = db.prepare('SELECT COALESCE(SUM(amount),0) s FROM wallet_tx WHERE user_id=?').get(req.user.id).s;
+  res.json({ ok: true, balance });
 });
 
 app.post('/api/notifications/:id/cancel', auth, (req, res) => {
@@ -309,12 +331,12 @@ app.post('/api/notifications/:id/cancel', auth, (req, res) => {
 });
 
 /* ---------- teacher panel ---------- */
-app.get('/api/panel/teacher', auth, (req, res) => {
-  const tid = req.user.role === 'teacher' ? db.prepare('SELECT id FROM teachers WHERE name=?').get(req.user.name)?.id || 1 : 1;
+app.get('/api/panel/teacher', auth, requireRole('teacher'), (req, res) => {
+  const tid = teacherIdFor(req.user) || 1;
   res.json({
     user: req.user,
-    today: { classes: 4, income: 1850000, share: '۸۵٪' },
-    month: { sessions: 52, income: 14620000, rating: 4.9, reviews: 312, active_students: 28, new_students: 4 },
+    today: { classes: 9, income: 1850000, share: '۷۸٪', growth: '۱۸+٪' },
+    month: { sessions: 23, income: 12450000, rating: 4.9, reviews: 320, active_students: 28, new_students: 4 },
     level: {
       current: 'متخصص', next: 'استاد ارشد', sessions_done: 148, sessions_need: 200,
       requirements: ['۲۰۰ جلسهٔ موفق', 'حضور به‌موقع بالای ۹۵٪', 'یک دورهٔ گروهی تأییدشده'],
@@ -335,17 +357,20 @@ app.get('/api/panel/teacher', auth, (req, res) => {
   });
 });
 
-app.post('/api/teacher/course-requests', auth, (req, res) => {
+app.post('/api/teacher/course-requests', auth, requireRole('teacher'), (req, res) => {
   const b = req.body || {};
   const status = b.submit ? 'pending' : 'draft';
+  const tid = teacherIdFor(req.user) || 1;
   db.prepare('INSERT INTO course_requests (teacher_id,name,subject,start,duration,sessions,min_max,price_range,status) VALUES (?,?,?,?,?,?,?,?,?)')
-    .run(1, b.name || '', b.subject || '', b.start || '', b.duration || '', b.sessions || 0, b.min_max || '', b.price_range || '', status);
+    .run(tid, b.name || '', b.subject || '', b.start || '', b.duration || '', b.sessions || 0, b.min_max || '', b.price_range || '', status);
   res.json({ ok: true, status });
 });
 
-app.post('/api/teacher/reviews/:id/reply', auth, (req, res) => {
-  const { text } = req.body || {};
+app.post('/api/teacher/reviews/:id/reply', auth, requireRole('teacher'), (req, res) => {
+  const text = (req.body?.text ?? req.body?.reply ?? '').trim();
   if (!text) return res.status(400).json({ error: 'متن پاسخ خالی است' });
+  const rv = db.prepare('SELECT * FROM reviews WHERE id=?').get(req.params.id);
+  if (!rv) return res.status(404).json({ error: 'نظر پیدا نشد' });
   db.prepare('UPDATE reviews SET replied=1, reply=? WHERE id=?').run(text, req.params.id);
   res.json({ ok: true });
 });

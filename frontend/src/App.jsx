@@ -11,8 +11,6 @@ import StudentHome from './pages/panel/StudentHome.jsx';
 import TeacherHome from './pages/panel/TeacherHome.jsx';
 import Chat from './pages/panel/Chat.jsx';
 import Club from './pages/panel/Club.jsx';
-import './styles/panel.css';
-import './styles/styles2.css';
 
 function Guard({ need, children }) {
   const { user, loading } = useAuth();

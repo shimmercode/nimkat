@@ -42,6 +42,14 @@ CREATE TABLE IF NOT EXISTS classes (
   days TEXT, time TEXT, desc TEXT, syllabus TEXT, rules TEXT, badges TEXT,
   deadline TEXT, location TEXT
 );
+CREATE TABLE IF NOT EXISTS callback_requests (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  phone TEXT NOT NULL,
+  name TEXT DEFAULT '',
+  status TEXT DEFAULT 'new',
+  created_at TEXT DEFAULT (datetime('now', 'localtime'))
+);
+
 CREATE TABLE IF NOT EXISTS reviews (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   teacher_id INTEGER, author TEXT, role_label TEXT, letter TEXT, color TEXT,
@@ -311,27 +319,28 @@ function seed() {
   insM.run(1, 'سارا محمدی', 'استاد', 'س', 'green', 'یادآوری: جلسهٔ امروز ساعت ۱۶:۰۰، مبحث قانون کولن. تست فنی را فراموش نکنید.', '۱۲:۱۰', 'امروز', null, 0);
 
   const insMis = db.prepare('INSERT INTO club_missions (title,done,target,coins,deadline) VALUES (?,?,?,?,?)');
-  insMis.run('شرکت در یک کلاس گروهی', 2, 3, 30, '');
-  insMis.run('فعالیت ماهانه در نیم‌چت', 0, 1, 50, '');
-  insMis.run('سه کلاس ۵ ستاره', 1, 1, 15, '');
-  insMis.run('چالش هفتگی: ۱۰ تست فیزیک در نیم‌چت', 4, 10, 120, 'تا پایان مهر · ۲۲ روز');
+  insMis.run('شرکت در بیش از ۱۰ کلاس', 7, 10, 50, '');
+  insMis.run('سه کلاس ۵ ستاره', 2, 3, 20, '');
+  insMis.run('شرکت در یک کلاس گروهی', 0, 1, 30, '');
+  insMis.run('فعالیت ماهانه در نیم‌چت', 1, 1, 10, '');
 
   const insRew = db.prepare('INSERT INTO club_rewards (title,desc,cost,tag,locked) VALUES (?,?,?,?,?)');
-  insRew.run('یک جلسه مشاورهٔ تحصیلی', '۴۵ دقیقه، آنلاین', 400, 'دریافت', 0);
-  insRew.run('پک لوازم‌التحریر نیمکت', 'ارسال رایگان به سراسر ایران', 600, 'دریافت', 0);
-  insRew.run('شارژ ۱۰۰ هزار تومانی کیف پول', 'قابل استفاده برای هر کلاس', 800, 'دریافت', 0);
-  insRew.run('دو جلسهٔ رایگان با استاد برتر', 'ویژهٔ سطح طلایی', 1500, 'سطح طلایی', 1);
+  insRew.run('دو جلسه‌ی رایگان با استاد برتر', 'ویژه‌ی سطح طلایی', 5500, 'سطح طلایی', 1);
+  insRew.run('شارژ ۱۰۰ هزار تومانی کیف پول', 'قابل استفاده برای هر کلاس', 500, 'دریافت', 0);
+  insRew.run('پک لوازم‌التحریر نیمکت', 'ارسال رایگان به سراسر ایران', 700, 'دریافت', 0);
+  insRew.run('یک جلسه مشاوره‌ی تحصیلی', '۴۵ دقیقه، آنلاین', 400, 'دریافت', 0);
 
   const insH = db.prepare('INSERT INTO club_history (user_id,desc,amount,date_label) VALUES (?,?,?,?)');
-  insH.run(1, 'حضور در جلسهٔ  فیزیک یازدهم', 20, '۸ مهر');
+  insH.run(1, 'حضور در جلسه‌ی ۲ فیزیک یازدهم', 50, '۸ مهر');
   insH.run(1, 'نظرسنجی پایان کلاس زبان', 15, '۷ مهر');
   insH.run(1, 'دعوت پارسا کیانی', 50, '۵ مهر');
-  insH.run(1, 'دریافت پک لوازم‌التحریر', -400, '۱ مهر');
-  insH.run(1, 'سکه‌های آغاز فصل پاییز', 1435, '۳۰ شهریور');
+  insH.run(1, 'دریافت پک لوازم‌التحریر', -700, '۱ مهر');
+  insH.run(1, 'سکه‌های آغاز فصل پاییز', 3005, '۳۰ شهریور');
 
   const insW = db.prepare('INSERT INTO wallet_tx (user_id,desc,amount,date_label) VALUES (?,?,?,?)');
   insW.run(1, 'موجودی اولیهٔ کیف پول', 2266000, '۱ مهر');
   insW.run(1, 'رزرو ۸ جلسه فیزیک یازدهم', -2016000, 'دیروز');
+  insW.run(1, 'شارژ کیف پول از درگاه', 990000, '۵ مهر');
 
   const insN = db.prepare('INSERT INTO notifications (user_id,title,desc,time_label,cancellable) VALUES (?,?,?,?,?)');
   insN.run(1, 'پرداخت موفق', 'رزرو ۸ جلسه فیزیک یازدهم · ۲٬۰۱۶٬۰۰۰ تومان', 'دیروز', 1);
