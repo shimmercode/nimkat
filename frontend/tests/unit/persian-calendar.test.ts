@@ -1,0 +1,3 @@
+import {expect,it} from 'vitest';
+import {persianMonthBounds} from '../../src/utils/persian-calendar.js';
+it('navigates true Persian months at Tehran midnight, including leap-year boundaries',()=>{const format=new Intl.DateTimeFormat('en-US-u-ca-persian',{timeZone:'Asia/Tehran',month:'numeric',day:'numeric',year:'numeric'});for(const offset of [-15,-1,0,1,15]){const {from,to}=persianMonthBounds(offset,Date.parse('2026-10-20T12:00:00Z'));expect(format.formatToParts(from).find(p=>p.type==='day')?.value).toBe('1');expect(format.formatToParts(to).find(p=>p.type==='day')?.value).toBe('1');expect([29,30,31]).toContain((to-from)/86400000);expect(new Date(from).toISOString()).toContain('20:30:00');}});

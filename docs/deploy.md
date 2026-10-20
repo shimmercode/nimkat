@@ -1,183 +1,86 @@
-# راهنمای انتشار نیمکت (Deploy)
+# استقرار نیمکت — Next.js + API
 
-هدف: با هر push به GitHub، نسخهٔ جدید ساخته و روی سرور منتشر شود، بدون آپلود دستی
-فایل‌های حجیم. نکتهٔ کلیدی: **هرگز `node_modules` یا سورس React را آپلود نمی‌کنیم**؛
-فقط خروجی `npm run build` (پوشهٔ `dist`) منتشر می‌شود.
+## معماری جاری
 
-## ۰) معماری
-
-```
-مرورگر کاربر
-   │
-   ▼
-React + Vite (خروجی استاتیک dist)   ←─ روی Nginx / هاست استاتیک
-   │  API
-   ▼
-Laravel (بعداً، پوشهٔ backend/)     ←─ سرویس جدا + MySQL
+```text
+HTTPS → Nginx → Next.js Node server :5173 → /api rewrite → Express :8000 → SQLite
 ```
 
-فرانت‌اند فعلی بدون بک‌اند کار می‌کند (دادهٔ نمونه). وقتی Laravel اضافه شد،
-فرانت‌اند فقط با آدرس API (متغیر `VITE_API_URL`) صحبت می‌کند.
+این نسخه SPA استاتیک Vite نیست؛ آپلود `dist` یا try_files به index.html صحیح نیست.
+به دو سرویس Node تحت systemd یا یک process manager نیاز است.
 
-## ۱) تست لوکال
+## نصب و ساخت
+
+Node 22، ابزار ساخت native dependencyها و فضای writable برای `backend/data` لازم است.
 
 ```bash
-cd frontend
-npm install
-npm run dev        # توسعه
-npm run build      # بیلد انتشار
-npm run preview    # تست خروجی بیلد
-```
+cd backend
+npm ci --omit=dev
+# NIMKAT_SECRET را یک secret تصادفی قوی و خارج از مخزن قرار دهید.
+npm start
 
-## ۲) روش الف: سرور مجازی (VPS) + Nginx
-
-روی سرور (یک بار):
-
-```bash
-sudo apt update && sudo apt install -y nginx nodejs npm git   # یا معادل توزیع خودتان
-git clone https://github.com/shimmercode/nimkat.git /var/www/nimkat
-```
-
-بروزرسانی در هر انتشار:
-
-```bash
-cd /var/www/nimkat
-git pull
+# در ترمینال جدا
 cd frontend
 npm ci
 npm run build
-sudo rsync -a --delete dist/ /var/www/nimkat-dist/
+# متغیرهای server-side در محیط سرویس:
+# API_INTERNAL_URL=http://127.0.0.1:8000
+# SITE_URL=https://REAL_DOMAIN
+npm start
 ```
 
-نمونهٔ تنظیم Nginx (SPA با روتر سمت مرورگر):
+نام دامنهٔ واقعی را در `SITE_URL` تنظیم کنید تا sitemap میزبان اشتباه معرفی نکند.
+`API_INTERNAL_URL` نباید NEXT_PUBLIC شود و نباید به مرورگر کاربر ارسال شود.
+
+## نمونهٔ Nginx
 
 ```nginx
 server {
     listen 80;
-    server_name nimkat.ir www.nimkat.ir;
-
-    root /var/www/nimkat-dist;
-    index index.html;
-
+    server_name YOUR_DOMAIN;
     location / {
-        try_files $uri $uri/ /index.html;
-    }
-
-    location /api/ {
-        proxy_pass http://127.0.0.1:8000/;   # بعداً: Laravel
+        proxy_pass http://127.0.0.1:5173;
+        proxy_http_version 1.1;
         proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-    }
-
-    # کش کردن asset های هش‌دار
-    location /assets/ {
-        expires 1y;
-        add_header Cache-Control "public, immutable";
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     }
 }
 ```
 
-برای HTTPS از `certbot --nginx` استفاده کنید.
+TLS و مدیریت سرویس‌ها متناسب با سرور تنظیم شود. API نباید به‌صورت عمومی و بدون
+محدودیت شبکه عرضه شود. از `backend/data` با روش سازگار با SQLite/WAL بکاپ بگیرید؛
+کپی فایل DB هنگام نوشتن به‌تنهایی بکاپ قابل اتکا نیست.
 
-## ۳) روش ب: هاست اشتراکی cPanel
+## محدودیت تولید
 
-1. لوکال: `npm run build`
-2. محتوای `frontend/dist` را ZIP کنید (خودِ فایل‌ها، نه پوشهٔ dist).
-3. در File Manager مسیر `public_html` آپلود و Extract کنید.
-4. فایل `.htaccess` زیر را در `public_html` بگذارید تا رفرش صفحات داخلی 404 ندهد:
+کوکی HttpOnly/refresh/revoke و CSRF اکنون پیاده شده‌اند (شرح: `technical/AUTH-SESSIONS.md`).
+OTP آزمایشی، SQLite مالی، درگاه/پیامک نمایشی و سایر موارد باز
+مناسب تولید نیستند. قبل از انتشار عمومی باید تنظیمات امن API و پراکسی، انتقال limiter/session به زیرساخت هدف، سرویس‌های
+واقعی، دیتابیس هدف، تراکنش‌های مالی، بکاپ/restore و آزمون بار تکمیل شوند.
+جزئیات در `technical/IMPLEMENTATION-PLAN.md` است.
 
-```apache
-<IfModule mod_rewrite.c>
-  RewriteEngine On
-  RewriteBase /
-  RewriteRule ^index\.html$ - [L]
-  RewriteCond %{REQUEST_FILENAME} !-f
-  RewriteCond %{REQUEST_FILENAME} !-d
-  RewriteRule . /index.html [L]
-</IfModule>
-```
+## متغیرهای API
 
-اگر سایت در زیرپوشه است (مثلاً `public_html/nimkat`)، `RewriteBase` و مسیر
-هدف را مطابق آن عوض کنید.
+برای خود سرویس API، NODE_ENV=production و NIMKAT_SECRET تصادفی حداقل ۳۲کاراکتری
+الزامی‌اند؛ backend/.env.example صرفاً نمونه است و خودکار خوانده نمی‌شود. تنظیم
+COOKIE_SECURE=false در production پذیرفته نیست. APP_ORIGINS را exact و TRUST_PROXY
+را فقط برای پراکسی کنترل‌شده تنظیم کنید. بدون SMS adapter، درخواست OTP تولیدی
+با 503 رد می‌شود و هیچ کد آزمایشی برنمی‌گرداند. حالت development را برای دورزدن
+این محافظت روی دامنهٔ واقعی فعال نکنید.
 
-## ۴) روش ج: دیپلوی خودکار با GitHub Actions (پیشنهادی)
+## دامنهٔ canonical، مجله و RSS
 
-فایل نمونهٔ `docs/ci.yml.example` را در مسیر `.github/workflows/ci.yml` کپی کنید
-تا با هر push فرانت‌اند بیلد شود و خروجی `dist` به‌صورت artifact نگه داشته شود.
-برای انتشار خودکار روی VPS، یک
-workflow جدا (مثل `deploy.yml`) بسازید که فقط پس از موفقیت CI اجرا شود:
+روی سرویس Next.js، `SITE_URL=https://your-real-domain.tld` (بدون مسیر) را با
+دامنهٔ واقعی تنظیم کنید؛ `PUBLIC_SITE_URL` نیز پشتیبانی می‌شود. نام بالا فقط
+الگوست، نه مقدار قابل استقرار. canonical، Open Graph، JSON-LD، sitemap و RSS
+باید همگی به همین دامنه اشاره کنند. مسیرها: `/blog`، `/blog/[slug]`، `/rss.xml`،
+`/sitemap.xml` و `/robots.txt`. فقط مقالات منتشرشده وارد feed/sitemap می‌شوند؛
+ذخیرهٔ پیش‌نویس مطلب زنده را تغییر نمی‌دهد. RSS تولیدی حداکثر ۵ دقیقه cache دارد.
 
-```yaml
-name: Deploy
-
-on:
-  push:
-    branches: [main]
-
-permissions:
-  contents: read
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: frontend
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
-      - run: npm ci
-      - run: npm run build
-      - uses: actions/upload-artifact@v4
-        with:
-          name: dist
-          path: frontend/dist
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment: production
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: dist
-          path: dist
-      - name: Deploy over rsync/ssh
-        uses: burnett01/rsync-deployments@7.0.1
-        with:
-          switches: -avz --delete
-          path: dist/
-          remote_path: /var/www/nimkat-dist/
-          remote_host: ${{ secrets.DEPLOY_HOST }}
-          remote_user: ${{ secrets.DEPLOY_USER }}
-          remote_key: ${{ secrets.DEPLOY_SSH_KEY }}
-```
-
-Secretsهای موردنیاز (Settings → Secrets and variables → Actions):
-
-- `DEPLOY_HOST`: آی‌پی یا دامنهٔ سرور
-- `DEPLOY_USER`: کاربر SSH (مثلاً `deploy`)
-- `DEPLOY_SSH_KEY`: کلید خصوصی همان کاربر
-
-نکته: این فایل نمونه است؛ وقتی سرور خریدید آن را با هم فعال می‌کنیم.
-
-## ۵) امنیت و داده‌های محرمانه
-
-- `.env` هرگز به مخزن نرود (در `.gitignore` هست). فقط `.env.example` مجاز است.
-- متغیرهای فرانت‌اند با پیشوند `VITE_` داخل بیلد عمومی می‌شوند؛ رمز و کلید
-  خصوصی (درگاه پرداخت، پیامک، دیتابیس) هرگز در آن‌ها قرار نگیرد.
-- کلیدهای پرداخت و پیامک سمت بک‌اند (Laravel) و در `.env` سرور بماند.
-- قبل از هر migration مخرب یا انتشار بزرگ، از دیتابیس بک‌آپ بگیرید.
-- دسترسی SSH دیپلوی فقط با کلید، بدون رمز عبور، و محدود به یک کاربر غیر-root.
-
-## ۶) چک‌لیست انتشار
-
-- [ ] `npm run build` لوکال بدون خطا
-- [ ] CI سبز روی GitHub Actions
-- [ ] بک‌آپ دیتابیس (پس از افزوده‌شدن بک‌اند)
-- [ ] اجرای دیپلوی و بررسی صفحهٔ اصلی + یک مسیر داخلی (رفرش بدون 404)
-- [ ] بررسی کنسول مرورگر و لود فونت وزیرمتن
+بدون دامنهٔ معتبر HTTPS، صفحات noindex و sitemap خالی‌اند؛ RSS پیش‌فرض 503 است.
+فقط برای پیش‌نمایش خصوصی `NIMKAT_PREVIEW_MODE=true` اجازهٔ RSS با میزبان معتبر
+Arena/E2B یا loopback را می‌دهد (private/no-store/noindex). این حالت را جای
+تنظیم دامنهٔ تولید استفاده نکنید. دامنهٔ example.test در آزمون‌ها استفاده شد
+و روی پیش‌نمایش نهایی تنظیم نیست. شرح قابلیت‌ها و محدودیت‌ها:
+`technical/BLOG-GUEST-SUPPORT.md`.

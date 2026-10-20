@@ -1,58 +1,80 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { IconBench, IconSearch, IconUser, IconMenu } from './icons.jsx';
+'use client';
+import { Link, useNavigate,useLocation } from '../routing/navigation';
+import { useEffect, useState } from 'react';
+import { DesktopNavigation, MobileNavigation } from './ui/twenty-first/navigation.jsx';
+import { useAuth } from '../auth.jsx';
+import { IconSearch, IconUser, IconBench } from './icons.jsx';
 
-const NAV = [
-  { label: 'کلاس‌ها و اساتید', to: '/classes', active: true },
-  { label: 'کلاس‌های گروهی', to: '/classes' },
-  { label: 'نیم‌چت', to: '/panel/chat' },
-  { label: 'نیمکت کلاب', to: '/panel/club' },
-  { label: 'ویژه والدین', to: '/#parents' },
-  { label: 'مجله', to: '/#faq' },
-];
+export function Brand({ dark = false, compact = false }) {
+  return (
+    <Link to="/" className="brand">
+      <span className="brand-logo">
+        <IconBench size={26} />
+        <i className="dot" />
+      </span>
+      <span>
+        <span className="brand-name" style={dark ? { color: '#fff' } : undefined}>
+          نیمکت
+        </span>
+        {!compact && (
+          <span className="brand-tag" style={{ display: 'block' }}>
+            پلتفرم آموزش آنلاین و حضوری
+          </span>
+        )}
+      </span>
+    </Link>
+  );
+}
 
 export default function Header() {
-  const [open, setOpen] = useState(false);
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const {pathname}=useLocation();
+  const editSlug=pathname==='/'?'home':pathname==='/classes'?'classes':/^\/teachers\/\d+$/.test(pathname)?'teacher-'+pathname.split('/').at(-1):/^\/classes\/\d+$/.test(pathname)?'class-'+pathname.split('/').at(-1):pathname==='/blog'?'blog':pathname.startsWith('/blog/')?'article-layout':pathname==='/club'?'club':pathname.startsWith('/p/')?pathname.split('/').at(-1):'home';
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const update = () => setScrolled(window.scrollY > 24);
+    update(); window.addEventListener('scroll', update, { passive: true });
+    return () => window.removeEventListener('scroll', update);
+  }, []);
 
   return (
-    <header className={`header${open ? ' open' : ''}`}>
-      <div className="container header-inner">
-        <Link className="brand" to="/">
-          <span className="brand-logo">
-            <IconBench size={26} />
-          </span>
-          <span>
-            <span className="brand-name">نیمکت</span>
-            <br />
-            <span className="brand-tag">پلتفرم آموزش آنلاین و حضوری</span>
-          </span>
-        </Link>
+    <header className="site-header nk-header" data-scrolled={scrolled}>
+      <div className="container inner">
+        <Brand />
 
-        <nav className="nav" onClick={() => setOpen(false)}>
-          {NAV.map((item) => (
-            <Link key={item.label} to={item.to} className={item.active ? 'active' : ''}>
-              {item.label}
-            </Link>
-          ))}
-        </nav>
+        <DesktopNavigation user={user} />
 
         <div className="header-actions">
-          <Link className="icon-btn" to="/classes" aria-label="جست‌وجو">
-            <IconSearch size={19} />
-          </Link>
-          <Link className="btn btn-outline" to="/login">
-            <IconUser size={17} />
-            ورود / ثبت‌نام
-          </Link>
-          <Link className="btn btn-primary" to="/teachers/1">استاد شوید</Link>
-          <button
-            className="icon-btn burger"
-            aria-label="منو"
-            onClick={() => setOpen((v) => !v)}
-          >
-            <IconMenu size={20} />
+          <button className="btn-icon-round nk-header-search" aria-label="جستجو" onClick={() => navigate('/classes')}>
+            <IconSearch size={20} />
           </button>
+          {user ? (
+            <>
+              <Link to={user.role === 'admin' ? `/editor/${editSlug}` : user.role === 'teacher' ? '/teacher' : user.role==='parent'?'/parent':'/panel'} className="btn btn-outline">
+                <IconUser size={18} />
+                {user.role === 'admin' ? 'ویرایش همین صفحه' : user.name.split(' ')[0]}
+              </Link>
+              <button
+                className="btn btn-ghost btn-sm nk-header-logout"
+                onClick={async () => {
+                  if (await logout()) navigate('/');
+                }}
+              >
+                خروج
+              </button>
+            </>
+          ) : (
+            <Link to="/login" className="btn btn-outline">
+              <IconUser size={18} />
+              ورود / ثبت‌نام
+            </Link>
+          )}
+          <Link to="/login?mode=teacher" className="btn btn-primary nk-teacher-link">
+            استاد شوید
+          </Link>
         </div>
+        <MobileNavigation user={user} onLogout={logout} />
       </div>
     </header>
   );
