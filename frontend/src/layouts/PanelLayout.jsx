@@ -1,4 +1,5 @@
-import { NavLink, Outlet, Link, useLocation } from 'react-router-dom';
+'use client';
+import { NavLink, Link, useLocation } from '../routing/navigation';
 import { useAuth } from '../auth.jsx';
 import {
   IconBench, IconSearch, IconBell, IconHome, IconBook, IconChat, IconChart,
@@ -72,7 +73,7 @@ const TITLES = {
   '/teacher/club': 'نیمکت کلاب',
 };
 
-export default function PanelLayout({ variant }) {
+export default function PanelLayout({ variant, children }) {
   const { user, logout } = useAuth();
   const { pathname } = useLocation();
   const nav = variant === 'teacher' ? TEACHER_NAV : STUDENT_NAV;
@@ -162,7 +163,7 @@ export default function PanelLayout({ variant }) {
 
         {/* content (left) */}
         <div>
-          <Outlet />
+          {children}
         </div>
       </div>
     </div>

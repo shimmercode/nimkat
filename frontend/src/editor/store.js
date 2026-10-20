@@ -21,12 +21,10 @@ export function useEditorStore(initialSchema) {
       if (past.current.length > LIMIT) past.current.shift();
       future.current = [];
     }
-    setSchema((prev) => {
-      const next = clone(prev);
-      fn(next);
-      schemaRef.current = next;
-      return next;
-    });
+    const next = clone(schemaRef.current);
+    fn(next);
+    schemaRef.current = next;
+    setSchema(next);
     setDirty(true);
     force();
   }, []);

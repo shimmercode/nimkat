@@ -1,3 +1,4 @@
+'use client';
 /* PageRenderer — renders a page schema (public site + editor canvas) */
 import { useEffect, useState } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
@@ -39,7 +40,7 @@ function NodeView({ node, vw, edit, selectedId, onSelect }) {
   return (
     <EditWrap edit={edit} node={node} selectedId={selectedId} onSelect={onSelect}>
       <div style={style}>
-        <Comp node={node} style={style}>
+        <Comp node={node} style={style} editorPreview={edit}>
           {(node.children || []).map((c) => (
             <NodeView key={c.id} node={c} vw={vw} edit={edit} selectedId={selectedId} onSelect={onSelect} />
           ))}
@@ -51,7 +52,7 @@ function NodeView({ node, vw, edit, selectedId, onSelect }) {
 
 function EditWrap({ edit, node, selectedId, onSelect, children }) {
   const reduce = useReducedMotion();
-  if (!edit) return <motion.div initial={reduce ? false : { opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.05 }} transition={{ duration: reduce ? 0 : .35 }}>{children}</motion.div>;
+  if (!edit) return <motion.div initial={false} whileInView={reduce ? { opacity: 1, y: 0 } : { opacity: [.85, 1], y: [12, 0] }} viewport={{ once: true, amount: 0.05 }} transition={{ duration: reduce ? 0 : .35 }}>{children}</motion.div>;
   const selected = selectedId === node.id;
   return (
     <div
@@ -64,7 +65,7 @@ function EditWrap({ edit, node, selectedId, onSelect, children }) {
   );
 }
 
-export default function PageRenderer({ schema, edit = false, selectedId, onSelect, viewport }) {
+export default function PageRenderer({ schema, edit = false, selectedId = null, onSelect = () => {}, viewport = undefined }) {
   const [width, setWidth] = useState(() => typeof window === 'undefined' ? 1440 : window.innerWidth);
   useEffect(() => {
     const resize = () => setWidth(window.innerWidth);

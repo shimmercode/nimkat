@@ -1,6 +1,7 @@
+'use client';
 /* Home page blocks — ported 1:1 from Home.jsx so visuals stay identical */
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from '../routing/navigation';
 import heroStudent from '../assets/hero-student.png';
 import heroTeacher from '../assets/hero-teacher.png';
 import {
@@ -86,8 +87,8 @@ export function HeroBlock({ node }) {
         </div>
 
         <div className="hero-visual">
-          <img className="hero-photo photo-1" src={heroStudent} alt="شاگرد نیمکت" />
-          <img className="hero-photo photo-2" src={heroTeacher} alt="استاد نیمکت" />
+          <img className="hero-photo photo-1" src={heroStudent.src || heroStudent} alt="شاگرد نیمکت" />
+          <img className="hero-photo photo-2" src={heroTeacher.src || heroTeacher} alt="استاد نیمکت" />
           <div className="bubble b1">{d.bubble1}</div>
           <div className="bubble b2">{d.bubble2}</div>
           <div className="bubble dark b3">{d.bubble3Line1}<br />{d.bubble3Line2}</div>

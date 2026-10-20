@@ -7,7 +7,10 @@ import {
 import { HeroBlock, heroSpec, BookingStepsBlock, bookingStepsSpec, StatsBandBlock, statsBandSpec, TopTeachersBlock, topTeachersSpec, TopStudentsBlock, topStudentsSpec } from './home-blocks-1.jsx';
 import { GroupClassesBlock, groupClassesSpec, ClubBandBlock, clubBandSpec, PromoDuoBlock, promoDuoSpec, TestimonialsBlock, testimonialsSpec, MagazineBlock, magazineSpec, FaqBlock, faqSpec, CallbackBlock, callbackSpec } from './home-blocks-2.jsx';
 
+import { nativeRegistry } from './native/index.jsx';
+
 export const registry = {
+  ...nativeRegistry,
   hero: { ...heroSpec, component: HeroBlock },
   'booking-steps': { ...bookingStepsSpec, component: BookingStepsBlock },
   'stats-band': { ...statsBandSpec, component: StatsBandBlock },
@@ -71,4 +74,4 @@ export function setIn(obj, dotted, value) {
   target[last] = value;
 }
 
-export const categories = ['ویژه', 'لایه‌بندی', 'متن', 'رسانه', 'کاربردی'];
+export const categories = ['ویژه', 'لایه‌بندی', 'متن', 'رسانه', 'کاربردی', 'صفحات پویا'];

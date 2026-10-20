@@ -2,44 +2,54 @@
 
 ## وضعیت واقعی — ۲۰ اکتبر ۲۰۲۶
 
-پیاده‌سازی فعلی React 18 + Vite + JavaScript، Express و SQLite است؛ هنوز
-Next.js/TypeScript/PostgreSQL/Redis نیست. نصب پکیج به معنای تحقق تمام سند نیست.
-متن PDF شامل نویسه‌های خراب در برخی تیترهاست؛ موارد مبهم دست‌نویس باید پیش از
-تبدیل به معیار پذیرش قطعی، با کارفرما تطبیق داده شوند.
+فرانت‌اند از Vite/React Router به **Next.js 16 App Router + React 19** منتقل شد.
+entryها، routeها، layoutهای ریشه، helperهای سرور و قرارداد اسکیما TypeScript هستند؛
+کامپوننت‌های قدیمی JSX با allowJs حفظ شده‌اند و هنوز همه به TS تبدیل نشده‌اند.
+بک‌اند همچنان Express/SQLite است، نه PostgreSQL/Redis.
+متن PDF در برخی تیترها نویسه‌های خراب دارد؛ موارد ناخوانای تصاویر جلسه قبل از
+تبدیل به معیار پذیرش باید تطبیق داده شوند.
 
-## ساختار هدف (مطابق صفحات ۳ تا ۷ سند)
+## ساختار هدف مطابق سند
 
-- Frontend: Next.js App Router + TypeScript؛ گروه مسیرهای public/auth/student/teacher/parent/admin.
-- Public SSR/SSG: خانه، جستجو، پروفایل استاد، بلاگ و حقوقی؛ پنل‌ها noindex.
+- Next App Router، TypeScript، SSR/SSG عمومی و CSR محافظت‌شده پنل‌ها.
+- گروه مسیرهای public/auth/student/teacher/parent/admin.
 - Tailwind + توکن‌های برند، TanStack Query، Zustand، React Hook Form + Zod.
-- Backend: Modular Monolith با مرز دامنه‌های auth/users/catalog/scheduling/booking/payments/wallet/chat/club/content/support.
-- PostgreSQL 16 برای داده و تراکنش؛ Redis برای OTP/rate limit/cache/queue/pubsub.
-- Socket.io، S3-compatible object storage، Docker + CI/CD.
-- OTP کوتاه‌عمر، refresh cookie از نوع HttpOnly، revoke سمت سرور؛ نه localStorage تولیدی.
+- بک‌اند Modular Monolith: auth/users/catalog/scheduling/booking/payments/wallet/chat/club/content/support.
+- PostgreSQL 16، Redis، Socket.io، S3-compatible storage، Docker و CI/CD.
+- OTP کوتاه‌عمر، refresh cookie از نوع HttpOnly، revoke سمت سرور.
 - رزرو ضد double booking، تراکنش و قفل، پرداخت idempotent و ledger دوطرفه append-only.
-- سرویس کلاس آنلاین از طریق adapter سرور؛ لینک/اعتبارنامه نباید در فرانت تولید شود.
+- کلاس آنلاین با adapter سرور؛ اعتبارنامهٔ سرویس‌ها هرگز در فرانت قرار نگیرد.
 
-## انجام‌شده در این تغییر
+## انجام‌شده
 
-- نصب مهارت‌های UI/UX Pro Max با حفظ لایسنس؛ اجرای جست‌وجوی طراحی، UX و Next.js.
-- نصب و اتصال Tailwind v4 به Vite، بدون preflight و با prefix برای حفظ طراحی موجود.
-- نصب و استفاده Motion: ورود صفحه و reveal بلوک‌های منتشرشده؛ reduced-motion.
-- توکن‌های برند، focus-visible و بازخورد دکمه‌ها.
-- رفع viewport ثابت PageRenderer: override عمومی اکنون از عرض واقعی مرورگر استفاده می‌کند.
+1. نصب UI/UX Pro Max و استفاده از جست‌وجوی آن با حفظ برند/PDF؛ Tailwind و Motion.
+2. جایگزینی روتر SPA و build Vite با Next App Router. درخواست /api هم‌مبدأ با rewrite.
+3. SSR عمومی، دریافت محتوای منتشرشده در سرور، متادیتای نام استاد/کلاس، robots،
+   sitemap وابسته به دامنهٔ واقعی و JSON-LD Person/Course.
+4. پشتیبانی ویرایشگر برای خانه، جستجوی کلاس، پروفایل استاد، جزئیات کلاس و کلاب.
+   صفحات کاربردی widgetهای یکپارچه با متن‌های قابل‌ویرایش‌اند؛ هنوز تک‌تک کارت‌های
+   داخلی آن‌ها بلوک مستقل نیستند. منطق رزرو و فیلتر محفوظ است.
+5. اولویت محتوای اختصاصی teacher-ID/class-ID نسبت به قالب عمومی؛ پنل و مسیر عمومی کلاب.
+6. جداسازی snapshot منتشرشده از پیش‌نویس با migration افزایشی، تراکنش save/publish
+   و snapshot؛ validation ساختاری محدود به عمق/تعداد و ID یکتا.
+7. استخراج دامنه content در بک‌اند؛ سایر دامنه‌ها هنوز یکپارچه در server.js هستند.
+8. کنترل دسترسی ویرایشگر، preview غیرتعاملی برای widgetهای مالی، return-to پس از ورود.
+9. تست‌های Vitest، Node test و Playwright برای انتشار/SSR/دسترسی و استقلال پیش‌نویس.
 
 ## باقی‌مانده؛ ادعای تکمیل ندارند
 
-1. بلوکی‌کردن جستجوی کلاس، پروفایل استاد، جزئیات کلاس و کلاب با حفظ رفتارها و فیلدهای قابل ویرایش.
-2. مهاجرت کنترل‌شده به Next.js/TypeScript، همراه تست برابری مسیرها، SEO و حفظ اسکیماهای ویرایشگر.
-3. زیرساخت PostgreSQL/Redis و ماژولارسازی بک‌اند با migration داده.
-4. امنیت احراز هویت، سرویس‌های واقعی پیامک/درگاه/کلاس، ledger و تست همزمانی رزرو.
-5. Query/store/forms، تقویم شمسی، realtime، PWA و رصد خطا؛ نصب هرکدام همراه کاربرد واقعی.
-6. Vitest/Playwright، تست‌های مالی و کنترل بصری موبایل/دسکتاپ، CI.
+- مهاجرت تمام JSX و مدل‌های مالی به TypeScript و تکمیل اعتبارسنجی دامنه.
+- PostgreSQL/Redis، migration و انتقال داده و modularization تمام بک‌اند.
+- امنیت production نشست/OTP، HttpOnly refresh/revoke، rate limit و audit.
+- پیامک/درگاه/کلاس واقعی، ledger، تست همزمانی رزرو و reconciliation.
+- Query/store/forms مطابق سند، تقویم شمسی، realtime، PWA، object storage و رصد خطا.
+- تکمیل پنل مستقل والدین و ماژول‌های باقی‌مانده سند و تست‌های پذیرش آن‌ها.
+- اصلاحات ریز responsive پنل‌ها و بوم ویرایشگر؛ کنترل بصری جامع در تمام breakpointها.
+- E2E مالی و آزمون بار قبل از ورود پول واقعی.
 
 ## نکات تصاویر جلسه
 
-نکات خوانا شامل SSR، ورود داده اولیه CSV، سطح دسترسی superadmin، جلوگیری از
-رزرو تکراری، اطلاع‌رسانی پیامکی قبل کلاس، ظرفیت همزمان کلاس، تیکتینگ، کانال
-اطلاع‌رسانی و پرداخت است. اعداد، نام درگاه و عبارت‌های ناخوانا هنوز معیار پذیرش
-قطعی نیستند. PDF همچنین استک را معماری مرجع می‌نامد و تطبیق با پیوست فنی قرارداد
-را لازم می‌داند؛ نباید از این سند به‌تنهایی تعهد اجرایی قراردادی جدید ساخت.
+موارد خوانا شامل SSR، CSV، superadmin، ضد double booking، پیامک قبل از کلاس،
+ظرفیت همزمان، تیکتینگ، کانال اطلاع‌رسانی و پرداخت‌اند. اعداد و نام‌های مبهم هنوز
+معیار قطعی نیستند. خود PDF معماری را مرجع و تطبیق با پیوست فنی قرارداد را لازم
+می‌داند؛ نباید صرفاً از روی آن تعهد قراردادی جدید ساخت.

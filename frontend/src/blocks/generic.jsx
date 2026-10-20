@@ -1,5 +1,6 @@
+'use client';
 /* Generic layout + content blocks for the page builder */
-import { Link } from 'react-router-dom';
+import { Link } from '../routing/navigation';
 import {
   IconStar, IconArrowLeft, IconSearch, IconGlobe, IconMapPin, IconChevronDown,
 } from '../components/icons.jsx';

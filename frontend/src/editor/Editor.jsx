@@ -1,8 +1,11 @@
+'use client';
 /* Editor shell — topbar, layers (drag&drop), block library, canvas, versions & templates modals */
 import { useEffect, useRef, useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link } from '../routing/navigation';
 import { registry, categories, findNode, clone } from '../blocks/registry.js';
 import { defaultHomeSchema } from '../blocks/homeSchema.js';
+import { editablePages, defaultApplicationSchema } from '../blocks/pageSchemas.js';
+import { useAuth } from '../auth.jsx';
 import { useEditorStore } from './store.js';
 import Inspector from './Inspector.jsx';
 import PageRenderer from '../render/PageRenderer.jsx';
@@ -103,7 +106,9 @@ function Modal({ title, onClose, children }) {
 export default function Editor() {
   const { slug = 'home' } = useParams();
   const navigate = useNavigate();
-  const store = useEditorStore(slugDefaults[slug] ? slugDefaults[slug]() : { root: { id: 'root', type: 'page', props: {}, style: {}, children: [] } });
+  const { user, loading } = useAuth();
+  const [loadError, setLoadError] = useState('');
+  const store = useEditorStore(slugDefaults[slug] ? slugDefaults[slug]() : defaultApplicationSchema(slug));
   const { schema, loadSchema, undo, redo, canUndo, canRedo, dirty, setDirty, selectedId, setSelectedId, addBlock } = store;
   const [breakpoint, setBreakpoint] = useState('desktop');
   const [status, setStatus] = useState('draft');
@@ -116,16 +121,22 @@ export default function Editor() {
   const vpWidth = breakpoint === 'desktop' ? '100%' : breakpoint === 'tablet' ? 768 : 375;
 
   useEffect(() => {
-    if (!getToken()) {
-      toast('برای ویرایش اول وارد شوید (شماره‌ی مدیر)', 'err');
-      navigate('/login');
+    if (loading) return;
+    if (!user) {
+      navigate(`/login?next=${encodeURIComponent(`/editor/${slug}`)}`);
       return;
     }
+    if (user.role !== 'admin') { setLoadError('دسترسی به ویرایشگر فقط برای مدیر سایت است.'); return; }
+    let active = true;
+    setLoadError('');
+    setSelectedId(null);
+    loadSchema(slug === 'home' ? defaultHomeSchema() : defaultApplicationSchema(slug));
+    setStatus('draft');
     api(`/pages/${slug}?preview=1`).then((d) => {
-      if (d.page) { loadSchema(d.page.schema); setStatus(d.page.status); }
-    }).catch(() => {});
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slug]);
+      if (active && d.page) { loadSchema(d.page.schema); setStatus(d.page.status); }
+    }).catch((e) => { if (active) setLoadError(e.message || 'خطا در بارگذاری صفحه'); });
+    return () => { active = false; };
+  }, [slug, loading, user, navigate, loadSchema, setSelectedId]);
 
   useEffect(() => {
     const onKey = (e) => {
@@ -197,12 +208,23 @@ export default function Editor() {
     } catch (e) { toast(e.message, 'err'); }
   };
 
+  if (loading) return <div className="container section">در حال بررسی دسترسی…</div>;
+  if (loadError) return <div className="container section" role="alert">{loadError} <Link to="/">بازگشت به سایت</Link></div>;
+  if (!user || user.role !== 'admin') return null;
+
   return (
     <div className="editor">
       <div className="ed-topbar">
         <div className="ed-top-right">
           <Link to="/" className="ed-logo">نیمکت <span>· ویرایشگر</span></Link>
-          <span className="ed-slug">/{slug}</span>
+          <select aria-label="انتخاب صفحه برای ویرایش" className="ed-page-select" value={slug} onChange={(e) => {
+            if (dirty && !window.confirm('تغییرات ذخیره نشده‌اند. از این صفحه خارج می‌شوید؟')) return;
+            navigate(`/editor/${e.target.value}`);
+          }}>
+            {!editablePages.some((p) => p.slug === slug) && <option value={slug}>{slug}</option>}
+            {editablePages.map((p) => <option key={p.slug} value={p.slug}>{p.title}</option>)}
+          </select>
+          <Link className="ed-live-link" to={editablePages.find((p) => p.slug === slug)?.href || (slug.match(/^teacher-(\d+)$/) ? `/teachers/${slug.slice(8)}` : slug.match(/^class-(\d+)$/) ? `/classes/${slug.slice(6)}` : `/p/${slug}`)} target="_blank" rel="noopener noreferrer">نمایش صفحه ↗</Link>
           <span className={`ed-status ${status}`}>{status === 'published' ? 'منتشرشده' : 'پیش‌نویس'}{dirty ? ' •' : ''}</span>
         </div>
         <div className="ed-devices">

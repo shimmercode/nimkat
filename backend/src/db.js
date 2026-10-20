@@ -128,6 +128,16 @@ db.exec(`CREATE TABLE IF NOT EXISTS pages (
   updated_by INTEGER
 )`);
 
+// Additive migration: published content is a separate immutable-until-publish snapshot.
+// Existing published pages are backfilled exactly once, not on every startup.
+if (!db.prepare('PRAGMA table_info(pages)').all().some((c) => c.name === 'published_schema_json')) {
+  db.transaction(() => {
+  db.exec('ALTER TABLE pages ADD COLUMN published_schema_json TEXT');
+  db.exec('ALTER TABLE pages ADD COLUMN published_title TEXT');
+  db.exec("UPDATE pages SET published_schema_json=schema_json, published_title=title WHERE status='published'");
+  })();
+}
+
 db.exec(`CREATE TABLE IF NOT EXISTS page_versions (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   page_slug TEXT NOT NULL,

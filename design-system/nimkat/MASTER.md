@@ -27,9 +27,9 @@ Raw targeted search results: docs/technical/motion-guidance.txt and nextjs-guida
 
 ## Implementation
 Tailwind v4 utilities are prefixed `tw:`; preflight is intentionally omitted to
-avoid overwriting legacy PDF styles. Tokens live in frontend/src/styles/tailwind.css.
+avoid overwriting approved PDF styles. Next uses @tailwindcss/postcss. Tokens live in frontend/src/styles/tailwind.css.
 Use logical spacing (`tw:ps-4`, `tw:me-2`) for new RTL components.
-Motion: route entry 240ms; builder sections reveal 350ms/12px, once in view.
+Motion: route entry 240ms; builder sections reveal 350ms/12px, once in view. SSR content remains visible without JavaScript.
 Editor canvas stays static for reliable selection. Button press 180ms; no autoplay,
 parallax, pinned scroll or distracting perpetual animation. Respect prefers-reduced-motion.
 Visible keyboard focus is mandatory. Validate at 375/768/1024/1440 widths.

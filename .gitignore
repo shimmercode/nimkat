@@ -39,3 +39,11 @@ backend/data/
 __pycache__/
 *.pyc
 .coverage
+
+# Next.js / TypeScript
+.next/
+*.tsbuildinfo
+
+# Browser test artifacts
+frontend/test-results/
+frontend/playwright-report/

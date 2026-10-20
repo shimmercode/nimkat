@@ -1,4 +1,5 @@
-import { Link } from 'react-router-dom';
+'use client';
+import { Link } from '../routing/navigation';
 import {
   IconBench, IconPhone, IconShield, IconCap, IconSend, IconCamera, IconVideo,
 } from './icons.jsx';

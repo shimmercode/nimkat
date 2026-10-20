@@ -1,3 +1,4 @@
+'use client';
 /* Inspector — content + style fields for the selected block, with breakpoint tabs */
 import { useState } from 'react';
 import { registry, findNode, clone, getIn, setIn, uid } from '../blocks/registry.js';

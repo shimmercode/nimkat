@@ -1,6 +1,7 @@
+'use client';
 /* Home page blocks — part 2: group classes, club, promos, testimonials, magazine, FAQ, callback */
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from '../routing/navigation';
 import {
   IconSearch, IconStar, IconLock, IconCap, IconCrown, IconBench, IconCoins, IconUsers,
   IconUserPlus, IconCalendar, IconClock, IconCheck, IconArrowLeft, IconHeadset, IconVideo,
@@ -138,7 +139,7 @@ export function GroupClassesBlock({ node }) {
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: 12, marginTop: 20 }}>
+            <div className="gc-actions" style={{ display: 'flex', gap: 12, marginTop: 20 }}>
               <Link to={d.payHref || '/classes/1'} className="btn btn-primary btn-lg" style={{ flex: 1 }}>
                 {d.payLabel} · {d.seatLabel} {faNum(seat)} <IconArrowLeft size={19} />
               </Link>

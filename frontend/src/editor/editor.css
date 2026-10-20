@@ -100,3 +100,5 @@
 @media (max-width: 1100px) {
   .ed-main { grid-template-columns: 210px 1fr 250px; }
 }
+.ed-page-select { max-width: 180px; border: 1px solid #D9E1DE; border-radius: 8px; padding: 5px 8px; background: #F3F6F4; font: inherit; }
+.ed-live-link { color: #0A6847; font-size: 11px; white-space: nowrap; }

@@ -1,4 +1,5 @@
-import { Link, NavLink, useNavigate } from 'react-router-dom';
+'use client';
+import { Link, NavLink, useNavigate } from '../routing/navigation';
 import { useAuth } from '../auth.jsx';
 import { IconSearch, IconUser, IconBench } from './icons.jsx';
 
@@ -32,6 +33,19 @@ export default function Header() {
       <div className="container inner">
         <Brand />
 
+        <details className="mobile-nav">
+          <summary aria-label="فهرست صفحات">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" /></svg>
+          </summary>
+          <nav aria-label="فهرست موبایل" onClick={(e) => { e.currentTarget.closest('details').open = false; }}>
+            <Link to="/classes">کلاس‌ها و اساتید</Link>
+            <Link to="/club">نیمکت کلاب</Link>
+            <Link to={user ? '/panel/chat' : '/login?next=/panel/chat'}>نیم‌چت</Link>
+            <Link to="/#parents">ویژه والدین</Link>
+            <Link to="/#magazine">مجله نیمکت</Link>
+          </nav>
+        </details>
+
         <nav className="main-nav">
           <NavLink to="/classes">کلاس‌ها و اساتید</NavLink>
           <a href="/#group-classes">کلاس‌های گروهی</a>
@@ -47,9 +61,9 @@ export default function Header() {
           </button>
           {user ? (
             <>
-              <Link to={user.role === 'teacher' ? '/teacher' : '/panel'} className="btn btn-outline">
+              <Link to={user.role === 'admin' ? '/editor/home' : user.role === 'teacher' ? '/teacher' : '/panel'} className="btn btn-outline">
                 <IconUser size={18} />
-                {user.name.split(' ')[0]}
+                {user.role === 'admin' ? 'ویرایش صفحات' : user.name.split(' ')[0]}
               </Link>
               <button
                 className="btn btn-ghost btn-sm"
