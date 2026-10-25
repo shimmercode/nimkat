@@ -1,57 +1,98 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { IconBench, IconSearch, IconUser, IconMenu } from './icons.jsx';
+'use client';
+import { NavLink, Link, useNavigate } from '../routing/navigation';
+import { useAuth } from '../auth.jsx';
+import { IconBench, IconSearch, IconUser } from './icons.jsx';
+import { MobileNavigation } from './ui/twenty-first/navigation.jsx';
 
-const NAV = [
-  { label: 'کلاس‌ها و اساتید', to: '/classes', active: true },
-  { label: 'کلاس‌های گروهی', to: '/classes' },
-  { label: 'نیم‌چت', to: '/panel/chat' },
-  { label: 'نیمکت کلاب', to: '/panel/club' },
-  { label: 'ویژه والدین', to: '/#parents' },
-  { label: 'مجله', to: '/#faq' },
-];
+export function Brand({ dark = false }) {
+  return (
+    <Link to="/" className="brand">
+      <span className="brand-logo">
+        <IconBench size={26} />
+        <i className="dot" />
+      </span>
+      <span>
+        <span className="brand-name" style={dark ? { color: '#fff' } : {}}>
+          نیمکت
+        </span>
+        <span className="brand-tag" style={{ display: 'block' }}>
+          پلتفرم آموزش آنلاین و حضوری
+        </span>
+      </span>
+    </Link>
+  );
+}
 
 export default function Header() {
-  const [open, setOpen] = useState(false);
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const panelPath =
+    user?.role === 'teacher'
+      ? '/teacher'
+      : user?.role === 'admin'
+        ? '/admin/analytics'
+        : user?.role === 'parent'
+          ? '/parent'
+          : '/panel';
+
+  const chatPath = user
+    ? user.role === 'teacher'
+      ? '/teacher/chat'
+      : '/panel/chat'
+    : '/login?next=/panel/chat';
 
   return (
-    <header className={`header${open ? ' open' : ''}`}>
-      <div className="container header-inner">
-        <Link className="brand" to="/">
-          <span className="brand-logo">
-            <IconBench size={26} />
-          </span>
-          <span>
-            <span className="brand-name">نیمکت</span>
-            <br />
-            <span className="brand-tag">پلتفرم آموزش آنلاین و حضوری</span>
-          </span>
-        </Link>
+    <header className="site-header">
+      <div className="container inner">
+        <Brand />
 
-        <nav className="nav" onClick={() => setOpen(false)}>
-          {NAV.map((item) => (
-            <Link key={item.label} to={item.to} className={item.active ? 'active' : ''}>
-              {item.label}
-            </Link>
-          ))}
+        <nav className="main-nav" aria-label="منوی اصلی">
+          <NavLink to="/classes" className={({ isActive }) => (isActive ? 'active' : '')}>
+            کلاس‌ها و اساتید
+          </NavLink>
+          <Link to="/classes?kind=گروهی">کلاس‌های گروهی</Link>
+          <Link to={chatPath}>نیم‌چت</Link>
+          <NavLink to="/club" className={({ isActive }) => (isActive ? 'active' : '')}>
+            نیمکت کلاب
+          </NavLink>
+          <NavLink to="/parent-guide" className={({ isActive }) => (isActive ? 'active' : '')}>
+            ویژه والدین
+          </NavLink>
+          <NavLink to="/blog" className={({ isActive }) => (isActive ? 'active' : '')}>
+            مجله
+          </NavLink>
         </nav>
 
         <div className="header-actions">
-          <Link className="icon-btn" to="/classes" aria-label="جست‌وجو">
-            <IconSearch size={19} />
-          </Link>
-          <Link className="btn btn-outline" to="/login">
-            <IconUser size={17} />
-            ورود / ثبت‌نام
-          </Link>
-          <Link className="btn btn-primary" to="/teachers/1">استاد شوید</Link>
           <button
-            className="icon-btn burger"
-            aria-label="منو"
-            onClick={() => setOpen((v) => !v)}
+            className="btn-icon-round"
+            type="button"
+            aria-label="جستجو"
+            onClick={() => navigate('/classes')}
           >
-            <IconMenu size={20} />
+            <IconSearch size={20} />
           </button>
+          {user ? (
+            <>
+              <Link to={panelPath} className="btn btn-outline">
+                <IconUser size={18} />
+                {user.name || 'پنل من'}
+              </Link>
+              <button className="btn btn-ghost btn-sm" type="button" onClick={() => logout()}>
+                خروج
+              </button>
+            </>
+          ) : (
+            <Link to="/login" className="btn btn-outline">
+              <IconUser size={18} />
+              ورود / ثبت‌نام
+            </Link>
+          )}
+          <Link to="/login?mode=teacher" className="btn btn-primary">
+            استاد شوید
+          </Link>
+          <MobileNavigation user={user} logout={logout} />
         </div>
       </div>
     </header>

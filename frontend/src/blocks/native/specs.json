@@ -1,0 +1,170 @@
+{
+  "ClassesSearch": {
+    "defaults": {
+      "title": "کلاس فیزیک یازدهم",
+      "subtitle": "۴۶ استاد و ۹ کلاس گروهی با شرایط انتخابی شما پیدا شد.",
+      "suggestionsTitle": "پیشنهاد نیمکت برای شما",
+      "filtersTitle": "فیلترها"
+    },
+    "fields": [
+      {
+        "key": "title",
+        "label": "عنوان جستجو",
+        "type": "text"
+      },
+      {
+        "key": "subtitle",
+        "label": "توضیح جستجو",
+        "type": "text"
+      },
+      {
+        "key": "suggestionsTitle",
+        "label": "عنوان پیشنهادها",
+        "type": "text"
+      },
+      {
+        "key": "filtersTitle",
+        "label": "عنوان فیلترها",
+        "type": "text"
+      }
+    ]
+  },
+  "TeacherProfile": {
+    "defaults": {
+      "aboutTitle": "درباره‌ی من",
+      "availabilityTitle": "زمان‌های آزاد هفته‌ی آینده",
+      "credentialsTitle": "سوابق تحصیلی و حرفه‌ای",
+      "reviewsTitle": "نظرات شاگردها",
+      "classesTitle": "کلاس‌های گروهی فعال",
+      "bio": "نه سال است فیزیک درس می‌دهم؛ پنج سال در دبیرستان‌های منطقه ۳ تهران و از ۱۴۰۱ به‌صورت آنلاین. کلاس‌هایم با یک سؤال از زندگی روزمره شروع می‌شود و بعد به فرمول می‌رسیم. برای هر شاگرد بعد از جلسه‌ی اول یک برنامه‌ی ۸ جلسه‌ای می‌نویسم و بعد از هر جلسه گزارش کوتاه برای خودش و والدینش می‌فرستم."
+    },
+    "fields": [
+      {
+        "key": "aboutTitle",
+        "label": "عنوان معرفی",
+        "type": "text"
+      },
+      {
+        "key": "availabilityTitle",
+        "label": "عنوان زمان‌های آزاد",
+        "type": "text"
+      },
+      {
+        "key": "credentialsTitle",
+        "label": "عنوان سوابق",
+        "type": "text"
+      },
+      {
+        "key": "reviewsTitle",
+        "label": "عنوان نظرات",
+        "type": "text"
+      },
+      {
+        "key": "classesTitle",
+        "label": "عنوان کلاس‌های فعال",
+        "type": "text"
+      },
+      {
+        "key": "bio",
+        "label": "متن معرفی استاد",
+        "type": "textarea"
+      }
+    ]
+  },
+  "ClassDetail": {
+    "defaults": {
+      "descriptionTitle": "توضیحات کلاس",
+      "syllabusTitle": "سرفصل‌ها",
+      "rulesTitle": "قوانین لغو و حضور",
+      "technicalTitle": "تست فنی قبل از ورود به کلاس",
+      "description": "این کلاس برای شاگردهایی است که در فیزیک یازدهم با مفاهیم مشکل دارند یا برای امتحان نوبت اول آماده می‌شوند. هر جلسه ۳۰ دقیقه مرور مفهوم، ۴۵ دقیقه حل مسئله‌ی هم‌سطح امتحان و ۱۵ دقیقه جمع‌بندی و تکلیف دارد. جزوه و تمرین‌ها بعد از هر جلسه در بخش فایل‌های پنل شما قرار می‌گیرد."
+    },
+    "fields": [
+      {
+        "key": "descriptionTitle",
+        "label": "عنوان توضیحات",
+        "type": "text"
+      },
+      {
+        "key": "syllabusTitle",
+        "label": "عنوان سرفصل‌ها",
+        "type": "text"
+      },
+      {
+        "key": "rulesTitle",
+        "label": "عنوان قوانین",
+        "type": "text"
+      },
+      {
+        "key": "technicalTitle",
+        "label": "عنوان تست فنی",
+        "type": "text"
+      },
+      {
+        "key": "description",
+        "label": "شرح کلاس",
+        "type": "textarea"
+      }
+    ]
+  },
+  "Club": {
+    "defaults": {
+      "title": "نیمکت کلاب؛ مسیر رشد تو",
+      "eyebrow": "نیمکت کلاب · مسیر رشد",
+      "levelsTitle": "سطح‌های باشگاه",
+      "missionsTitle": "مأموریت‌های فعال",
+      "earnTitle": "راه‌های کسب سکه",
+      "medalsTitle": "مدال‌ها و افتخارات",
+      "rewardsTitle": "جوایز قابل دریافت",
+      "historyTitle": "تاریخچه‌ی سکه‌ها",
+      "intro": "فعالیت آموزشی واقعی، قدم‌به‌قدم به رشد تبدیل می‌شود. سکه برای جوایز؛ امتیاز برای سطح."
+    },
+    "fields": [
+      {
+        "key": "title",
+        "label": "عنوان باشگاه",
+        "type": "text"
+      },
+      {
+        "key": "eyebrow",
+        "label": "عنوان کوچک باشگاه",
+        "type": "text"
+      },
+      {
+        "key": "levelsTitle",
+        "label": "عنوان سطح‌ها",
+        "type": "text"
+      },
+      {
+        "key": "missionsTitle",
+        "label": "عنوان مأموریت‌ها",
+        "type": "text"
+      },
+      {
+        "key": "earnTitle",
+        "label": "عنوان کسب سکه",
+        "type": "text"
+      },
+      {
+        "key": "medalsTitle",
+        "label": "عنوان مدال‌ها",
+        "type": "text"
+      },
+      {
+        "key": "rewardsTitle",
+        "label": "عنوان جوایز",
+        "type": "text"
+      },
+      {
+        "key": "historyTitle",
+        "label": "عنوان تاریخچه",
+        "type": "text"
+      },
+      {
+        "key": "intro",
+        "label": "توضیح باشگاه",
+        "type": "textarea"
+      }
+    ]
+  }
+}

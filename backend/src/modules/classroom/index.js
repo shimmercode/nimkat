@@ -1,0 +1,42 @@
+const crypto=require('node:crypto');
+const fail=(m,s=400)=>{throw Object.assign(new Error(m),{status:s});};
+function classroomModule(app,{db,auth,requireRole,settings,fetcher=fetch,now=Date.now}){
+ db.exec(`CREATE TABLE IF NOT EXISTS classroom_rooms(occurrence_id INTEGER PRIMARY KEY,provider_room_id INTEGER NOT NULL,created_at INTEGER NOT NULL,config_version INTEGER NOT NULL,config_fingerprint TEXT);
+ CREATE TABLE IF NOT EXISTS classroom_attendance(event_id TEXT PRIMARY KEY,occurrence_id INTEGER NOT NULL,user_id INTEGER NOT NULL,joined_at INTEGER NOT NULL,left_at INTEGER NOT NULL,payload_hash TEXT NOT NULL,created_at INTEGER NOT NULL);
+ CREATE TRIGGER IF NOT EXISTS attendance_no_update BEFORE UPDATE ON classroom_attendance BEGIN SELECT RAISE(ABORT,'append-only attendance'); END;
+ CREATE TRIGGER IF NOT EXISTS attendance_no_delete BEFORE DELETE ON classroom_attendance BEGIN SELECT RAISE(ABORT,'append-only attendance'); END;`);
+ if(!db.prepare('PRAGMA table_info(classroom_rooms)').all().some(c=>c.name==='config_fingerprint'))db.exec('ALTER TABLE classroom_rooms ADD COLUMN config_fingerprint TEXT');
+ const fingerprint=c=>crypto.createHash('sha256').update(c.secrets.apiKey+'|'+c.config.domain).digest('hex');
+ const safe=fn=>(req,res,next)=>Promise.resolve().then(()=>fn(req,res)).catch(next),inflight=new Map();
+ function occurrence(id){const o=db.prepare('SELECT o.*,c.title,c.mode FROM class_occurrences o JOIN classes c ON c.id=o.class_id WHERE o.id=?').get(id);if(!o||o.status!=='scheduled')fail('جلسه پیدا نشد یا لغو شده است.',404);return o;}
+ function participant(o,uid){const teacher=db.prepare("SELECT user_id FROM teacher_accounts WHERE teacher_id=? AND status='approved'").get(o.teacher_id);if(teacher?.user_id===uid)return 'teacher';if(db.prepare("SELECT 1 FROM booking_occurrences bo JOIN bookings b ON b.id=bo.booking_id WHERE bo.occurrence_id=? AND b.user_id=? AND b.status='confirmed' AND b.schema_version=2").get(o.id,uid))return 'student';fail('رزرو قطعی یا عضویت مدرس لازم است.',403);}
+ function config(){const c=settings.get('classroom');if(!c.config.enabled||!c.secrets.apiKey)fail('سرویس کلاس هنوز توسط مدیر فعال نشده است.',503);return c;}
+ async function call(c,action,params){let response;try{response=await fetcher(`https://api.skyroom.online/skyroom/api/${encodeURIComponent(c.secrets.apiKey)}`,{method:'POST',redirect:'error',signal:AbortSignal.timeout(12000),headers:{'Content-Type':'application/json'},body:JSON.stringify({action,params})});}catch{fail('ارتباط با ارائه‌دهندهٔ کلاس برقرار نشد.',503);}if(!response.ok)fail('پاسخ ارائه‌دهندهٔ کلاس ناموفق بود.',503);let data;try{data=await response.json();}catch{fail('پاسخ سرویس کلاس قابل پردازش نیست.',502);}if(data.ok!==true)fail('عملیات توسط ارائه‌دهندهٔ کلاس تأیید نشد.',502);return data.result;}
+ async function ensureRoom(id){if(inflight.has(id))return inflight.get(id);const work=(async()=>{const old=db.prepare('SELECT * FROM classroom_rooms WHERE occurrence_id=?').get(id);const c=config();if(old){if(!old.config_fingerprint&&old.config_version===c.version)db.prepare('UPDATE classroom_rooms SET config_fingerprint=? WHERE occurrence_id=?').run(fingerprint(c),id);else if(old.config_fingerprint!==fingerprint(c))fail('تنظیمات سرویس اتاق تغییر کرده؛ انتقال اتاق توسط مدیر لازم است.',409);return old.provider_room_id;}const o=occurrence(id),name=`nimkat-session-${o.id}`;let found;try{found=await call(c,'getRoom',{name});}catch(e){if(e.status!==502)throw e;}
+  if(!found)found=await call(c,'createRoom',{name,title:o.title,max_users:100,guest_login:false,op_login_first:true});const rid=typeof found==='number'?found:found?.id;if(!Number.isSafeInteger(rid)||rid<1)fail('شناسهٔ اتاق معتبر نیست.',502);
+  db.prepare('INSERT OR IGNORE INTO classroom_rooms VALUES(?,?,?,?,?)').run(o.id,rid,now(),c.version,fingerprint(c));settings.audit(null,'classroom.created',String(o.id),{providerRoomId:rid});return rid;
+ })();inflight.set(id,work);try{return await work;}finally{inflight.delete(id);}}
+ app.post('/api/classroom/:id/join',auth,safe(async(req,res)=>{
+  const o=occurrence(Number(req.params.id)),role=participant(o,req.user.id);if(['حضوری','in-person'].includes(o.mode))fail('این جلسه حضوری است و اتاق آنلاین ندارد.',422);if(now()<o.starts_at-900000||now()>o.ends_at+900000)fail('ورود از ۱۵ دقیقه قبل تا ۱۵ دقیقه پس از جلسه مجاز است.',409);
+  const c=config(),rid=await ensureRoom(o.id);
+  const result=await call(c,'getLoginUrl',{room_id:rid,user_id:`nimkat_${req.user.id}`,nickname:req.user.name,operator:role==='teacher',access:role==='teacher'?3:1,language:'fa',max_time:Math.min(900,Math.ceil((o.ends_at+900000-now())/1000))});
+  const url=typeof result==='string'?result:result?.url;let parsed;try{parsed=new URL(url);}catch{fail('نشانی ورود معتبر نیست.',502);}if(parsed.protocol!=='https:'||parsed.username||parsed.password||!(parsed.hostname==='skyroom.online'||parsed.hostname.endsWith('.skyroom.online')))fail('نشانی ورود خارج از دامنهٔ سرویس است.',502);
+  // Recheck authorization after a slow network call; never leak a join URL after cancellation.
+  const current=occurrence(o.id);participant(current,req.user.id);if(now()>current.ends_at+900000||current.starts_at!==o.starts_at||current.ends_at!==o.ends_at)fail('زمان جلسه تغییر کرده؛ برنامه را تازه کنید.',409);
+  res.set('Cache-Control','no-store');settings.audit(req.user.id,'classroom.join',String(o.id),{role});res.json({url:parsed.href,expiresInSeconds:Math.min(900,Math.ceil((o.ends_at+900000-now())/1000))});
+ }));
+ // This is the documented Nimkat bridge contract, NOT a claim that Skyroom sends
+ // this webhook natively. A provider polling/bridge worker must sign normalized events.
+ app.post('/api/classroom/attendance/events',safe((req,res)=>{
+  const c=config(),secret=c.secrets.webhookSecret;if(!secret||secret.length<32)fail('کلید وب‌هوک حضور تنظیم نشده است.',503);
+  const timestamp=req.get('x-nimkat-timestamp'),signature=req.get('x-nimkat-signature')||'';
+  if(!/^\d{13}$/.test(timestamp||'')||Math.abs(now()-Number(timestamp))>300000||!/^sha256=[a-f0-9]{64}$/.test(signature))fail('امضای حضور معتبر نیست.',401);
+  const raw=req.rawBody||Buffer.from(JSON.stringify(req.body));const expected='sha256='+crypto.createHmac('sha256',secret).update(timestamp+'.').update(raw).digest('hex');if(!crypto.timingSafeEqual(Buffer.from(signature),Buffer.from(expected)))fail('امضای حضور معتبر نیست.',401);
+  const {eventId,occurrenceId,userId,joinedAt,leftAt}=req.body||{};if(!/^[a-zA-Z0-9_-]{16,100}$/.test(eventId||'')||![occurrenceId,userId,joinedAt,leftAt].every(Number.isSafeInteger))fail('ساختار رخداد حضور معتبر نیست.');const hash=crypto.createHash('sha256').update(raw).digest('hex');
+  db.transaction(()=>{const old=db.prepare('SELECT payload_hash FROM classroom_attendance WHERE event_id=?').get(eventId);if(old){if(old.payload_hash!==hash)fail('رخداد تکراری با محتوای متفاوت.',409);return;}const o=occurrence(occurrenceId);participant(o,userId);if(leftAt<=joinedAt||leftAt>now()||joinedAt<o.starts_at-900000||leftAt>o.ends_at+900000)fail('بازهٔ حضور خارج از جلسه است.');db.prepare('INSERT INTO classroom_attendance VALUES(?,?,?,?,?,?,?)').run(eventId,o.id,userId,joinedAt,leftAt,hash,now());settings.audit(null,'classroom.attendance',eventId,{occurrenceId,userId});})();res.json({ok:true});
+ }));
+ function duration(o,uid){const intervals=db.prepare('SELECT joined_at,left_at FROM classroom_attendance WHERE occurrence_id=? AND user_id=? ORDER BY joined_at').all(o.id,uid);let total=0,end=o.starts_at;for(const i of intervals){const start=Math.max(o.starts_at,i.joined_at,end),stop=Math.min(o.ends_at,i.left_at);if(stop>start)total+=stop-start;end=Math.max(end,stop);}return Math.floor(total/60000);}
+ app.get('/api/classroom/:id/attendance',auth,safe((req,res)=>{const o=occurrence(Number(req.params.id));if(req.user.role!=='admin')participant(o,req.user.id);const teacher=db.prepare("SELECT user_id FROM teacher_accounts WHERE teacher_id=? AND status='approved'").get(o.teacher_id);const isTeacher=teacher?.user_id===req.user.id;const ids=req.user.role==='admin'||isTeacher?db.prepare('SELECT DISTINCT user_id FROM classroom_attendance WHERE occurrence_id=?').all(o.id).map(x=>x.user_id):[req.user.id];res.json({source:'signed-provider-bridge',sessionMinutes:Math.floor((o.ends_at-o.starts_at)/60000),attendance:ids.map(uid=>({userId:uid,minutes:duration(o,uid)})),note:'بازه‌های هم‌پوشان یک‌بار شمرده می‌شوند؛ این داده به‌تنهایی جای تأیید کلاس موفق یا احراز کیفیت رسانه نیست.'});}));
+ return {ensureRoom,duration};
+}
+module.exports={classroomModule};

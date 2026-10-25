@@ -1,0 +1,13 @@
+{
+  "repository": "https://github.com/tailark/blocks",
+  "commit": "8139698115c1341bfd2e3e286c04bb4d8146f472",
+  "license": "MIT",
+  "fetchedAt": "2026-10-20",
+  "files": {
+    "LICENSE.txt": "9ceb2565db4149b699df9fb53b16963f59675f5308de1143679639b2c561410c",
+    "call-to-action.tsx.txt": "0f3edecfc78441a06f1bc321226ec37d35550766011eec2a80c43ead9d5fc995",
+    "footer.tsx.txt": "aa4d12271c6c33109135e081b9272627b131f28840309dfa4b15a77654de7d7b",
+    "header.tsx.txt": "853fadb4de117d3c6ad8be6f646b78f6295557fc93c3ae3f0c54446c764e14e8",
+    "hero-section.tsx.txt": "3db2c3af114e29d4d7067da4785c860bc84e0bc33f16029eee2a1d9099c437a2"
+  }
+}

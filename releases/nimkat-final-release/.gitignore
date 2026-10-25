@@ -1,0 +1,36 @@
+# --- Node / React (frontend) ---
+node_modules/
+dist/
+dist-ssr/
+*.local
+.env
+.env.*
+!.env.example
+npm-debug.log*
+yarn-error.log*
+.vite/
+
+# --- PHP / Laravel (backend, when added) ---
+/vendor/
+/public/build/
+/public/hot
+/public/storage
+/storage/*.key
+/storage/plogs/
+Homestead.json
+Homestead.yaml
+auth.json
+
+# --- Editors / OS ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# --- Local tooling ---
+.cache/
+coverage/
+
+# --- Runtime database (auto-seeded on first run) ---
+backend/data/

@@ -1,122 +1,94 @@
-import { faNum } from '../utils/fa.js';
-import {
-  IconBench,
-  IconPhone,
-  IconPlay,
-  IconCamera,
-  IconSend,
-  IconClock,
-  IconShield,
-  IconBuilding,
-} from './icons.jsx';
-
-const COLS = [
-  {
-    title: 'مقاطع تحصیلی',
-    links: ['ابتدایی', 'متوسطه اول', 'متوسطه دوم', 'کنکور', 'مهارتی'],
-  },
-  {
-    title: 'دسترسی سریع',
-    links: ['جست‌وجوی کلاس', 'نیم‌چت', 'نیمکت کلاب', 'مجله نیمکت', 'استاد شوید'],
-  },
-  {
-    title: 'پشتیبانی',
-    links: [
-      'سوالات متداول',
-      'قوانین و مقررات',
-      'حریم خصوصی',
-      'شرایط لغو و بازگشت وجه',
-      'تماس با ما',
-    ],
-  },
-];
+'use client';
+import { Link } from '../routing/navigation';
+import { Brand } from './Header.jsx';
+import { IconSend, IconCamera, IconVideo, IconPhone, IconShield, IconCap } from './icons.jsx';
 
 export default function Footer() {
   return (
-    <footer className="footer">
+    <footer className="site-footer">
       <div className="container">
-        <div className="footer-grid">
-          <div>
-            <span className="brand">
-              <span className="brand-logo">
-                <IconBench size={26} />
-              </span>
-              <span>
-                <span className="brand-name">نیمکت</span>
-                <br />
-                <span className="brand-tag">پلتفرم آموزش آنلاین و حضوری</span>
-              </span>
-            </span>
-            <p className="footer-about">
-              نیمکت شاگرد و استاد را بر اساس مقطع، درس و هدف آموزشی به هم
-              می‌رساند؛ از کلاس خصوصی آنلاین تا کلاس گروهی حضوری در مدرسهٔ
-              خودتان.
+        <div className="cols">
+          <div className="footer-brand">
+            <Brand dark />
+            <p className="footer-desc">
+              نیمکت شاگرد و استاد را بر اساس مقطع، درس و هدف آموزشی به هم می‌رساند؛ از کلاس خصوصی
+              آنلاین تا کلاس گروهی حضوری در محله‌ی خودتان.
             </p>
-            <div className="socials">
-              <a className="social" href="#top" aria-label="تلفن">
+            <div className="footer-socials">
+              <Link to="/contact" aria-label="تلگرام">
+                <IconSend size={18} />
+              </Link>
+              <Link to="/contact" aria-label="اینستاگرام">
+                <IconCamera size={18} />
+              </Link>
+              <Link to="/classes" aria-label="ویدیوهای آموزشی">
+                <IconVideo size={18} />
+              </Link>
+              <a href="tel:02191004560" aria-label="تماس تلفنی">
                 <IconPhone size={18} />
               </a>
-              <a className="social" href="#top" aria-label="ویدیو">
-                <IconPlay size={18} />
-              </a>
-              <a className="social" href="#top" aria-label="اینستاگرام">
-                <IconCamera size={18} />
-              </a>
-              <a className="social" href="#top" aria-label="تلگرام">
-                <IconSend size={18} />
-              </a>
             </div>
-            <div className="footer-contact">
-              <span>
-                <IconPhone size={15} />
-                ۰۲۱-۹۱۰۴۵۶
-              </span>
-              <span>
-                <IconClock size={15} />
-                شنبه تا پنجشنبه ۸ تا ۲۰
-              </span>
+            <div className="footer-tel num">
+              <IconPhone size={16} />
+              <span>۰۲۱-۹۱۰۰۴۵۶۰</span>
+              <span style={{ opacity: 0.5 }}>·</span>
+              <span>شنبه تا پنجشنبه ۸ تا ۲۰</span>
             </div>
           </div>
 
-          {COLS.map((col) => (
-            <div key={col.title}>
-              <h4>{col.title}</h4>
-              <ul className="footer-links">
-                {col.links.map((l) => (
-                  <li key={l}>
-                    <a href="#top">{l}</a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+          <div>
+            <h4>مقاطع تحصیلی</h4>
+            <Link to="/classes?grade=ابتدایی">ابتدایی</Link>
+            <Link to="/classes?grade=متوسطه اول">متوسطه اول</Link>
+            <Link to="/classes?grade=متوسطه دوم">متوسطه دوم</Link>
+            <Link to="/classes?grade=کنکور">کنکور</Link>
+            <Link to="/classes?q=مهارتی">مهارتی</Link>
+          </div>
+
+          <div>
+            <h4>دسترسی سریع</h4>
+            <Link to="/classes">جستجوی کلاس</Link>
+            <Link to="/panel/chat">نیم‌چت</Link>
+            <Link to="/club">نیمکت کلاب</Link>
+            <Link to="/blog">مجله نیمکت</Link>
+            <Link to="/login?mode=teacher">استاد شوید</Link>
+          </div>
+
+          <div>
+            <h4>پشتیبانی</h4>
+            <Link to="/faq">سوالات متداول</Link>
+            <Link to="/terms">قوانین و مقررات</Link>
+            <Link to="/privacy">حریم خصوصی</Link>
+            <Link to="/cancellation-policy">شرایط لغو و بازگشت وجه</Link>
+            <Link to="/contact">تماس با ما</Link>
+          </div>
 
           <div>
             <h4>مجوزها</h4>
-            <div className="license-boxes">
-              <span className="license">
-                <IconShield size={22} />
+            <div className="footer-badges">
+              <div className="footer-badge">
+                <IconShield size={24} />
                 نماد اعتماد
                 <br />
                 الکترونیکی
-              </span>
-              <span className="license">
-                <IconBuilding size={22} />
+              </div>
+              <div className="footer-badge">
+                <IconCap size={24} />
                 ساماندهی
                 <br />
                 کسب‌وکار مجازی
-              </span>
+              </div>
             </div>
           </div>
         </div>
 
         <div className="footer-bottom">
-          <span>© {faNum(1405)} نیمکت. همهٔ حقوق محفوظ است.</span>
-          <span className="footer-bottom-links">
-            <a href="#top">قوانین</a>
-            <a href="#top">حریم خصوصی</a>
-            <a href="#top">نقشه سایت</a>
-          </span>
+          <span>© ۱۴۰۵ نیمکت. همه‌ی حقوق محفوظ است.</span>
+          <div className="links">
+            <Link to="/terms">قوانین</Link>
+            <Link to="/privacy">حریم خصوصی</Link>
+            <Link to="/sitemap">نقشه سایت</Link>
+          </div>
         </div>
       </div>
     </footer>

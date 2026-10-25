@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>نیمکت کلاب | گزارش جامع نیازمندی‌ها - خواسته کارفرما</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700;800&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Vazirmatn', Tahoma, sans-serif; background:#f6f7fb; color:#1e293b; line-height:1.9; font-size:14.5px}
+a{color:inherit}
+.container{max-width:1100px; margin:0 auto; padding:0 24px}
+.hero{background: linear-gradient(135deg,#0f172a 0%, #1e3a5f 50%, #0ea5e9 100%); color:#fff; padding:52px 0 44px; position:relative; overflow:hidden}
+.hero::after{content:""; position:absolute; inset:0; background: radial-gradient(circle at 20% 20%, rgba(255,255,255,0.08), transparent 40%), radial-gradient(circle at 90% 80%, rgba(14,165,233,0.25), transparent 40%)}
+.hero-inner{position:relative; z-index:2}
+.badge{display:inline-block; background:rgba(255,255,255,0.14); border:1px solid rgba(255,255,255,0.22); backdrop-filter:blur(6px); padding:6px 14px; border-radius:999px; font-size:12px; letter-spacing:0.5px}
+.hero h1{font-size:36px; font-weight:800; margin:16px 0 8px; line-height:1.3}
+.hero h2{font-size:18px; font-weight:300; opacity:0.92}
+.hero-meta{margin-top:18px; display:flex; gap:12px; flex-wrap:wrap}
+.hero-meta span{background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.18); padding:7px 14px; border-radius:999px; font-size:12.5px}
+.toc{background:#fff; border:1px solid #e2e8f0; border-radius:16px; padding:20px 22px; margin:-28px auto 28px; box-shadow:0 8px 24px rgba(15,23,42,0.06); position:relative; z-index:3}
+.toc h3{font-size:15px; font-weight:700; margin-bottom:12px; color:#0f172a}
+.toc-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:8px 18px}
+.toc a{display:block; padding:7px 10px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; font-size:12.8px; text-decoration:none; color:#334155}
+.toc a b{color:#0ea5e9}
+.card{background:#fff; border:1px solid #e2e8f0; border-radius:18px; padding:26px 24px; margin-bottom:20px; box-shadow:0 4px 18px rgba(15,23,42,0.04)}
+.card h2{font-size:19px; font-weight:800; color:#0f172a; margin-bottom:14px; display:flex; align-items:center; gap:10px}
+.card h2 .num{background:#0ea5e9; color:#fff; width:34px; height:34px; border-radius:10px; display:inline-flex; align-items:center; justify-content:center; font-size:15px; flex-shrink:0}
+.card h3{font-size:15.5px; font-weight:700; color:#1e40af; margin:18px 0 10px; border-right:4px solid #0ea5e9; padding-right:10px}
+.card h4{font-size:14px; font-weight:700; color:#334155; margin:14px 0 8px}
+.kpi-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:14px; margin:12px 0}
+.kpi{background:linear-gradient(180deg,#f8fafc,#fff); border:1px solid #e2e8f0; border-radius:14px; padding:14px 16px}
+.kpi strong{font-size:13px; color:#0f172a}
+.kpi p{font-size:12.5px; color:#64748b; margin-top:4px}
+table{width:100%; border-collapse:collapse; margin:12px 0; font-size:13.2px; overflow:hidden; border-radius:12px; border:1px solid #e2e8f0}
+th{background:#0f172a; color:#fff; font-weight:700; padding:10px 12px; text-align:right; white-space:nowrap}
+td{padding:10px 12px; border-bottom:1px solid #e2e8f0; vertical-align:top}
+tr:nth-child(even) td{background:#f8fafc}
+.badge2{display:inline-block; padding:3px 10px; border-radius:999px; font-size:11.5px; font-weight:600; border:1px solid}
+.b-coin{background:#fefce8; color:#a16207; border-color:#fde68a}
+.b-score{background:#eff6ff; color:#1d4ed8; border-color:#bfdbfe}
+.b-level{background:#f0fdf4; color:#15803d; border-color:#bbf7d0}
+.level-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:14px}
+.level{border-radius:16px; padding:16px; border:1px solid #e2e8f0; position:relative; overflow:hidden}
+.level.bronze{background:linear-gradient(180deg,#fff7ed,#fff); border-color:#fed7aa}
+.level.silver{background:linear-gradient(180deg,#f8fafc,#fff); border-color:#cbd5e1}
+.level.gold{background:linear-gradient(180deg,#fefce8,#fff); border-color:#fde68a}
+.level.platinum{background:linear-gradient(180deg,#f0fdfa,#fff); border-color:#99f6e4}
+.level.ambassador{background:linear-gradient(135deg,#0f172a,#1e3a5f); color:#fff; border-color:#0f172a}
+.level .lvl-name{font-weight:800; font-size:15px}
+.level .lvl-range{font-size:12px; opacity:0.8; margin:4px 0 8px}
+.level ul{font-size:12.5px; padding-right:16px; line-height:1.8}
+.level.ambassador ul{opacity:0.92}
+.callout{background:#f0f9ff; border:1px solid #bae6fd; border-right:4px solid #0ea5e9; border-radius:12px; padding:14px 16px; font-size:13px; color:#0c4a6e; margin:12px 0}
+.callout.warn{background:#fffbeb; border-color:#fde68a; border-right-color:#f59e0b; color:#92400e}
+.callout.success{background:#f0fdf4; border-color:#bbf7d0; border-right-color:#22c55e; color:#14532d}
+.list{padding-right:18px}
+.list li{margin:6px 0}
+.two-col{display:grid; grid-template-columns:1fr 1fr; gap:14px}
+@media(max-width:800px){.two-col{grid-template-columns:1fr} .hero h1{font-size:28px}}
+.tag{display:inline-block; font-size:11px; padding:3px 8px; border-radius:999px; background:#e0f2fe; color:#0369a1; font-weight:600; margin:2px}
+.footer{background:#0f172a; color:#cbd5e1; padding:28px 0; margin-top:24px; font-size:12.5px}
+.footer strong{color:#fff}
+.chip{display:inline-block; padding:4px 10px; border-radius:999px; font-size:11.5px; font-weight:700; margin:3px}
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="container hero-inner">
+    <span class="badge">📘 سند نیازمندی‌ها • نسخه نهایی • ۵ مهر ۱۴۰۴</span>
+    <h1>نیمکت کلاب — باشگاه هوشمند وفاداری، تعامل و مسیر رشد</h1>
+    <h2>گزارش جامع و ساختاربندی‌شده خواسته کارفرما | از «مسیر رشد» تا «پنل ادمین» — تمام سطوح، مأموریت‌ها، مدال‌ها، جوایز و یکپارچه‌سازی‌ها</h2>
+    <div class="hero-meta">
+      <span>🎯 لایه انگیزشی روی پلتفرم نیمکت</span>
+      <span>🧭 پاسخ به ۳ سؤال: الان کجا هستم؟ قدم بعدی چیست؟ چطور برسم؟</span>
+      <span>⚙️ همه مقادیر از ادمین قابل تنظیم</span>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <!-- TOC -->
+  <div class="toc">
+    <h3>فهرست گزارش — برای مرور سریع کارفرما</h3>
+    <div class="toc-grid">
+      <a href="#s1"><b>۱</b> چشم‌انداز و نقش کلاب در نیمکت</a>
+      <a href="#s2"><b>۲</b> اهداف کسب‌وکاری و محصولی (۷ هدف)</a>
+      <a href="#s3"><b>۳</b> اصول طراحی کلاب (۸ اصل)</a>
+      <a href="#s4"><b>۴</b> اجزای کلاب: سکه / امتیاز / سطح / مدال ...</a>
+      <a href="#s5"><b>۵</b> پنج سطح کلاب + مزایای هر سطح</a>
+      <a href="#s6"><b>۶</b> صفحه اصلی کلاب (۱۱ بخش الزامی)</a>
+      <a href="#s7"><b>۷</b> مأموریت‌های شاگردان</a>
+      <a href="#s8"><b>۸</b> مأموریت‌های اساتید</a>
+      <a href="#s9"><b>۹</b> مدال‌ها و افتخارات</a>
+      <a href="#s10"><b>۱۰</b> جوایز (شاگرد / استاد)</a>
+      <a href="#s11"><b>۱۱</b> یکپارچه‌سازی با ۶ ماژول نیمکت</a>
+      <a href="#s12"><b>۱۲</b> پنل ادمین و کمپین‌ها</a>
+      <a href="#s13"><b>۱۳</b> گزارش‌های مدیریتی مورد نیاز</a>
+      <a href="#s14"><b>۱۴</b> الزامات عمومی پلتفرم نیمکت (SRS)</a>
+      <a href="#s15"><b>۱۵</b> چک‌لیست تحویل و نکات اجرایی</a>
+    </div>
+  </div>
+
+  <!-- S1 -->
+  <div class="card" id="s1">
+    <h2><span class="num">۱</span> چشم‌انداز و نقش نیمکت کلاب در پلتفرم</h2>
+    <p>نیمکت کلاب <b>لایه انگیزشی و وفاداری</b> روی پلتفرم آموزشی نیمکت است. قرار نیست کاربر صرفاً «امتیاز جمع کند»؛ بلکه فعالیت‌های واقعی او — یادگیری مستمر، حضور در کلاس، مشارکت در نیمچت، بازخورد، پیشرفت تحصیلی، دعوت دوستان و افتخارات — به یک <b>مسیر قابل مشاهده و معنادار</b> تبدیل می‌شود.</p>
+    <div class="kpi-grid">
+      <div class="kpi"><strong>🧭 مفهوم هسته رابط کاربری</strong><p><b>«مسیر رشد»</b> به‌جای عدد خام. همیشه باید به ۳ سؤال پاسخ دهد.</p></div>
+      <div class="kpi"><strong>❓ الان کجا هستم؟</strong><p>سطح فعلی، امتیاز، سکه، Streak، مدال آخر</p></div>
+      <div class="kpi"><strong>👣 قدم بعدی من چیست؟</strong><p>پیشنهاد شخصی‌سازی‌شده برای رسیدن به سطح بعد</p></div>
+      <div class="kpi"><strong>🛠️ چطور برسم؟</strong><p>مأموریت‌های روزانه/هفتگی/ماهانه/مناسبتی + جوایز</p></div>
+    </div>
+    <div class="callout">
+      <b>تفکیک عمدی و کلیدی:</b> <span class="chip" style="background:#fef9c3; color:#854d0e">🪙 سکه = قابل مصرف برای جوایز/مزایا</span> <span class="chip" style="background:#dbeafe; color:#1e40af">⭐ امتیاز کلاب = غیرقابل مصرف، برای سطح‌بندی و رتبه‌بندی</span> — مدال = هویت، مأموریت = هدایت رفتار، Streak = استمرار، اعلان = اطلاع لحظه مهم.
+    </div>
+  </div>
+
+  <!-- S2 -->
+  <div class="card" id="s2">
+    <h2><span class="num">۲</span> اهداف کسب‌وکاری و محصولی</h2>
+    <div class="kpi-grid">
+      <div class="kpi"><strong>🔁 وفاداری</strong><p>افزایش بازگشت و استفاده مجدد</p></div>
+      <div class="kpi"><strong>💬 تعامل</strong><p>مشارکت آموزشی و اجتماعی (کلاس، نیمچت، چالش)</p></div>
+      <div class="kpi"><strong>📝 کیفیت داده</strong><p>تکمیل پروفایل + ثبت بازخورد معتبر</p></div>
+      <div class="kpi"><strong>📚 یادگیری</strong><p>تقویت رفتارهای منجر به یادگیری مستمر</p></div>
+      <div class="kpi"><strong>👥 جامعه</strong><p>ساخت جامعه فعال پیرامون نیمچت و چالش‌ها</p></div>
+      <div class="kpi"><strong>💰 درآمد</strong><p>پشتیبانی از رزرو مجدد و LTV بدون وابستگی صرف به خرید</p></div>
+      <div class="kpi"><strong>✨ تمایز برند</strong><p>تبدیل کلاب به نقطه تمایز تجربه نیمکت</p></div>
+    </div>
+  </div>
+
+  <!-- S3 -->
+  <div class="card" id="s3">
+    <h2><span class="num">۳</span> اصول طراحی کلاب — ۸ اصل غیرقابل مذاکره کارفرما</h2>
+    <ol class="list">
+      <li>پاداش باید <b>رفتار ارزشمند</b> را تقویت کند، نه صرفاً مبلغ پرداختی.</li>
+      <li><b>سکه و امتیاز مستقل</b> بمانند؛ سکه مصرفی، امتیاز برای سطح.</li>
+      <li>تمام مقادیر، سقف‌ها و قواعد <b>از پنل ادمین قابل تنظیم</b> باشد.</li>
+      <li>کاربر همیشه بداند کجاست، چه کسب کرده و قدم بعدی چیست.</li>
+      <li>رقابت <b>سالم، آموزشی و اختیاری</b> ؛ رتبه‌بندی صرفاً بر اساس خرید نباشد.</li>
+      <li>شاخص‌های منفی <b>عمومی نشوند</b> (فقط ادمین ببیند).</li>
+      <li>پاداش‌های مالی <b>سقف بودجه و کنترل هزینه</b> داشته باشند.</li>
+      <li>تمام المان‌های بصری <b>جذاب و برندمحور</b> طراحی شوند.</li>
+    </ol>
+  </div>
+
+  <!-- S4 -->
+  <div class="card" id="s4">
+    <h2><span class="num">۴</span> اجزای نیمکت کلاب — ساختار حساب</h2>
+    <p style="color:#64748b; font-size:13px; margin-bottom:8px">هر کاربر یک حساب کلاب دارد که این ۷ مؤلفه را در خود نگه می‌دارد:</p>
+    <table>
+      <thead><tr><th>مؤلفه</th><th>کارکرد</th><th>قابل مصرف؟</th><th>توضیح</th></tr></thead>
+      <tbody>
+        <tr><td><span class="badge2 b-coin">🪙 سکه</span></td><td>واحد پاداش برای مصرف در جوایز/مزایا</td><td>بله</td><td>کیف پول سکه، تاریخچه تراکنش</td></tr>
+        <tr><td><span class="badge2 b-score">⭐ امتیاز کلاب</span></td><td>تعیین سطح و پیشرفت</td><td>خیر</td><td>مجموع امتیاز، هرگز کم نمی‌شود</td></tr>
+        <tr><td><span class="badge2 b-level">🏔️ سطح</span></td><td>تعیین جایگاه و مزایا</td><td>خیر</td><td>۵ سطح: برنزی تا سفیر</td></tr>
+        <tr><td>🏅 مدال</td><td>ثبت دستاورد قابل نمایش</td><td>خیر</td><td>در پروفایل و کلاب نمایش</td></tr>
+        <tr><td>🎯 مأموریت</td><td>هدف کوتاه‌مدت / دوره‌ای</td><td>خیر</td><td>روزانه، هفتگی، ماهانه، مناسبتی</td></tr>
+        <tr><td>🔥 Streak</td><td>نمایش استمرار فعالیت</td><td>خیر</td><td>روزانه + هفتگی متوالی</td></tr>
+        <tr><td>🎫 بلیت/اعتبار ویژه</td><td>مجوز تجربه یا رویداد خاص</td><td>بسته به نوع</td><td>دسترسی زودهنگام، رویداد انحصاری</td></tr>
+      </tbody>
+    </table>
+    <div class="callout success"><b>نکته مدیریتی:</b> سقف‌های روزانه/هفتگی برای هر فعالیت (مثلاً نیمچت) باید قابل تنظیم باشد تا از سوءاستفاده و اسپم جلوگیری شود.</div>
+  </div>
+
+  <!-- S5 -->
+  <div class="card" id="s5">
+    <h2><span class="num">۵</span> پنج سطح کلاب (Leveling System)</h2>
+    <p style="color:#64748b; font-size:13px">امتیاز = تنها معیار سطح. همه آستانه‌ها از ادمین قابل ویرایش هستند.</p>
+    <div class="level-grid" style="margin-top:14px">
+      <div class="level bronze">
+        <div class="lvl-name">🥉 سطح ۱ — برنزی</div>
+        <div class="lvl-range">۰ تا ۹۹۹ امتیاز • «شروع مسیر»</div>
+        <ul>
+          <li>دسترسی به مأموریت‌های روزانه</li>
+          <li>نشان برنزی پروفایل</li>
+          <li>کیف پول سکه فعال</li>
+          <li>محتوای رایگان پایه (ویدیو/مقاله)</li>
+          <li>شرکت در چالش‌های عمومی</li>
+        </ul>
+      </div>
+      <div class="level silver">
+        <div class="lvl-name">🥈 سطح ۲ — نقره‌ای</div>
+        <div class="lvl-range">۱۰۰۰ تا ۲۴۹۹ امتیاز • «عضو فعال»</div>
+        <ul>
+          <li>نشان نقره‌ای پروفایل</li>
+          <li>مأموریت‌های هفتگی (پاداش بالاتر)</li>
+          <li>هدیه ارتقا: ۵۰ سکه</li>
+          <li>کد تخفیف کلاس گروهی</li>
+          <li>دسترسی به وبینارهای منتخب</li>
+        </ul>
+      </div>
+      <div class="level gold">
+        <div class="lvl-name">🥇 سطح ۳ — طلایی</div>
+        <div class="lvl-range">۲۵۰۰ تا ۴۹۹۹ امتیاز • «کاربر وفادار»</div>
+        <ul>
+          <li>نشان طلایی برجسته</li>
+          <li>کد تخفیف ماهانه ثابت (مثلاً ۵٪)</li>
+          <li>دسترسی زودهنگام ۲۴-۴۸ ساعته</li>
+          <li>هدیه ارتقا: ۱۰۰ سکه</li>
+          <li>مأموریت‌های مناسبتی پربازده</li>
+        </ul>
+      </div>
+      <div class="level platinum">
+        <div class="lvl-name">💎 سطح ۴ — پلاتینیوم</div>
+        <div class="lvl-range">۵۰۰۰ تا ۹۹۹۹ امتیاز • «کاربر ویژه»</div>
+        <ul>
+          <li>نشان پلاتینیوم درخشان</li>
+          <li>رویدادهای انحصاری + Q&A با اساتید برتر</li>
+          <li>هدیه ارتقا: ۴۰۰ سکه / پک فیزیکی</li>
+          <li>پشتیبانی اولویت‌دار</li>
+          <li>تخفیف ویژه رویدادها تا ۳۰٪</li>
+          <li>گروه‌های دعوت‌محور نیمچت</li>
+        </ul>
+      </div>
+      <div class="level ambassador">
+        <div class="lvl-name">👑 سطح ۵ — سفیر نیمکت</div>
+        <div class="lvl-range">۱۰,۰۰۰+ امتیاز • «سطح افتخاری»</div>
+        <ul>
+          <li>نشان سفیر ویژه (بالاترین اعتبار)</li>
+          <li>برنامه همکاری در رشد + پاداش جذب</li>
+          <li>هدیه ارتقا: ۶۰۰ سکه / پک فیزیکی</li>
+          <li>جلسات مشاوره رایگان</li>
+          <li>هدیه سالانه/فصلی ارزشمند</li>
+          <li>مأموریت‌های ویژه پربازده</li>
+          <li>مجوز استفاده از عنوان «سفیر نیمکت»</li>
+          <li>شبکه سفیران (ارتباط بین سفیران)</li>
+        </ul>
+      </div>
+    </div>
+    <div class="callout" style="margin-top:14px"><b>الزامات UI سطح:</b> نوار پیشرفت بین سطح فعلی و بعدی + عدد فاصله دقیق («۳۶۰ امتیاز تا پلاتینیوم») + نمایش هر ۵ سطح با برجسته‌سازی «شما اینجا هستید» + بخش «چطور به سطح بعد برسم؟» با پیشنهاد شخصی‌شده.</div>
+  </div>
+
+  <!-- S6 -->
+  <div class="card" id="s6">
+    <h2><span class="num">۶</span> نیازمندی‌های صفحه اصلی کلاب — ۱۱ بخش الزامی (داشبورد اصلی)</h2>
+    <p style="color:#64748b; font-size:13px">صفحه کلاب باید مثل داشبورد عمل کند: مهم‌ترین اطلاعات در یک نگاه.</p>
+
+    <h3>۱) نمای کلی — کارت هویتی</h3>
+    <div class="kpi-grid">
+      <div class="kpi"><strong>نام و تصویر</strong></div>
+      <div class="kpi"><strong>سطح فعلی</strong></div>
+      <div class="kpi"><strong>امتیاز کلاب</strong></div>
+      <div class="kpi"><strong>موجودی سکه</strong></div>
+      <div class="kpi"><strong>Streak (روزهای متوالی)</strong></div>
+      <div class="kpi"><strong>مأموریت‌های فعال</strong></div>
+      <div class="kpi"><strong>آخرین دستاورد/مدال</strong></div>
+    </div>
+
+    <h3>۲) مسیر رشد</h3>
+    <ul class="list">
+      <li>نمایش امتیاز کلاب + نوار Progress بین سطح فعلی و بعدی</li>
+      <li>فاصله عددی دقیق («۳۶۰ امتیاز تا پلاتینیوم»)</li>
+      <li>نمایش هر ۵ سطح با «شما اینجا هستید»</li>
+      <li>بخش «چطور به سطح بعد برسم؟» — پیشنهاد شخصی‌شده:<br><em style="color:#64748b">«یک کلاس دیگر شرکت کن، مأموریت هفتگی را کامل کن، یک دوست دعوت کن، نظرسنجی را تکمیل کن یا در چالش شرکت کن.»</em></li>
+    </ul>
+
+    <h3>۳) قدم بعدی من</h3>
+    <p>نمایش یک مأموریت/اقدام پیشنهادیِ هوشمند (اولویت‌دارترین کار برای رشد).</p>
+
+    <h3>۴) مأموریت‌ها</h3>
+    <p>محل نمایش تمام مأموریت‌ها با پیشرفت، پاداش و وضعیت. دسته‌بندی:</p>
+    <div class="kpi-grid">
+      <div class="kpi"><strong>📅 روزانه</strong><p>چالش‌های کوتاه روزانه</p></div>
+      <div class="kpi"><strong>📆 هفتگی</strong><p>مثل: شرکت در رویداد، ۲ کلاس موفق</p></div>
+      <div class="kpi"><strong>🗓️ ماهانه</strong><p>مثل: ماه پربازده — ۴ کلاس + نظرسنجی + چالش</p></div>
+      <div class="kpi"><strong>🎉 ویژه/مناسبتی</strong><p>مثل: هفته معلم، شب امتحان</p></div>
+    </div>
+    <p style="font-size:13px">وضعیت هر مأموریت: <span class="tag">فعال</span> <span class="tag">در حال پیشرفت</span> <span class="tag" style="background:#dcfce7;color:#166534">تکمیل‌شده</span> <span class="tag" style="background:#fee2e2;color:#991b1b">منقضی‌شده</span> — نمونه: «شرکت در ۵ کلاس؛ ۳ از ۵؛ ۶۰٪؛ پاداش: ۱۰۰ امتیاز + ۵۰ سکه»</p>
+
+    <h3>۵) Streak — زنجیره فعالیت</h3>
+    <p>نمایش تعداد هفته‌های متوالی فعال — مثال: «۳ هفته است در مسیر یادگیری هستی» + تقویم حرارتی/Streak flame.</p>
+
+    <h3>۶) جوایز (Rewards Store)</h3>
+    <ul class="list">
+      <li>جوایز قابل دریافت + جوایز نزدیک به دستیابی</li>
+      <li>هر جایزه: تصویر، عنوان، توضیح، سکه موردنیاز، موجودی، شرایط، تاریخ انقضا، دکمه «دریافت جایزه»</li>
+    </ul>
+
+    <h3>۷) دستاوردها (Achievements)</h3>
+    <p>نمایش مدال‌ها و افتخارات کسب‌شده + مدال‌های در دسترس (قفل/باز).</p>
+
+    <h3>۸) کیف سکه (Wallet + History)</h3>
+    <ul class="list">
+      <li>موجودی فعلی + تاریخچه تراکنش‌ها (تاریخ، علت، مقدار، موجودی پس از تراکنش)</li>
+      <li>فیلترها: همه / دریافت / مصرف / تاریخ</li>
+    </ul>
+
+    <h3>۹) تب «مزایای من»</h3>
+    <p>نمایش مزایای فعال‌شده به‌دلیل سطح فعلی (تخفیف‌ها، دسترسی‌ها، هدایا).</p>
+
+    <h3>۱۰) لیگ نیمکت (Leaderboard — اختیاری اما زیرساخت الزامی)</h3>
+    <ul class="list">
+      <li>رتبه کاربر: «رتبه شما در این ماه: ۲۷» + فاصله تا رتبه بعدی</li>
+      <li>رتبه‌بندی ترکیبی: فعالیت آموزشی + استمرار + مأموریت + مشارکت (نه صرفاً خرید)</li>
+      <li>فیلترها: زمان (هفته/ماه/سال/کل) — مکان (کشور/استان/شهر) — معیار (امتیاز کسب‌شده)</li>
+      <li>فاز اول می‌تواند غیرفعال باشد اما زیرساخت باید آماده باشد.</li>
+    </ul>
+
+    <h3>۱۱) شانس طلایی نیمکت (گردونه)</h3>
+    <ul class="list">
+      <li>نه سیستم اصلی جوایز؛ بلکه <b>سرگرمی + بازگشت</b></li>
+      <li>شرط فعال‌سازی ماهانه: <b>شاگرد:</b> حداقل ۴ هفته Streak — <b>استاد:</b> حداقل ۸ کلاس موفق</li>
+      <li>گردونه شانس با جوایز تصادفی از لیست جوایز اصلی</li>
+    </ul>
+  </div>
+
+  <!-- S7 -->
+  <div class="card" id="s7">
+    <h2><span class="num">۷</span> مأموریت‌ها و امتیازدهی — شاگردان</h2>
+    <table>
+      <thead><tr><th>عنوان</th><th>تناوب</th><th>سکه</th><th>امتیاز</th></tr></thead>
+      <tbody>
+        <tr><td>تکمیل پروفایل</td><td>یک‌بار</td><td>10</td><td>50</td></tr>
+        <tr><td>اولین کلاس موفق (+ پاداش کلاس)</td><td>یک‌بار</td><td>20</td><td>100</td></tr>
+        <tr><td>هر کلاس موفق</td><td>هر جلسه</td><td>10</td><td>50</td></tr>
+        <tr><td>کلاس گروهی موفق</td><td>هر جلسه</td><td>15</td><td>60</td></tr>
+        <tr><td>دعوت دوست (ثبت‌نام معتبر)</td><td>پس از تحقق شرط</td><td>30</td><td>100</td></tr>
+        <tr><td>اولین کلاس برگزار شده دوست</td><td>پس از تحقق</td><td>40</td><td>100</td></tr>
+        <tr><td>دوست ۳ جلسه برگزار کرد</td><td>پس از تحقق</td><td>120</td><td>300</td></tr>
+        <tr><td>نظرسنجی معتبر پایان کلاس</td><td>هر جلسه</td><td>5</td><td>10</td></tr>
+        <tr><td>۵ کلاس موفق</td><td>آستانه</td><td>50</td><td>150</td></tr>
+        <tr><td>۱۰ کلاس موفق</td><td>آستانه</td><td>120</td><td>300</td></tr>
+        <tr><td>۲۰ کلاس موفق</td><td>آستانه</td><td>250</td><td>600</td></tr>
+        <tr><td>۵۰ کلاس موفق</td><td>آستانه</td><td>800</td><td>1200</td></tr>
+        <tr><td>۱۰۰ کلاس موفق</td><td>آستانه</td><td>2000</td><td>2500</td></tr>
+        <tr><td>مشارکت مفید نیمچت (۳ لایک)</td><td>هفتگی، سقف ۳</td><td>5</td><td>20</td></tr>
+        <tr><td>مأموریت هفتگی</td><td>هر چالش</td><td>10</td><td>40</td></tr>
+        <tr><td>پیشرفت تحصیلی (+10% ماهانه)</td><td>پس از تحقق</td><td>50</td><td>300</td></tr>
+        <tr><td>کسب مدال و دستاورد</td><td>پس از تحقق</td><td>10</td><td>200</td></tr>
+        <tr><td>مأموریت مناسبتی</td><td>هر مأموریت</td><td>10</td><td>200</td></tr>
+        <tr><td>ماه پربازده (۴ کلاس+نظرسنجی+چالش)</td><td>ماهانه</td><td>40</td><td>200</td></tr>
+        <tr><td>پرسش و پاسخ در پروفایل استاد</td><td>ماهانه تا ۱۰ مورد</td><td>5/مورد</td><td>5/مورد</td></tr>
+        <tr><td>میانگین نظرسنجی استاد از شاگرد &gt; ۴</td><td>پس از تحقق</td><td>10</td><td>30</td></tr>
+      </tbody>
+    </table>
+    <div class="callout warn"><b>نکته کنترلی:</b> تمام سقف‌ها (مثلاً ۳ مشارکت مفید/هفته، ۱۰ پرسش/ماه) باید از ادمین قابل تنظیم باشد. شرط «معتبر بودن» نظرسنجی/مشارکت توسط سیستم‌های مربوطه تأیید شود.</div>
+  </div>
+
+  <!-- S8 -->
+  <div class="card" id="s8">
+    <h2><span class="num">۸</span> مأموریت‌ها و امتیازدهی — اساتید</h2>
+    <table>
+      <thead><tr><th>عنوان</th><th>تناوب</th><th>سکه</th><th>امتیاز</th></tr></thead>
+      <tbody>
+        <tr><td>تکمیل پروفایل</td><td>یک‌بار</td><td>20</td><td>50</td></tr>
+        <tr><td>تکمیل ویدئوی پروفایل</td><td>یک‌بار</td><td>30</td><td>50</td></tr>
+        <tr><td>هر جلسه موفق</td><td>هر جلسه</td><td>10</td><td>50</td></tr>
+        <tr><td>۵ کلاس موفق</td><td>آستانه</td><td>20</td><td>100</td></tr>
+        <tr><td>۱۰ کلاس موفق</td><td>آستانه</td><td>40</td><td>200</td></tr>
+        <tr><td>۲۰ کلاس موفق</td><td>آستانه</td><td>100</td><td>400</td></tr>
+        <tr><td>۵۰ کلاس موفق</td><td>آستانه</td><td>300</td><td>800</td></tr>
+        <tr><td>۱۰۰ کلاس موفق</td><td>آستانه</td><td>750</td><td>1500</td></tr>
+        <tr><td>میانگین نظرسنجی &gt; ۴</td><td>بازه‌ای</td><td>10</td><td>100</td></tr>
+        <tr><td>هر ۱۰ پیام مفید نیمچت (۵ لایک)</td><td>پس از تحقق</td><td>20</td><td>50</td></tr>
+        <tr><td>وبینار آموزشی</td><td>پس از هر وبینار</td><td>40</td><td>200</td></tr>
+        <tr><td>مأموریت هفتگی</td><td>هر چالش</td><td>10</td><td>40</td></tr>
+        <tr><td>کسب مدال و دستاورد</td><td>پس از تحقق</td><td>10</td><td>100</td></tr>
+        <tr><td>مأموریت مناسبتی</td><td>هر مأموریت</td><td>50</td><td>200</td></tr>
+        <tr><td>پرسش و پاسخ در پروفایل استاد</td><td>ماهانه</td><td>5/مورد</td><td>5/مورد</td></tr>
+        <tr><td>رسیدن به شاخص مثبت توصیفی &gt; ۴ بار</td><td>پس از تحقق</td><td>10</td><td>10</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- S9 -->
+  <div class="card" id="s9">
+    <h2><span class="num">۹</span> مدال‌ها و افتخارات</h2>
+    <div class="two-col">
+      <div>
+        <h3>🏆 مدال‌های اساتید — بر اساس نظرسنجی (حدنصاب از ادمین)</h3>
+        <table>
+          <thead><tr><th>مدال</th><th>شرط دریافت</th></tr></thead>
+          <tbody>
+            <tr><td>وقت‌شناس</td><td>≥۵ بازخورد مثبت وقت‌شناسی</td></tr>
+            <tr><td>مسلط به تدریس</td><td>≥۵ بازخورد تسلط</td></tr>
+            <tr><td>خوش‌برخورد</td><td>≥۵ بازخورد تعامل و رفتار</td></tr>
+            <tr><td>پیگیر</td><td>≥۵ بازخورد پیگیری تکالیف</td></tr>
+            <tr><td>باحوصله</td><td>≥۵ بازخورد حوصله</td></tr>
+            <tr><td>محبوب</td><td>≥۱۰ بازخورد با میانگین ≥۴٫۷</td></tr>
+            <tr><td>بهینه‌آموز</td><td>≥۵ بازخورد تطابق هزینه/کیفیت</td></tr>
+            <tr><td>نوآور</td><td>≥۵ بازخورد استفاده از تجهیزات به‌روز</td></tr>
+          </tbody>
+        </table>
+        <h4>مدال‌های اساتید — بر اساس فعالیت</h4>
+        <table>
+          <thead><tr><th>مدال</th><th>شرط</th></tr></thead>
+          <tbody>
+            <tr><td>همیار نیمکت</td><td>۱۰ مشارکت مفید تأییدشده (هر پیام ۵ لایک)</td></tr>
+            <tr><td>همسفر نیمکت</td><td>ارائه ۳ محتوای آموزشی در ماه</td></tr>
+            <tr><td>مبلغ نیمکت</td><td>معرفی ۵ شاگرد با کد معرف</td></tr>
+            <tr><td>متعهد</td><td>عدم لغو در ۱۰ کلاس متوالی</td></tr>
+            <tr><td>پاسخگو</td><td>ثبت ۱۵ پاسخ در پروفایل</td></tr>
+            <tr><td>همکار نیمکت</td><td>معرفی ۳ استاد با کد معرف</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <h3>🌟 مدال‌های شاگردان — بر اساس نظرسنجی</h3>
+        <table>
+          <thead><tr><th>مدال</th><th>شرط دریافت</th></tr></thead>
+          <tbody>
+            <tr><td>متمرکز</td><td>≥۵ بازخورد مثبت تمرکز</td></tr>
+            <tr><td>مودب</td><td>≥۵ بازخورد ادب و احترام</td></tr>
+            <tr><td>فعال</td><td>≥۵ بازخورد فعالیت در کلاس</td></tr>
+            <tr><td>آماده</td><td>≥۵ بازخورد آمادگی لازم</td></tr>
+            <tr><td>منظم</td><td>≥۵ بازخورد نظم</td></tr>
+          </tbody>
+        </table>
+        <h4>مدال‌های شاگردان — بر اساس فعالیت</h4>
+        <table>
+          <thead><tr><th>مدال</th><th>شرط</th></tr></thead>
+          <tbody>
+            <tr><td>شاگرد پنج‌ستاره</td><td>۵ بازخورد ۵ ستاره معتبر</td></tr>
+            <tr><td>پرتلاش</td><td>۳ هفته متوالی فعالیت (کلاس/نیمچت/نظرسنجی)</td></tr>
+            <tr><td>همیار نیمکتی</td><td>۱۰ مشارکت مفید تأییدشده</td></tr>
+            <tr><td>همسفر نیمکت</td><td>۳ دعوت موفق (هر دعوت ≥۱ کلاس)</td></tr>
+            <tr><td>پیشرفت</td><td>≥۱۰٪ بهبود شاخص تحصیلی ماهانه</td></tr>
+            <tr><td>پرسشگر</td><td>ثبت ۴ سؤال در پروفایل استاد</td></tr>
+            <tr><td>وفاداری</td><td>Streak ۸ هفته متوالی</td></tr>
+          </tbody>
+        </table>
+        <div class="callout" style="margin-top:12px">
+          <b>قواعد صدور مدال:</b> تاریخ و علت ثبت شود • از صدور تکراری برای همان حدنصاب جلوگیری شود • نمایش در کلاب + (در صورت فعال بودن) پروفایل عمومی • شاخص‌های منفی هرگز عمومی نشود.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- S10 -->
+  <div class="card" id="s10">
+    <h2><span class="num">۱۰</span> جوایز — فروشگاه سکه (Reward Store)</h2>
+    <div class="two-col">
+      <div>
+        <h3>🎁 جوایز شاگردان</h3>
+        <table>
+          <thead><tr><th>جایزه</th><th>سکه</th></tr></thead>
+          <tbody>
+            <tr><td>۵٪ تخفیف کلاس (سقف ۴۰ هزار تومان)</td><td>200</td></tr>
+            <tr><td>۱۰٪ تخفیف (سقف ۷۰ هزار)</td><td>380</td></tr>
+            <tr><td>۲۰٪ تخفیف (سقف ۸۰ هزار)</td><td>600</td></tr>
+            <tr><td>۲۵٪ تخفیف (سقف ۱۰۰ هزار)</td><td>750</td></tr>
+            <tr><td>۳۰٪ تخفیف (سقف ۱۲۰ هزار)</td><td>900</td></tr>
+            <tr><td>۵۰٪ تخفیف (سقف ۲۵۰ هزار)</td><td>1400</td></tr>
+            <tr><td>نیمکت طلایی: ۱ جلسه رایگان با استاد برتر</td><td>3500</td></tr>
+            <tr><td>شارژ کیف پول ۱۰۰ هزار تومان</td><td>900</td></tr>
+            <tr><td>شارژ کیف پول ۲۰۰ هزار تومان</td><td>1700</td></tr>
+            <tr><td>شارژ کیف پول ۳۰۰ هزار تومان</td><td>2500</td></tr>
+            <tr><td>کارت نخبگان/مشاهیر نیمکت</td><td>2000</td></tr>
+            <tr><td>۱ جلسه مشاوره تحصیلی رایگان</td><td>500</td></tr>
+            <tr><td>پک لوازم‌التحریر با هویت نیمکت</td><td>به‌زودی</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <h3>👨‍🏫 جوایز اساتید</h3>
+        <table>
+          <thead><tr><th>جایزه</th><th>سکه</th></tr></thead>
+          <tbody>
+            <tr><td>شارژ کیف پول ۱۰۰ هزار تومان</td><td>500</td></tr>
+            <tr><td>شارژ کیف پول ۲۰۰ هزار تومان</td><td>900</td></tr>
+            <tr><td>شارژ کیف پول ۳۰۰ هزار تومان</td><td>1300</td></tr>
+            <tr><td>معافیت از کمیسیون (۱ جلسه)</td><td>800</td></tr>
+            <tr><td>معافیت از کمیسیون (۲ جلسه)</td><td>1500</td></tr>
+            <tr><td>سفارشی شدن پروفایل (۳ روز)</td><td>3000</td></tr>
+            <tr><td>پک لوازم‌التحریر + تجهیزات کلاس (قلم نوری...)</td><td>به‌زودی</td></tr>
+          </tbody>
+        </table>
+        <div class="callout warn"><b>الزامات کارفرما:</b> هر جایزه باید شامل تصویر، عنوان، توضیح، سکه موردنیاز، موجودی، شرایط دریافت و تاریخ انقضا باشد. جوایز مالی باید سقف بودجه و کنترل هزینه داشته باشند.</div>
+        <div class="callout success"><b>شانس طلایی:</b> جوایز گردونه از همین لیست انتخاب می‌شوند — گردونه جایگزین فروشگاه نیست.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- S11 -->
+  <div class="card" id="s11">
+    <h2><span class="num">۱۱</span> یکپارچه‌سازی کلاب با پلتفرم — ۶ ماژول محرک</h2>
+    <p style="color:#64748b; font-size:13px">کلاب ماژولی مستقل اما یکپارچه است؛ فرآیند موازی نسازد، از رویدادهای معتبر سامانه اصلی تغذیه کند.</p>
+    <table>
+      <thead><tr><th>#</th><th>ماژول مبدأ</th><th>کاربرد اتصال به کلاب</th><th>نمونه رویداد محرک</th></tr></thead>
+      <tbody>
+        <tr><td>۱</td><td>سیستم نظرسنجی</td><td>امتیاز/سکه/مدال بر اساس بازخورد معتبر</td><td>۵ بازخورد مثبت «وقت‌شناسی» → مدال استاد وقت‌شناس</td></tr>
+        <tr><td>۲</td><td>گزارش و امتیاز تحصیلی</td><td>پاداش پیشرفت واقعی + مدال پیشرفت</td><td>۱۰٪+ بهبود ماهانه → اعلان «پیشرفت جدید!» + ۵۰ سکه؛ تکرار ۳بار → مدال</td></tr>
+        <tr><td>۳</td><td>نیمچت</td><td>تشویق مشارکت مفید + مأموریت/مدال</td><td>۱۰ مشارکت مفید (هرکدام ۵ لایک) → مدال همیار؛ هر ۳ مشارکت هفتگی → ۲۰ امتیاز+۵ سکه (سقف‌دار)</td></tr>
+        <tr><td>۴</td><td>سیستم اعلان‌ها</td><td>اطلاع‌رسانی لحظه‌های کلاب</td><td>سطح جدید، نزدیک سطح بعد، مأموریت جدید، Streak، جایزه آماده، دعوت موفق، شانس طلایی</td></tr>
+        <tr><td>۵</td><td>کد معرف / افیلیت</td><td>پاداش معرفی در قالب سکه/امتیاز</td><td>ثبت‌نام معتبر ۳۰ سکه → اولین کلاس دوست ۴۰ سکه → سومین جلسه دوست ۱۲۰ سکه</td></tr>
+        <tr><td>۶</td><td>کلاس و رزرو</td><td>ثبت فعالیت آموزشی و مسیر رشد</td><td>برگزاری موفق کلاس (نه صرف رزرو) → امتیاز/سکه طبق جدول آستانه‌ها</td></tr>
+      </tbody>
+    </table>
+
+    <h3>جزئیات اتصال به اعلان‌ها — ۱۲ اعلان کلیدی</h3>
+    <table>
+      <thead><tr><th>عنوان اعلان</th><th>زمان</th><th>نمونه پیام</th></tr></thead>
+      <tbody>
+        <tr><td>سطح جدید</td><td>در لحظه</td><td>تبریک! به سطح جدید رسیدی</td></tr>
+        <tr><td>نزدیک سطح بعد</td><td>در آستانه</td><td>فقط X امتیاز تا سطح بعد</td></tr>
+        <tr><td>مأموریت جدید</td><td>بر اساس زمان</td><td>مأموریت جدید برای شما فعال شد</td></tr>
+        <tr><td>نزدیک تکمیل مأموریت</td><td>٪ تکمیل بالا</td><td>فقط یک قدم باقی مانده</td></tr>
+        <tr><td>Streak</td><td>هفتگی</td><td>X هفته است در مسیر هستی</td></tr>
+        <tr><td>جایزه آماده</td><td>واجد شرایط</td><td>یک جایزه جدید منتظر شماست</td></tr>
+        <tr><td>ارتقای سطح</td><td>پس از ارتقا</td><td>تبریک! به سطح X رسیدی</td></tr>
+        <tr><td>کسب مدال</td><td>پس از کسب</td><td>شما به عنوان «...» شناخته شدید</td></tr>
+        <tr><td>پیشرفت تحصیلی</td><td>پس از تحقق</td><td>پیشرفت جدید! ۱۲٪ بهتر شدی</td></tr>
+        <tr><td>دعوت موفق</td><td>پس از تحقق</td><td>دوستت اولین کلاسش را برگزار کرد؛ ۴۰ سکه گرفتی</td></tr>
+        <tr><td>شانس طلایی</td><td>واجد شرایط ماهانه</td><td>شانس طلایی تو فعال شد!</td></tr>
+      </tbody>
+    </table>
+    <div class="callout"><b>تأکید کارفرما:</b> شرط «کلاس موفق» باید دقیق تعریف شود (حضور + برگزاری کامل)؛ صرف رزرو/پرداخت کافی نیست. حدنصاب پیشرفت و نوع پاداش قابل تنظیم باشد و برای یک بازه یکسان، پاداش تکراری صادر نشود.</div>
+  </div>
+
+  <!-- S12 -->
+  <div class="card" id="s12">
+    <h2><span class="num">۱۲</span> پنل ادمین کلاب — مدیریت کامل</h2>
+    <p style="color:#64748b; font-size:13px">در پنل ادمین، بخش مستقل «مدیریت نیمکت کلاب» با زیرمنوهای زیر ایجاد شود:</p>
+    <div class="kpi-grid">
+      <div class="kpi"><strong>📊 داشبورد کلاب</strong><p>اعضا، کاربران فعال، سکه توزیع/مصرف‌شده، کاربران هر سطح، مأموریت‌های فعال، جوایز دریافتی</p></div>
+      <div class="kpi"><strong>🪙 مدیریت سکه</strong><p>تعریف فعالیت، مقدار پاداش، سقف، تاریخ اعتبار</p></div>
+      <div class="kpi"><strong>🎯 مدیریت مأموریت</strong><p>ایجاد/ویرایش/توقف/زمان‌بندی/گروه هدف</p></div>
+      <div class="kpi"><strong>🏔️ مدیریت سطوح</strong><p>نام، آیکون، حد امتیاز، مزایا</p></div>
+      <div class="kpi"><strong>🏅 مدیریت مدال‌ها</strong><p>نام، تصویر، شرط دریافت، حدنصاب</p></div>
+      <div class="kpi"><strong>🎁 مدیریت جوایز</strong><p>عنوان، نوع، ارزش، موجودی، سکه موردنیاز، انقضا</p></div>
+      <div class="kpi"><strong>📣 کمپین‌ها/رویداد</strong><p>مثلاً کمپین بازگشایی مدارس — تنظیم قوانین خاص دوره‌ای</p></div>
+    </div>
+    <div class="callout warn"><b>خواسته صریح کارفرما:</b> همه اعداد — از حدنصاب مدال تا سقف نیمچت و سکه هر مأموریت — بدون نیاز به کدنویسی از ادمین قابل تغییر باشد.</div>
+  </div>
+
+  <!-- S13 -->
+  <div class="card" id="s13">
+    <h2><span class="num">۱۳</span> گزارش‌های کلاب — آنچه ادمین باید ببیند</h2>
+    <div class="two-col">
+      <div>
+        <h3>گزارش‌های عملکردی</h3>
+        <ul class="list">
+          <li>چند٪ کاربران عضو فعال کلاب هستند؟</li>
+          <li>چند٪ مأموریت انجام می‌دهند؟</li>
+          <li>میانگین سکه کسب‌شده / مصرف‌شده</li>
+          <li>محبوب‌ترین و کم‌استفاده‌ترین مأموریت</li>
+          <li>محبوب‌ترین جایزه</li>
+          <li>توزیع کاربران در هر سطح</li>
+        </ul>
+      </div>
+      <div>
+        <h3>گزارش‌های اثربخشی</h3>
+        <ul class="list">
+          <li>نرخ بازگشت کاربران کلاب vs. غیرکلاب</li>
+          <li>نرخ رزرو مجدد اعضای کلاب</li>
+          <li>نرخ دعوت موفق</li>
+          <li>هزینه واقعی پاداش‌ها (کنترل بودجه)</li>
+          <li style="background:#fef9c3; padding:6px 10px; border-radius:8px; border:1px solid #fde68a"><b>سؤال طلایی:</b> آیا کلاب واقعاً باعث افزایش استفاده از نیمکت شده است؟</li>
+        </ul>
+      </div>
+    </div>
+    <p style="font-size:12.5px; color:#64748b; margin-top:10px">هدف کلاب صرفاً سرگرمی نیست؛ اثر کسب‌وکاری و آموزشی آن باید قابل اندازه‌گیری باشد.</p>
+  </div>
+
+  <!-- S14 -->
+  <div class="card" id="s14">
+    <h2><span class="num">۱۴</span> الزامات عمومی پلتفرم نیمکت — خلاصه سند SRS (۱۸ شهریور)</h2>
+    <p style="color:#64748b; font-size:13px">برای درک جایگاه کلاب در کل اکوسیستم:</p>
+    <h3>صفحات و ماژول‌های اصلی</h3>
+    <div class="kpi-grid">
+      <div class="kpi"><strong>🏠 صفحه اصلی</strong><p>هدر، اساتید برتر، نوابغ، دوره‌های ترمیک (نمایش نیمکت‌ها مثل بلیت سینما)، نیمچت لایو، چرا نیمکت، مجله، مشاوره، FAQ، شمارنده‌ها</p></div>
+      <div class="kpi"><strong>🔍 جستجو و لیست کلاس</strong><p>سلسله‌مراتبی: شیوه (آنلاین/حضوری) → ماهیت (خصوصی/گروهی/دوستانه) → فیلتر مقطع/رشته/قیمت/زمان؛ کلاس دوستانه تا ۵ نفر با تخفیف پلکانی</p></div>
+      <div class="kpi"><strong>📄 جزئیات کلاس + لندینگ</strong><p>اطلاعات استاد، نظرات، قوانین کنسلی، تست فنی، اتصال اسکای‌روم/فنوتک، پشتیبانی شناور حین کلاس</p></div>
+      <div class="kpi"><strong>👨‍🏫 پروفایل استاد</strong><p>تخصص، سوابق، امتیاز، کلاس‌ها، تقویم، نظرات، ویدئو معرفی (آپارات)</p></div>
+      <div class="kpi"><strong>🧑‍🎓 مای نیمکت (شاگرد/استاد)</strong><p>خانه، پروفایل، کلاس من، تقویم کاری، مالی، فایل‌ها، نظرات، گزارش تحصیلی، نیمپند (نکته روزانه برای اساتید)، افتخارات و سطح‌بندی اساتید</p></div>
+      <div class="kpi"><strong>💬 نیمچت</strong><p>چت شاگرد-استاد (تا ۷۲ ساعت پس از کلاس) + گپ گروهی (عمومی/حضورمحور/دعوت‌محور) + مدیریت کلمات نامناسب</p></div>
+      <div class="kpi"><strong>⭐ نظرسنجی دوسویه</strong><p>۵ ستاره + شاخص توصیفی (مثبت عمومی، منفی فقط ادمین) → اتصال به مدال؛ تشویق به تگ‌گذاری با امتیاز بیشتر</p></div>
+      <div class="kpi"><strong>📈 گزارش تحصیلی</strong><p>۸ شاخص (آمادگی، وقت‌شناسی، تعامل...) با نمودار خطی/ستونی، مقایسه بازه‌ای، نقاط قوت/ضعف</p></div>
+    </div>
+    <h3>پنل مدیریت کلی</h3>
+    <ul class="list">
+      <li>پیشخوان آماری لحظه‌ای، مدیریت اساتید/کاربران، محتوا و آزمون، نیمچت و تیکت، مالی و گزارش جامع، افیلیت (کمیسیون ۵٪ برای ۳ جلسه دعوت)، گیمیفیکیشن و لاگ سیستمی</li>
+      <li>نیمکت شاپ (فاز بعد) — زیرساخت فروشگاه مجازی از ابتدا آماده باشد</li>
+    </ul>
+    <h3>غیرعملکردی و بصری</h3>
+    <ul class="list">
+      <li>کارایی، امنیت تراکنش و چت، پایداری، رابط ساده، سازگاری مرورگر/موبایل</li>
+      <li>پالت آرامش‌بخش بر اساس لوگو + فونت «کلمه» + ریسپانسیو + آیکون‌های باکیفیت + نمودارهای جذاب</li>
+      <li>ثبت‌نام مجزا برای شاگرد/استاد با احراز هویت پیامکی، فرم تفصیلی ۱۲ مرحله‌ای برای اساتید + توافق‌نامه ۷ بندی</li>
+    </ul>
+  </div>
+
+  <!-- S15 -->
+  <div class="card" id="s15">
+    <h2><span class="num">۱۵</span> چک‌لیست تحویل و نکات اجرایی — آنچه تیم فنی باید رعایت کند</h2>
+    <div class="two-col">
+      <div>
+        <h3>الزامات فنی کلاب</h3>
+        <ul class="list">
+          <li>موتور امتیازدهی رویدادمحور (Event-driven) — عدم ثبت مجدد داده</li>
+          <li>سکه و امتیاز در دو فیلد جدا؛ امتیاز هرگز منفی نشود</li>
+          <li>تمام آستانه‌ها، سقف‌ها، پاداش‌ها Configurable از ادمین</li>
+          <li>Idempotency برای جلوگیری از پاداش تکراری (یک بازه، یک پاداش)</li>
+          <li>لاگ کامل تراکنش سکه (علت، مقدار، موجودی پس از)</li>
+          <li>کنترل بودجه جوایز مالی + موجودی + تاریخ انقضا</li>
+          <li>سطح افتخاری سفیر (۱۰۰۰۰+) با مزایای انحصاری</li>
+        </ul>
+      </div>
+      <div>
+        <h3>الزامات تجربه کاربری</h3>
+        <ul class="list">
+          <li>داشبورد کلاب = دسترسی حیاتی در یک نگاه</li>
+          <li>نوار پیشرفت + فاصله عددی + ۵ سطح با «شما اینجا هستید»</li>
+          <li>شاخص‌های منفی هرگز عمومی نشود (فقط ادمین)</li>
+          <li>رقابت لیگ اختیاری اما زیرساخت از روز اول</li>
+          <li>شانس طلایی = سرگرمی (جایگزین فروشگاه نیست)</li>
+          <li>اعلان خودکار برای ۱۲ لحظه کلیدی</li>
+          <li>طراحی بصری جذاب: آیکون سطح، مدال، گردونه، کارت هویتی</li>
+        </ul>
+      </div>
+    </div>
+    <div class="callout success" style="margin-top:16px">
+      <b>جمع‌بندی کارفرما در یک جمله:</b> نیمکت کلاب باید <b>رفتار آموزشی ارزشمند را به رشد قابل مشاهده تبدیل کند</b> — نه خرید را — و هر کاربر در هر لحظه بداند «کجا هستم، قدم بعدی چیست و چطور برسم»، در حالی که تمام قواعد از ادمین قابل کنترل و هزینه‌ها قابل مدیریت باشد.
+    </div>
+    <div style="margin-top:14px; display:flex; gap:10px; flex-wrap:wrap">
+      <span class="tag">📎 اسناد مبدأ: سند کلاب ۵ مهر + SRS ۱۸ شهریور + سطح‌بندی اساتید</span>
+      <span class="tag" style="background:#fef9c3; color:#854d0e">📌 این گزارش جایگزین اسناد نیست؛ چکیده ساختاریافته برای تصمیم‌گیری سریع است</span>
+    </div>
+  </div>
+
+  <div style="text-align:center; padding:14px 0 4px; color:#94a3b8; font-size:12px">تهیه‌شده بر اساس اسناد ارسالی کارفرما • ساختاربندی و دسته‌بندی برای ارائه به تیم محصول و فنی</div>
+</div>
+
+<div class="footer">
+  <div class="container">
+    <strong>نیمکت — پلتفرم جامع آموزش</strong> • نیمکت کلاب: مسیر رشد، نه فقط امتیاز &nbsp;|&nbsp; نسخه گزارش: ۱.۰ — ۲۰ اکتبر ۲۰۲۶ &nbsp;|&nbsp; محرمانه — جهت ارائه داخلی
+  </div>
+</div>
+
+</body>
+</html>

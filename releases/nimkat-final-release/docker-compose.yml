@@ -1,0 +1,29 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    environment:
+      NODE_ENV: production
+      PORT: 8000
+      NIMKAT_SECRET: ${NIMKAT_SECRET:?NIMKAT_SECRET must be set}
+      NIMKAT_DB_PATH: /app/backend/data/nimkat.db
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost}
+    volumes:
+      - nimkat_data:/app/backend/data
+    expose:
+      - "8000"
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  nimkat_data:
