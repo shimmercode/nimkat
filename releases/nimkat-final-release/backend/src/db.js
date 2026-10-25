@@ -3,14 +3,11 @@ const Database = require('better-sqlite3');
 const fs = require('fs');
 const path = require('path');
 
-const DATA_DIR = process.env.NIMKAT_DB_PATH ? path.dirname(path.resolve(process.env.NIMKAT_DB_PATH)) : path.join(__dirname, "..", "data");
-if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true, mode: 0o750 });
+const DATA_DIR = process.env.NIMKAT_DATA_DIR || path.join(__dirname, '..', 'data');
+if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 
-const DB_FILE = process.env.NIMKAT_DB_PATH ? path.resolve(process.env.NIMKAT_DB_PATH) : path.join(DATA_DIR, "nimkat.db");
-const db = new Database(DB_FILE);
-db.pragma("journal_mode = WAL");
-db.pragma("foreign_keys = ON");
-db.pragma("busy_timeout = 5000");
+const db = new Database(path.join(DATA_DIR, 'nimkat.db'));
+db.pragma('journal_mode = WAL');
 
 db.exec(`
 CREATE TABLE IF NOT EXISTS users (
@@ -120,6 +117,47 @@ CREATE TABLE IF NOT EXISTS course_requests (
 );
 CREATE TABLE IF NOT EXISTS coupons (code TEXT PRIMARY KEY, percent INTEGER);
 `);
+
+/* ---------- page builder (editor) ---------- */
+db.exec(`CREATE TABLE IF NOT EXISTS pages (
+  slug TEXT PRIMARY KEY,
+  title TEXT DEFAULT '',
+  schema_json TEXT NOT NULL,
+  status TEXT DEFAULT 'draft',            -- draft | published
+  updated_at TEXT DEFAULT (datetime('now','localtime')),
+  updated_by INTEGER
+)`);
+
+// Additive migration: published content is a separate immutable-until-publish snapshot.
+// Existing published pages are backfilled exactly once, not on every startup.
+if (!db.prepare('PRAGMA table_info(pages)').all().some((c) => c.name === 'published_schema_json')) {
+  db.transaction(() => {
+  db.exec('ALTER TABLE pages ADD COLUMN published_schema_json TEXT');
+  db.exec('ALTER TABLE pages ADD COLUMN published_title TEXT');
+  db.exec("UPDATE pages SET published_schema_json=schema_json, published_title=title WHERE status='published'");
+  })();
+}
+
+db.exec(`CREATE TABLE IF NOT EXISTS page_versions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  page_slug TEXT NOT NULL,
+  schema_json TEXT NOT NULL,
+  label TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now','localtime')),
+  created_by INTEGER
+)`);
+
+db.exec(`CREATE TABLE IF NOT EXISTS templates (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  category TEXT DEFAULT 'عمومی',
+  schema_json TEXT NOT NULL,
+  created_at TEXT DEFAULT (datetime('now','localtime'))
+)`);
+
+/* admin user for the page editor (idempotent) */
+db.prepare('INSERT OR IGNORE INTO users (id, mobile, name, role, subtitle, letter) VALUES (?,?,?,?,?,?)')
+  .run(10, '09120000000', 'مدیر نیمکت', 'admin', 'مدیر محتوای سایت', 'م');
 
 const count = db.prepare('SELECT COUNT(*) c FROM teachers').get().c;
 if (count === 0) seed();

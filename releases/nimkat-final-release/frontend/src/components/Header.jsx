@@ -1,4 +1,7 @@
-import { Link, NavLink, useNavigate } from 'react-router-dom';
+'use client';
+import { Link, useNavigate,useLocation } from '../routing/navigation';
+import { useEffect, useState } from 'react';
+import { DesktopNavigation, MobileNavigation } from './ui/twenty-first/navigation.jsx';
 import { useAuth } from '../auth.jsx';
 import { IconSearch, IconUser, IconBench } from './icons.jsx';
 
@@ -26,36 +29,36 @@ export function Brand({ dark = false, compact = false }) {
 export default function Header() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const {pathname}=useLocation();
+  const editSlug=pathname==='/'?'home':pathname==='/classes'?'classes':/^\/teachers\/\d+$/.test(pathname)?'teacher-'+pathname.split('/').at(-1):/^\/classes\/\d+$/.test(pathname)?'class-'+pathname.split('/').at(-1):pathname==='/blog'?'blog':pathname.startsWith('/blog/')?'article-layout':pathname==='/club'?'club':pathname.startsWith('/p/')?pathname.split('/').at(-1):'home';
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const update = () => setScrolled(window.scrollY > 24);
+    update(); window.addEventListener('scroll', update, { passive: true });
+    return () => window.removeEventListener('scroll', update);
+  }, []);
 
   return (
-    <header className="site-header">
+    <header className="site-header nk-header" data-scrolled={scrolled}>
       <div className="container inner">
         <Brand />
 
-        <nav className="main-nav">
-          <NavLink to="/classes">کلاس‌ها و اساتید</NavLink>
-          <a href="/#group-classes">کلاس‌های گروهی</a>
-          <a href={user ? '/panel/chat' : '/login'}>نیم‌چت</a>
-          <a href={user ? '/panel/club' : '/login'}>نیمکت کلاب</a>
-          <a href="/#parents">ویژه والدین</a>
-          <a href="/#magazine">مجله</a>
-        </nav>
+        <DesktopNavigation user={user} />
 
         <div className="header-actions">
-          <button className="btn-icon-round" aria-label="جستجو" onClick={() => navigate('/classes')}>
+          <button className="btn-icon-round nk-header-search" aria-label="جستجو" onClick={() => navigate('/classes')}>
             <IconSearch size={20} />
           </button>
           {user ? (
             <>
-              <Link to={user.role === 'teacher' ? '/teacher' : '/panel'} className="btn btn-outline">
+              <Link to={user.role === 'admin' ? `/editor/${editSlug}` : user.role === 'teacher' ? '/teacher' : user.role==='parent'?'/parent':'/panel'} className="btn btn-outline">
                 <IconUser size={18} />
-                {user.name.split(' ')[0]}
+                {user.role === 'admin' ? 'ویرایش همین صفحه' : user.name.split(' ')[0]}
               </Link>
               <button
-                className="btn btn-ghost btn-sm"
-                onClick={() => {
-                  logout();
-                  navigate('/');
+                className="btn btn-ghost btn-sm nk-header-logout"
+                onClick={async () => {
+                  if (await logout()) navigate('/');
                 }}
               >
                 خروج
@@ -67,10 +70,11 @@ export default function Header() {
               ورود / ثبت‌نام
             </Link>
           )}
-          <Link to="/login?mode=teacher" className="btn btn-primary">
+          <Link to="/login?mode=teacher" className="btn btn-primary nk-teacher-link">
             استاد شوید
           </Link>
         </div>
+        <MobileNavigation user={user} onLogout={logout} />
       </div>
     </header>
   );
