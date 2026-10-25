@@ -1,15 +1,100 @@
 'use client';
 import { useState } from 'react';
 import { useNavigate } from '../routing/navigation';
-import { IconSearch, IconGlobe, IconMapPin, IconChevronDown } from './icons.jsx';
-const fields = [
-  { key:'kind',label:'نوع کلاس',values:['خصوصی','گروهی','دوستانه'],initial:'خصوصی' },
-  { key:'grade',label:'مقطع',values:['ابتدایی','متوسطه اول','متوسطه دوم','کنکور'],initial:'متوسطه دوم' },
-  { key:'subject',label:'درس',values:['فیزیک','ریاضی','شیمی','زیست‌شناسی','زبان انگلیسی','فارسی'],initial:'فیزیک' },
-];
+import { IconGlobe, IconMapPin, IconSearch } from './icons.jsx';
+import { HERO_SEGMENTS, subjectsForSegment } from '../utils/curriculum.js';
+
+const kinds = ['خصوصی', 'گروهی', 'دوستانه'];
+
 export default function HeroSearch({ data = {} }) {
-  const navigate=useNavigate(),[mode,setMode]=useState('online');
-  const [values,setValues]=useState(()=>Object.fromEntries(fields.map((f,i)=>[f.key,data.searchFields?.[i]?.value||f.initial])));
-  function submit(e){e.preventDefault();const query=new URLSearchParams({...values,mode:mode==='online'?'آنلاین':'حضوری'});const href=data.searchBtnHref||'/classes';const target=href.startsWith('/')&&!href.startsWith('//')?href:'/classes';navigate(`${target.split('?')[0]}?${query}`);}
-  return <form className="hero-search" onSubmit={submit} aria-label="جستجوی کلاس"><div className="top"><div className="segmented" role="group" aria-label="شیوه برگزاری"><button aria-pressed={mode==='online'} className={mode==='online'?'is-active':''} type="button" onClick={()=>setMode('online')}><IconGlobe size={17}/>{data.modeOnlineLabel||'آنلاین'}</button><button aria-pressed={mode==='inperson'} className={mode==='inperson'?'is-active':''} type="button" onClick={()=>setMode('inperson')}><IconMapPin size={17}/>{data.modeInpersonLabel||'حضوری'}</button></div><span className="note">{data.searchNote||'شیوه‌ی برگزاری'} {mode==='online'?'آنلاین':'حضوری'}</span></div><div className="search-bar">{fields.map((f,i)=><label className="sfield hero-select-field" key={f.key}><span className="sf-label">{data.searchFields?.[i]?.label||f.label}</span><select aria-label={f.label} value={values[f.key]} onChange={e=>setValues(v=>({...v,[f.key]:e.target.value}))}>{[...new Set([values[f.key],...f.values])].map(v=><option key={v} value={v}>{v}</option>)}</select><IconChevronDown size={16} className="chev"/></label>)}<button type="submit" className="btn btn-primary hero-search-btn"><IconSearch size={19}/>{data.searchBtnLabel||'جستجو'}</button></div></form>;
+  const navigate = useNavigate();
+  const [mode, setMode] = useState('online');
+  const [kind, setKind] = useState(data.searchFields?.[0]?.value || 'خصوصی');
+  const [grade, setGrade] = useState(data.searchFields?.[1]?.value || 'متوسطه دوم');
+  const validSubjects = subjectsForSegment(grade, false);
+  const initialSubject = data.searchFields?.[2]?.value || 'فیزیک';
+  const [subject, setSubject] = useState(
+    validSubjects.includes(initialSubject) ? initialSubject : validSubjects[0] || 'ریاضی'
+  );
+
+  const handleGradeChange = (nextGrade) => {
+    setGrade(nextGrade);
+    const nextSubjects = subjectsForSegment(nextGrade, false);
+    if (!nextSubjects.includes(subject)) {
+      setSubject(nextSubjects[0] || 'ریاضی');
+    }
+  };
+
+  function submit(e) {
+    e.preventDefault();
+    const params = new URLSearchParams({
+      mode: mode === 'online' ? 'آنلاین' : 'حضوری',
+      kind,
+      grade,
+      subject,
+    });
+    navigate(`/classes?${params.toString()}`);
+  }
+
+  return (
+    <form className="search-box" onSubmit={submit}>
+      <div className="search-modes">
+        <button
+          type="button"
+          className={`mode-pill ${mode === 'online' ? 'is-active' : ''}`}
+          aria-pressed={mode === 'online'}
+          onClick={() => setMode('online')}
+        >
+          <IconGlobe size={16} /> {data.modeOnlineLabel || 'آنلاین'}
+        </button>
+        <button
+          type="button"
+          className={`mode-pill ${mode === 'inperson' ? 'is-active' : ''}`}
+          aria-pressed={mode === 'inperson'}
+          onClick={() => setMode('inperson')}
+        >
+          <IconMapPin size={16} /> {data.modeInpersonLabel || 'حضوری'}
+        </button>
+        <span style={{ marginRight: 'auto', fontSize: 12, color: 'var(--n500)', alignSelf: 'center' }}>
+          {data.searchNote || 'گام ۱ از ۳ · شیوه‌ی برگزاری'}
+        </span>
+      </div>
+      <div className="search-fields">
+        <label className="search-field">
+          <span className="lbl">{data.searchFields?.[0]?.label || 'نوع کلاس'}</span>
+          <select aria-label="نوع کلاس" className="val" value={kind} onChange={(e) => setKind(e.target.value)}>
+            {kinds.map((v) => (
+              <option key={v} value={v}>
+                {v}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="search-field">
+          <span className="lbl">{data.searchFields?.[1]?.label || 'مقطع'}</span>
+          <select aria-label="مقطع" className="val" value={grade} onChange={(e) => handleGradeChange(e.target.value)}>
+            {HERO_SEGMENTS.map((v) => (
+              <option key={v} value={v}>
+                {v}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="search-field">
+          <span className="lbl">{data.searchFields?.[2]?.label || 'درس'}</span>
+          <select aria-label="درس" className="val" value={subject} onChange={(e) => setSubject(e.target.value)}>
+            {validSubjects.map((v) => (
+              <option key={v} value={v}>
+                {v}
+              </option>
+            ))}
+          </select>
+        </label>
+        <button type="submit" className="btn btn-primary" style={{ height: 52 }}>
+          <IconSearch size={18} />
+          {data.searchBtnLabel || 'جستجو'}
+        </button>
+      </div>
+    </form>
+  );
 }

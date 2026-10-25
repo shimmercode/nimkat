@@ -34,6 +34,7 @@ coverage/
 
 # --- Runtime database (auto-seeded on first run) ---
 backend/data/
+releases/nimkat-final-release/backend/data/
 
 # Python tooling
 __pycache__/

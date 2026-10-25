@@ -1,2 +1,3 @@
 import Finance from '../../../../views/panel/Finance.jsx';
-export default function Page(){return <Finance/>;}
+export const metadata = { title: 'کیف پول و امور مالی | پنل شاگرد نیمکت' };
+export default function Page() { return <Finance />; }

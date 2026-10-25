@@ -275,7 +275,7 @@ export function TopTeachersBlock({ node }) {
                   <div className="l">امتیاز</div>
                 </div>
               </div>
-              <Link to={t.href || '/classes'} className="btn btn-outline-green btn-block">مشاهده پروفایل</Link>
+              <Link to={t.href || `/teachers/${t.id || 1}`} className="btn btn-outline-green btn-block">مشاهده پروفایل</Link>
             </div>
           ))}
         </div>
@@ -297,11 +297,11 @@ export const topTeachersSpec = {
     filters: ['همه', 'ریاضی', 'فیزیک', 'زبان انگلیسی', 'ادبیات', 'عربی', 'علوم', 'برنامه‌نویسی'],
     ctaLabel: 'شروع رزرو کلاس با این اساتید', ctaHref: '/classes',
     teachers: [
-      { name: 'سارا محمدی', letter: 'س', color: 'orange', subject: 'ریاضی — متوسطه اول', rank: '۱', rating: '۴٫۹', badges: ['پرفروش', 'وقت‌شناس'], classes: '۱٬۸۷۴', students: '۴۶۲', subjectKey: 'ریاضی' },
-      { name: 'امیر رضایی', letter: 'ا', color: 'green', subject: 'فیزیک — کنکور', rank: '۲', rating: '۴٫۹', badges: ['پرطرفدار', 'متخصص'], classes: '۱٬۳۱۱', students: '۴۰۸', subjectKey: 'فیزیک' },
-      { name: 'نگار سلطانی', letter: 'ن', color: 'green', subject: 'زبان انگلیسی', rank: '۳', rating: '۴٫۸', badges: ['مکالمه', 'کودکان'], classes: '۹۱۷', students: '۲۳۴', subjectKey: 'زبان انگلیسی' },
-      { name: 'حسین نوری', letter: 'ح', color: 'green', subject: 'ریاضی — کنکور', rank: '', rating: '۵٫۰', badges: ['رتبه برتر', 'نخبه'], classes: '۷۴۱', students: '۲۹۸', subjectKey: 'ریاضی' },
-      { name: 'مریم کاظمی', letter: 'م', color: 'orange', subject: 'ادبیات — متوسطه', rank: '', rating: '۴٫۹', badges: ['صبور', 'خلاق'], classes: '۲۸۹', students: '۱۵۶', subjectKey: 'ادبیات' },
+      { id: 1, href: '/teachers/1', name: 'سارا محمدی', letter: 'س', color: 'orange', subject: 'ریاضی — متوسطه اول', rank: '۱', rating: '۴٫۹', badges: ['پرفروش', 'وقت‌شناس'], classes: '۱٬۸۷۴', students: '۴۶۲', subjectKey: 'ریاضی' },
+      { id: 2, href: '/teachers/2', name: 'امیر رضایی', letter: 'ا', color: 'green', subject: 'فیزیک — کنکور', rank: '۲', rating: '۴٫۹', badges: ['پرطرفدار', 'متخصص'], classes: '۱٬۳۱۱', students: '۴۰۸', subjectKey: 'فیزیک' },
+      { id: 3, href: '/teachers/3', name: 'نگار سلطانی', letter: 'ن', color: 'green', subject: 'زبان انگلیسی', rank: '۳', rating: '۴٫۸', badges: ['مکالمه', 'کودکان'], classes: '۹۱۷', students: '۲۳۴', subjectKey: 'زبان انگلیسی' },
+      { id: 6, href: '/teachers/6', name: 'حسین نوری', letter: 'ح', color: 'green', subject: 'ریاضی — کنکور', rank: '', rating: '۵٫۰', badges: ['رتبه برتر', 'نخبه'], classes: '۷۴۱', students: '۲۹۸', subjectKey: 'ریاضی' },
+      { id: 7, href: '/teachers/7', name: 'مریم کاظمی', letter: 'م', color: 'orange', subject: 'ادبیات — متوسطه', rank: '', rating: '۴٫۹', badges: ['صبور', 'خلاق'], classes: '۲۸۹', students: '۱۵۶', subjectKey: 'ادبیات' },
     ],
   },
   fields: [

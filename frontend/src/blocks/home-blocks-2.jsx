@@ -375,7 +375,7 @@ export const magazineSpec = {
   defaults: {
     eyebrow: 'مجله نیمکت', title: 'برای بهتر درس خواندن بخوانید',
     sub: 'راهنمای درس‌خواندن، مدیریت زمان و انتخاب رشته — کوتاه و کاربردی.',
-    moreLabel: 'همه‌ی مطالب مجله', moreHref: '#magazine',
+    moreLabel: 'همه‌ی مطالب مجله', moreHref: '/blog',
     items: [
       { tag: 'مدیریت مطالعه', title: 'برنامه‌ریزی هفتگی برای کنکوری‌ها؛ از کجا شروع کنیم؟', meta0: '۸ دقیقه مطالعه', meta1: '۱۲ مهر', grad: 'linear-gradient(135deg,#0a6847,#21a878)' },
       { tag: 'راهنمای والدین', title: 'چطور پیشرفت فرزندمان را جلسه به جلسه بسنجیم؟', meta0: '۶ دقیقه مطالعه', meta1: '۹ مهر', grad: 'linear-gradient(135deg,#f28a3d,#f6b37a)' },

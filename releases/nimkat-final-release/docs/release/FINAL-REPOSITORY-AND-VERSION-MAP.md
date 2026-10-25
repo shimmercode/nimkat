@@ -1,0 +1,30 @@
+# نقشهٔ مخزن، شاخه‌ها، تگ‌ها و نسخه‌ها (`FINAL-REPOSITORY-AND-VERSION-MAP.md`)
+
+## ۱. مشخصات مخزن و منبع حقیقت (`Source of Truth`)
+
+- **آدرس مخزن GitHub:** `https://github.com/shimmercode/nimkat`
+- **شاخه کاری و انتشار:** `arena/c1a746f9-nimkat`
+- **مسیر منبع حقیقت در محیط کار:** `/home/user/nimkat`
+  - **بک‌اند اصلی:** `/home/user/nimkat/backend` (۱۴ ماژول دامنه + ۱۰۱ جدول SQLite + ۱۱۸ تست خودکار)
+  - **فرانت‌اند اصلی:** `/home/user/nimkat/frontend` (Next.js 16.4.2 App Router + React 19 + Tailwind 4 + ۵۸ مسیر کامپایل‌شده + ۲۳ تست واحد)
+  - **بستهٔ تحویل همگام‌شده:** `/home/user/nimkat/releases/nimkat-final-release` (کپی ۱:۱ و همگام با ریشهٔ مخزن همراه با `SHA256SUMS`)
+
+---
+
+## ۲. جدول کامل تگ‌ها و کامیت‌های تاریخچهٔ مخزن
+
+| تگ / نسخه | هش کامیت (`Commit SHA`) | معماری و محتوا | وضعیت |
+|---|---|---|---|
+| `v1.0.0` | `55e5bbade8aed9f3f57edb2b7a7c3d7c7e7f039d` | نمونهٔ اولیهٔ ۹ صفحه‌ای مبتنی بر React 18 + Vite (`App.jsx`) و بک‌اند تک‌فایلی | آرشیوی (اولیه) |
+| `v1.1.0-rc.1` | `a0dfd2d76529f6d3c48a019aa9b35194cb1ffa58` | مهاجرت به Next.js 16 App Router، ویرایشگر بصری صفحات، نشست‌های `HttpOnly` و ۱۴ ماژول بک‌اند | پیش‌انتشار (`Pre-release`) |
+| `v1.2.0` | `0f26796ab522fce688ff2f511cd28e355ee6837d` | ریشه دارای Next.js 16 بود اما پوشهٔ `releases/nimkat-final-release/` در این تگ هنوز حاوی فرانت‌اند Vite بود | منسوخ‌شده توسط `v1.3.0` |
+| `99c6d69` | `99c6d6976a6b797b98bd6d919e04482c2c069ac0` | همگام‌سازی اولیهٔ ریشه و `releases/nimkat-final-release/` با پلتفرم کامل Next.js 16 | کامیت پایهٔ بازیابی امروز |
+| **`v1.3.0`** | کامیت نهایی روی `arena/c1a746f9-nimkat` | **نسخهٔ نهایی بازیابی‌شده:** رفع تمام نواقص فازهای ۱ تا ۹، افزودن ۱۱ صفحهٔ جدید App Router، ۱۱۸ تست بک‌اند، ۲۳ تست فرانت‌اند، بیلد کامل ۵۸ مسیر و همگام‌سازی ۱:۱ `releases/nimkat-final-release/` | **نسخهٔ نهایی و رسمی (`Latest Release`)** |
+
+---
+
+## ۳. مقایسهٔ مسیرهای بررسی‌شده
+
+1. `/home/user/nimkat` (ریشهٔ مخزن): کامل‌ترین نسخهٔ معتبر محصول و **منبع حقیقت (`Source of Truth`)**.
+2. `/home/user/nimkat/releases/nimkat-final-release`: بستهٔ تحویل مستقل داخل مخزن که اکنون ۱:۱ با `/home/user/nimkat/backend` و `/home/user/nimkat/frontend` همگام‌سازی شده و دارای `SHA256SUMS` به‌روز (`291` فایل) است.
+3. مسیرهای فرضی نام‌برده‌شده در سرنخ‌ها (`nimkat-1.2.0-recovered`، `NIMKAT NODE`، `Nimkat-v1.1.0-rc.2-stage4e.20261021`، `nimkat-source`): پوشه‌هایی با این نام‌ها در سیستم‌فایل فعلی وجود ندارند؛ معادل‌های تاریخی آن‌ها در کامیت‌های گیت (`55e5bba`، `a0dfd2d`، `0f26796` و `99c6d69`) شناسایی و تحلیل شدند.

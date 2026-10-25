@@ -305,8 +305,8 @@ export default function Login() {
 
           <p className="t-small t-muted" style={{ marginTop: 30, textAlign: 'center' }}>
             ورود شما به معنی پذیرش{' '}
-            <a href="#" style={{ color: 'var(--primary)', fontWeight: 700 }}>قوانین و مقررات</a> و{' '}
-            <a href="#" style={{ color: 'var(--primary)', fontWeight: 700 }}>حریم خصوصی</a> نیمکت است.
+            <Link to="/terms" style={{ color: 'var(--primary)', fontWeight: 700 }}>قوانین و مقررات</Link> و{' '}
+            <Link to="/privacy" style={{ color: 'var(--primary)', fontWeight: 700 }}>حریم خصوصی</Link> نیمکت است.
           </p>
         </div>
       </div>

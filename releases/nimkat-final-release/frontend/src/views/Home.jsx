@@ -32,23 +32,23 @@ const SUBJECT_FILTERS = ['همه', 'ریاضی', 'فیزیک', 'زبان انگ�
 
 const TOP_TEACHERS = [
   {
-    name: 'سارا محمدی', letter: 'س', color: 'orange', subject: 'ریاضی — متوسطه اول', rank: 1, rating: '۴٫۹',
+    id: 1, name: 'سارا محمدی', letter: 'س', color: 'orange', subject: 'ریاضی — متوسطه اول', rank: 1, rating: '۴٫۹',
     badges: ['پرفروش', 'وقت‌شناس'], classes: '۱٬۸۷۴', students: '۴۶۲', score: '۴٫۹', subjectKey: 'ریاضی',
   },
   {
-    name: 'امیر رضایی', letter: 'ا', color: 'green', subject: 'فیزیک — کنکور', rank: 2, rating: '۴٫۹',
+    id: 2, name: 'امیر رضایی', letter: 'ا', color: 'green', subject: 'فیزیک — کنکور', rank: 2, rating: '۴٫۹',
     badges: ['پرطرفدار', 'متخصص'], classes: '۱٬۳۱۱', students: '۴۰۸', score: '۴٫۸', subjectKey: 'فیزیک',
   },
   {
-    name: 'نگار سلطانی', letter: 'ن', color: 'green', subject: 'زبان انگلیسی', rank: 3, rating: '۴٫۸',
+    id: 3, name: 'نگار سلطانی', letter: 'ن', color: 'green', subject: 'زبان انگلیسی', rank: 3, rating: '۴٫۸',
     badges: ['مکالمه', 'کودکان'], classes: '۹۱۷', students: '۲۳۴', score: '۴٫۸', subjectKey: 'زبان انگلیسی',
   },
   {
-    name: 'حسین نوری', letter: 'ح', color: 'green', subject: 'ریاضی — کنکور', rank: null, rating: '۵٫۰',
+    id: 6, name: 'حسین نوری', letter: 'ح', color: 'green', subject: 'ریاضی — کنکور', rank: null, rating: '۵٫۰',
     badges: ['رتبه برتر', 'نخبه'], classes: '۷۴۱', students: '۲۹۸', score: '۵٫۰', subjectKey: 'ریاضی',
   },
   {
-    name: 'مریم کاظمی', letter: 'م', color: 'orange', subject: 'ادبیات — متوسطه', rank: null, rating: '۴٫۹',
+    id: 7, name: 'مریم کاظمی', letter: 'م', color: 'orange', subject: 'ادبیات — متوسطه', rank: null, rating: '۴٫۹',
     badges: ['صبور', 'خلاق'], classes: '۲۸۹', students: '۱۵۶', score: '۴٫۹', subjectKey: 'ادبیات',
   },
 ];
@@ -160,7 +160,7 @@ function TeacherCard({ t }) {
           <div className="l">امتیاز</div>
         </div>
       </div>
-      <Link to="/classes" className="btn btn-outline-green btn-block">
+      <Link to={`/teachers/${t.id || 1}`} className="btn btn-outline-green btn-block">
         مشاهده پروفایل
       </Link>
     </div>

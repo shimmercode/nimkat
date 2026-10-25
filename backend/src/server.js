@@ -134,7 +134,15 @@ require('./modules/content/media')(app,{db,auth,requireRole});
 app.get('/api/panel/student',auth,requireRole('student','parent'),panel.overview);
 
 app.post('/api/notifications/:id/cancel', auth, (req, res) => {
+  const id = Number(req.params.id);
   db.prepare('DELETE FROM notifications WHERE id=? AND user_id=?').run(req.params.id, req.user.id);
+  if (Number.isSafeInteger(id)) {
+    db.prepare('INSERT OR IGNORE INTO user_notification_dismissals(user_id, notification_id, created_at) VALUES (?,?,?)').run(
+      req.user.id,
+      id,
+      Date.now()
+    );
+  }
   res.json({ ok: true });
 });
 
@@ -163,9 +171,11 @@ app.post('/api/teacher/reviews/:id/reply', auth, requireRole('teacher'), (req, r
 
 /* ---------- misc ---------- */
 app.post('/api/questions', auth, (req, res) => {
-  const { teacherId, text } = req.body || {};
+  const tid = Number(req.body?.teacherId ?? req.body?.teacher_id);
+  const text = String(req.body?.text || '').trim();
+  if (!Number.isSafeInteger(tid) || !text) return res.status(400).json({ error: 'استاد و متن سوال الزامی است.' });
   db.prepare('INSERT INTO questions (teacher_id,author,text,answer,date_label) VALUES (?,?,?,NULL,?)')
-    .run(teacherId, req.user.name, text, 'هم‌اکنون');
+    .run(tid, req.user.name, text, 'هم‌اکنون');
   res.json({ ok: true });
 });
 
@@ -180,9 +190,14 @@ app.use((err, req, res, next) => {
   res.status(status).json({ error: status >= 500 && status !== 503 ? 'خطای داخلی سرور؛ دوباره تلاش کنید.' : err.message });
 });
 
-const server=app.listen(PORT, '0.0.0.0', () => console.log(`Nimkat API listening on http://0.0.0.0:${PORT}`));
-// Keep backend sockets alive longer than the frontend proxy pool's idle window.
-// Otherwise 6-second support polling can race the default 5-second socket close.
-server.keepAliveTimeout=65000;
-server.headersTimeout=66000;
-server.requestTimeout=30000;
+if (require.main === module && process.env.NIMKAT_AUTO_LISTEN !== 'false') {
+  const server = app.listen(PORT, '0.0.0.0', () => console.log(`Nimkat API listening on http://0.0.0.0:${PORT}`));
+  // Keep backend sockets alive longer than the frontend proxy pool's idle window.
+  // Otherwise 6-second support polling can race the default 5-second socket close.
+  server.keepAliveTimeout = 65000;
+  server.headersTimeout = 66000;
+  server.requestTimeout = 30000;
+}
+
+module.exports = { app, db };
+

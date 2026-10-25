@@ -406,6 +406,7 @@ function seed() {
   insS.run(1, 'تسویهٔ دوره‌ای · ۲۱ جلسه', 5985000, 'واریز شد', '۲۴ شهریور');
 
   db.prepare('INSERT INTO coupons (code,percent) VALUES (?,?)').run('MEHR05', 5);
+  try { db.pragma('wal_checkpoint(TRUNCATE)'); } catch {}
 }
 
 module.exports = db;

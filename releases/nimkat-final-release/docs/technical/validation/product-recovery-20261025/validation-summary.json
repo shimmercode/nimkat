@@ -1,0 +1,29 @@
+{
+  "date": "2026-10-25",
+  "timezone": "Asia/Tehran",
+  "branch": "arena/c1a746f9-nimkat",
+  "committed": false,
+  "pushed": false,
+  "deployed": false,
+  "productionReadiness": false,
+  "baselineTests": {
+    "backend": { "total": 115, "passed": 115, "failed": 0 },
+    "frontend": { "files": 5, "total": 18, "passed": 18, "failed": 0 }
+  },
+  "finalTests": {
+    "backend": { "total": 118, "passed": 118, "failed": 0 },
+    "frontend": { "files": 6, "total": 23, "passed": 23, "failed": 0 },
+    "nextBuild": { "status": "PASS", "routesCompiled": 58, "typescriptErrors": 0 },
+    "playwrightBrowser": {
+      "status": "BLOCKED",
+      "reason": "Chromium binary download from cdn.playwright.dev is blocked by sandbox outbound network policy"
+    }
+  },
+  "externalServiceDependencies": [
+    "SMS OTP commercial provider credentials",
+    "Shaparak / Zarinpal production merchantId",
+    "Skyroom live API credentials & webhook secret",
+    "ClamAV clamd daemon on port 3310",
+    "Final legal counsel sign-off on draft privacy and terms pages"
+  ]
+}

@@ -38,6 +38,11 @@ export default function ClassDetail({ content = {}, preview = false, entityId } 
   const id = entityId || params.id;
   const navigate = useNavigate();
   const [classTitle, setClassTitle] = useState(initialEntity?.class?.title || 'فیزیک یازدهم؛ مفهومی و حل مسئله از پایه');
+  const [classInfo, setClassInfo] = useState(initialEntity?.class || null);
+  const [teacherInfo, setTeacherInfo] = useState(initialEntity?.teacher || null);
+  const [notFoundError, setNotFoundError] = useState(false);
+  const [walletBalance, setWalletBalance] = useState(null);
+  const [payMethod, setPayMethod] = useState('gateway');
   const [level, setLevel] = useState('متوسط');
   const [goal, setGoal] = useState('امتحان نهایی');
   const [sessions, setSessions] = useState(8);
@@ -52,7 +57,7 @@ export default function ClassDetail({ content = {}, preview = false, entityId } 
   const friends=[];
 
   const people = friend ? Math.max(1, friends.length) : 1;
-  const per = quote ? quote.gross / Math.max(1, sessions * people) : 280000;
+  const per = quote ? quote.gross / Math.max(1, sessions * people) : (classInfo?.price || 280000);
   const gross = quote ? quote.gross : per * sessions * people;
   const tierOff = quote ? quote.tier_percent / 100 : (sessions >= 8 ? 0.1 : sessions >= 4 ? 0.05 : 0);
   const friendOff = quote ? quote.friend_percent / 100 : (friend ? 0.2 : 0);
@@ -63,12 +68,25 @@ export default function ClassDetail({ content = {}, preview = false, entityId } 
   const share = quote ? quote.per_person : total / people;
 
   useEffect(() => {
+    setNotFoundError(false);
     api(`/classes/${id || 5}`).then((d) => {
-      if (d.class?.title) {
-        setClassTitle(d.class.title);setClassKind(d.class.kind);
+      if (d.class) {
+        setClassInfo(d.class);
+        if (d.class.title) setClassTitle(d.class.title);
+        setClassKind(d.class.kind);
       }
-    }).catch(() => {});
+      if (d.teacher) setTeacherInfo(d.teacher);
+    }).catch((err) => {
+      if (err?.status === 404 || String(err?.message || '').includes('پیدا نشد')) setNotFoundError(true);
+    });
   }, [id]);
+
+  useEffect(() => {
+    if (!user) { setWalletBalance(null); return; }
+    api('/panel/overview').then((d) => {
+      if (typeof d.wallet === 'number') setWalletBalance(d.wallet);
+    }).catch(() => {});
+  }, [user]);
 
   useEffect(() => {
     let alive = true;
@@ -106,13 +124,13 @@ export default function ClassDetail({ content = {}, preview = false, entityId } 
     }
     if(occurrenceIds.length!==sessions){toast('ابتدا زمان همهٔ جلسات را انتخاب کنید.', 'err');return;}
     setPayBusy(true);
-    const fingerprint = JSON.stringify([id, sessions, people, appliedCoupon, occurrenceIds]);
+    const fingerprint = JSON.stringify([id, sessions, people, appliedCoupon, occurrenceIds, payMethod]);
     const key = paymentAttempt?.fingerprint === fingerprint ? paymentAttempt.key : crypto.randomUUID();
     setPaymentAttempt({ fingerprint, key });
     try {
       const r = await api('/bookings', {
         method: 'POST',
-        body: { classId: Number(id) || 5, sessions, people, coupon: appliedCoupon || undefined, idempotencyKey: key, occurrenceIds },
+        body: { classId: Number(id) || 5, sessions, people, coupon: appliedCoupon || undefined, idempotencyKey: key, occurrenceIds, method: payMethod },
       });
       if (r.status === 'confirmed') { setPaid(r); toast('رزرو تأیید شد'); }
       else if (r.payment?.redirectUrl && r.payment.status === 'pending') window.location.assign(r.payment.redirectUrl);
@@ -122,6 +140,22 @@ export default function ClassDetail({ content = {}, preview = false, entityId } 
       toast(e.message || 'خطا در ثبت رزرو', 'err');
     } finally { setPayBusy(false); }
   };
+
+  if (notFoundError && !classInfo) {
+    return (
+      <div className="container section">
+        <div className="card-soft" style={{ padding: 32, textAlign: 'center' }}>
+          <h1 className="t-h2">کلاس مورد نظر پیدا نشد</h1>
+          <p className="t-small t-muted" style={{ marginTop: 8 }}>
+            ممکن است شناسهٔ کلاس اشتباه باشد یا این کلاس دیگر در فهرست فعال نباشد.
+          </p>
+          <Link to="/classes" className="btn btn-primary" style={{ marginTop: 16 }}>
+            بازگشت به جستجوی کلاس‌ها
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
 
   return (
@@ -281,15 +315,27 @@ export default function ClassDetail({ content = {}, preview = false, entityId } 
                 </div>
               </div>
             ) : (
-              <><SchedulePicker classId={Number(id)||5} count={sessions} selected={occurrenceIds} onChange={setOccurrenceIds} />
-              <button className="btn btn-primary btn-lg btn-block" data-testid="pay-btn" type="button" onClick={payNow} disabled={payBusy}>
-                پرداخت کل رزرو · {faPrice(quote?.total ?? share * people)} تومان
-              </button></>
+              <>
+                <SchedulePicker classId={Number(id)||5} count={sessions} selected={occurrenceIds} onChange={setOccurrenceIds} />
+                <div className="segmented" style={{ width: '100%' }} role="group" aria-label="روش پرداخت">
+                  <button type="button" className={payMethod === 'gateway' ? 'is-active' : ''} onClick={() => setPayMethod('gateway')} style={{ flex: 1, justifyContent: 'center' }}>
+                    درگاه بانکی
+                  </button>
+                  <button type="button" className={payMethod === 'wallet' ? 'is-active' : ''} onClick={() => setPayMethod('wallet')} style={{ flex: 1, justifyContent: 'center' }}>
+                    کیف پول
+                  </button>
+                </div>
+                <button className="btn btn-primary btn-lg btn-block" data-testid="pay-btn" type="button" onClick={payNow} disabled={payBusy}>
+                  پرداخت کل رزرو · {faPrice(quote?.total ?? share * people)} تومان
+                </button>
+              </>
             )}
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span className="field-hint"><IconLock size={14} /> درگاه پرداخت شاپرک</span>
-              <span className="field-hint num">موجودی کیف پول: {faPrice(1240000)} <IconWalletMini /></span>
+              <span className="field-hint num">
+                {walletBalance !== null ? <>موجودی کیف پول: {faPrice(walletBalance)} تومان <IconWalletMini /></> : <Link to="/login" style={{ color: 'var(--primary)', fontWeight: 700 }}>ورود برای مشاهده کیف پول</Link>}
+              </span>
             </div>
           </div>
 
@@ -301,7 +347,7 @@ export default function ClassDetail({ content = {}, preview = false, entityId } 
                 <div className="t-caption t-muted num">پشتیبانی ۰۲۱-۹۱۰۰۴۵۶۰</div>
               </div>
             </div>
-            <span className="chip soft-green" style={{ cursor: 'pointer' }}>چت</span>
+            <button type="button" className="chip soft-green" style={{ cursor: 'pointer', border: 'none' }} onClick={() => window.dispatchEvent(new Event('nimkat:open-support'))}>چت پشتیبانی</button>
           </div>
         </aside>
 
@@ -309,20 +355,24 @@ export default function ClassDetail({ content = {}, preview = false, entityId } 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 22, gridColumn: 1, gridRow: 1 }}>
           <div>
             <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
-              <span className="chip soft-green">کلاس خصوصی</span>
-              <span className="chip outline"><IconGlobe size={14} /> آنلاین</span>
+              <span className="chip soft-green">
+                {classKind === 'group' ? 'کلاس گروهی' : classKind === 'friendly' ? 'کلاس دوستانه' : 'کلاس خصوصی'}
+              </span>
+              <span className="chip outline"><IconGlobe size={14} /> {classInfo?.mode || 'آنلاین'}</span>
             </div>
             <h1 className="t-h2">{classTitle}</h1>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 18, flexWrap: 'wrap' }}>
-              <div className="avatar sq-64">س</div>
+              <div className="avatar sq-64">{(teacherInfo?.name || 'س')[0]}</div>
               <div>
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                  <Link to="/teachers/1" style={{ fontWeight: 800, fontSize: 16 }}>سارا محمدی</Link>
-                  <span className="chip soft-green">متخصص</span>
+                  <Link to={`/teachers/${teacherInfo?.id || classInfo?.teacher_id || 1}`} style={{ fontWeight: 800, fontSize: 16 }}>
+                    {teacherInfo?.name || 'سارا محمدی'}
+                  </Link>
+                  <span className="chip soft-green">{teacherInfo?.level || 'متخصص'}</span>
                 </div>
                 <div className="t-small t-muted" style={{ display: 'flex', gap: 6, alignItems: 'center', marginTop: 4 }}>
-                  <IconStar size={13} style={{ color: 'var(--accent)' }} /> ۴٫۹ از ۳۲۰ نظر ·
-                  <Link to="/teachers/1" style={{ color: 'var(--primary)', fontWeight: 700 }}>مشاهده‌ی پروفایل کامل</Link>
+                  <IconStar size={13} style={{ color: 'var(--accent)' }} /> {faNum(teacherInfo?.rating || classInfo?.rating || 4.9)} از {faNum(teacherInfo?.reviews_count || classInfo?.reviews_count || 320)} نظر ·
+                  <Link to={`/teachers/${teacherInfo?.id || classInfo?.teacher_id || 1}`} style={{ color: 'var(--primary)', fontWeight: 700 }}>مشاهده‌ی پروفایل کامل</Link>
                 </div>
               </div>
             </div>

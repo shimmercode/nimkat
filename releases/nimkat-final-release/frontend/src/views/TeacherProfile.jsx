@@ -23,29 +23,53 @@ export default function TeacherProfile({ content = {}, preview = false, entityId
   const [tier, setTier] = useState(8);
   const [reviewData,setReviewData]=useState(initialEntity?.reviews||null);
   const [teacher, setTeacher] = useState(initialEntity?.teacher || null);
+  const [questions, setQuestions] = useState(initialEntity?.questions || []);
+  const [notFoundError, setNotFoundError] = useState(false);
   const [askOpen, setAskOpen] = useState(false);
   const [askText, setAskText] = useState('');
   const [asked, setAsked] = useState(false);
-  const [helpful, setHelpful] = useState({});
   const tName = teacher?.name || 'سارا محمدی';
 
   useEffect(() => {
+    setNotFoundError(false);
     api(`/teachers/${id || 1}/reviews`).then(setReviewData).catch(()=>setReviewData(null));
-    api(`/teachers/${id || 1}`).then((d) => { if (d.teacher) setTeacher(d.teacher); }).catch(() => {});
+    api(`/teachers/${id || 1}`).then((d) => {
+      if (d.teacher) setTeacher(d.teacher);
+      if (Array.isArray(d.questions)) setQuestions(d.questions);
+    }).catch((err) => {
+      if (err?.status === 404 || String(err?.message || '').includes('پیدا نشد')) setNotFoundError(true);
+    });
   }, [id]);
 
   const sendQuestion = async () => {
     if (!askText.trim()) { toast('متن سوال را بنویسید', 'err'); return; }
     try {
-      await api('/questions', { method: 'POST', body: { teacher_id: Number(id) || 1, text: askText.trim() } });
+      await api('/questions', { method: 'POST', body: { teacherId: Number(id) || 1, teacher_id: Number(id) || 1, text: askText.trim() } });
       setAsked(true);
       setAskOpen(false);
       setAskText('');
       toast('سوال شما برای استاد ارسال شد ✓');
+      api(`/teachers/${id || 1}`).then((d) => { if (Array.isArray(d.questions)) setQuestions(d.questions); }).catch(() => {});
     } catch (e) {
       toast(e.message || 'خطا در ارسال سوال', 'err');
     }
   };
+
+  if (notFoundError && !teacher) {
+    return (
+      <div className="container section">
+        <div className="card-soft" style={{ padding: 32, textAlign: 'center' }}>
+          <h1 className="t-h2">استاد مورد نظر پیدا نشد</h1>
+          <p className="t-small t-muted" style={{ marginTop: 8 }}>
+            ممکن است شناسهٔ استاد اشتباه باشد یا پروفایل ایشان دیگر فعال نباشد.
+          </p>
+          <Link to="/classes" className="btn btn-primary" style={{ marginTop: 16 }}>
+            بازگشت به فهرست اساتید و کلاس‌ها
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -65,7 +89,7 @@ export default function TeacherProfile({ content = {}, preview = false, entityId
           <div className="tp-card">
             <div style={{ position: 'relative' }}>
               <div className="avatar sq-88" style={{ width: 128, height: 128, fontSize: 46, borderRadius: 'var(--r-2xl)' }}>
-                س
+                {tName[0] || 'س'}
               </div>
               <span className="avatar-verified" style={{ width: 36, height: 36, bottom: -6, left: -6 }}>
                 <IconShield size={19} />
@@ -75,12 +99,12 @@ export default function TeacherProfile({ content = {}, preview = false, entityId
             <div>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 10 }}>
                 <span className="chip dark">۲ برتر ماه</span>
-                <span className="chip soft-green">سطح: متخصص</span>
+                <span className="chip soft-green">سطح: {teacher?.level || 'متخصص'}</span>
                 <span className="chip outline"><IconGlobe size={14} /> آنلاین و حضوری</span>
               </div>
               <h1 className="t-h2">{tName}</h1>
               <p className="t-muted" style={{ marginTop: 10 }}>
-                دبیر فیزیک و ریاضی متوسطه دوم · کارشناسی ارشد فیزیک از دانشگاه صنعتی شریف
+                {teacher?.title || 'دبیر فیزیک و ریاضی متوسطه دوم · کارشناسی ارشد فیزیک از دانشگاه صنعتی شریف'}
               </p>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 16 }}>
                 {['فیزیک دهم تا دوازدهم', 'ریاضی نهم', 'حل تمرین', 'آمادگی امتحان نهایی', 'کنکور ریاضی'].map((c) => (
@@ -156,9 +180,9 @@ export default function TeacherProfile({ content = {}, preview = false, entityId
             <div className="book-box" id="book">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                  <div className="t-caption t-muted">هر جلسه‌ی ۹۰ دقیقه</div>
+                  <div className="t-caption t-muted">هر جلسه‌ی {faNum(teacher?.session_minutes || 90)} دقیقه</div>
                   <div style={{ fontSize: 24, fontWeight: 900 }} className="num">
-                    {faPrice(280000)}
+                    {faPrice(teacher?.price || 280000)}
                   </div>
                   <div className="t-caption t-muted">تومان</div>
                 </div>
@@ -314,6 +338,28 @@ export default function TeacherProfile({ content = {}, preview = false, entityId
             </div>
 
             <PublicTeacherReviews teacherId={id||1} initialData={reviewData}/>
+
+            {questions.length > 0 && (
+              <div className="card" id="qa" style={{ borderRadius: 'var(--r-2xl)', padding: 30 }}>
+                <h2 className="t-h3">پرسش و پاسخ با استاد ({faNum(questions.length)})</h2>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 16 }}>
+                  {questions.map((q) => (
+                    <div key={q.id || q.text} className="card-soft" style={{ padding: 16 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                        <b>{q.author || 'شاگرد'}</b>
+                        <span className="t-muted">{q.date_label || ''}</span>
+                      </div>
+                      <p style={{ marginTop: 6, fontSize: 14 }}>{q.text}</p>
+                      {q.answer && (
+                        <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--border)', fontSize: 13.5, color: 'var(--primary)' }}>
+                          <b>پاسخ استاد:</b> {q.answer}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
           </div>
         </div>

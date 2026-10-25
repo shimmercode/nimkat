@@ -14,6 +14,9 @@ function chatModule(app, { db, auth, requireRole, settings, events, now = Date.n
   CREATE INDEX IF NOT EXISTS chat_posts_room ON chat_posts(room_id,id);
   CREATE TABLE IF NOT EXISTS chat_reports (
     id INTEGER PRIMARY KEY AUTOINCREMENT,message_id INTEGER NOT NULL,reporter_id INTEGER NOT NULL,reason TEXT NOT NULL,status TEXT NOT NULL DEFAULT 'open',created_at INTEGER NOT NULL,UNIQUE(message_id,reporter_id)
+  );
+  CREATE TABLE IF NOT EXISTS chat_user_settings (
+    user_id INTEGER NOT NULL,room_id TEXT NOT NULL,notify_all INTEGER NOT NULL DEFAULT 1,sound INTEGER NOT NULL DEFAULT 1,preview INTEGER NOT NULL DEFAULT 1,teacher_only INTEGER NOT NULL DEFAULT 0,updated_at INTEGER NOT NULL,PRIMARY KEY(user_id,room_id)
   );`);
   db.prepare("INSERT OR IGNORE INTO chat_rooms (id,title,kind,source_key,created_at) VALUES ('community','گپ عمومی نیمکت','community','community',?)").run(now());
   require('./membership').membershipModule(app,{db,auth,requireRole,settings,events,now});
@@ -45,7 +48,18 @@ function chatModule(app, { db, auth, requireRole, settings, events, now = Date.n
     const escaped = query.replace(/[\\%_]/g, (c) => `\\${c}`);
     const posts = db.prepare(`SELECT p.id,p.sender_id,p.text,p.created_at,p.deleted_at,u.name,u.role,(SELECT COUNT(*) FROM chat_reactions cr WHERE cr.message_id=p.id) likes, EXISTS(SELECT 1 FROM chat_reactions cr WHERE cr.message_id=p.id AND cr.user_id=?) liked FROM chat_posts p JOIN users u ON u.id=p.sender_id WHERE p.room_id=? AND p.id<? AND (p.text LIKE ? ESCAPE '\\' OR ?='') ORDER BY p.id DESC LIMIT 50`).all(req.user.id, room.id, before, `%${escaped}%`, query).reverse().map((post) => ({ ...post, text: post.deleted_at ? 'این پیام حذف شده است.' : post.text }));
     const people = db.prepare('SELECT u.id,u.name,u.role,m.last_read_id,m.role room_role FROM chat_members m JOIN users u ON u.id=m.user_id WHERE m.room_id=?').all(room.id).map((row) => ({ ...row, online: events.isOnline(row.id) }));
-    res.json({ chat: room, messages: posts, members: people, hasMore: posts.length === 50, closed: !!room.closes_at && room.closes_at <= now() });
+    const prefs = db.prepare('SELECT notify_all,sound,preview,teacher_only FROM chat_user_settings WHERE user_id=? AND room_id=?').get(req.user.id, room.id) || { notify_all: 1, sound: 1, preview: 1, teacher_only: 0 };
+    res.json({ chat: room, messages: posts, members: people, settings: { notifyAll: !!prefs.notify_all, sound: !!prefs.sound, preview: !!prefs.preview, teacherOnly: !!prefs.teacher_only }, hasMore: posts.length === 50, closed: !!room.closes_at && room.closes_at <= now() });
+  }));
+  app.put('/api/chats/:id/settings', auth, safe((req, res) => {
+    const room = roomFor(req.params.id, req.user.id);
+    const b = req.body || {};
+    const notifyAll = b.notifyAll !== false ? 1 : 0;
+    const sound = b.sound !== false ? 1 : 0;
+    const preview = b.preview !== false ? 1 : 0;
+    const teacherOnly = b.teacherOnly === true ? 1 : 0;
+    db.prepare('INSERT INTO chat_user_settings (user_id,room_id,notify_all,sound,preview,teacher_only,updated_at) VALUES (?,?,?,?,?,?,?) ON CONFLICT(user_id,room_id) DO UPDATE SET notify_all=excluded.notify_all,sound=excluded.sound,preview=excluded.preview,teacher_only=excluded.teacher_only,updated_at=excluded.updated_at').run(req.user.id, room.id, notifyAll, sound, preview, teacherOnly, now());
+    res.json({ ok: true, settings: { notifyAll: !!notifyAll, sound: !!sound, preview: !!preview, teacherOnly: !!teacherOnly } });
   }));
   const sendLimits = new Map(), typingLimits = new Map();
   app.post('/api/chats/:id/messages', auth, safe((req, res) => {
