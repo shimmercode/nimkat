@@ -1,0 +1,36 @@
+## UI Pro Max Search Results
+**Domain:** ux | **Query:** reduced motion scroll reveal
+**Source:** ux-guidelines.csv | **Found:** 3 results
+
+### Result 1
+- **Category:** Animation
+- **Issue:** Reduced Motion
+- **Platform:** All
+- **Description:** Respect user's motion preferences
+- **Do:** Check prefers-reduced-motion media query
+- **Don't:** Ignore accessibility motion settings
+- **Code Example Good:** @media (prefers-reduced-motion: reduce)
+- **Code Example Bad:** No motion query check
+- **Severity:** High
+
+### Result 2
+- **Category:** Accessibility
+- **Issue:** Motion Sensitivity
+- **Platform:** All
+- **Description:** Parallax/Scroll-jacking causes nausea
+- **Do:** Honor prefers-reduced-motion and present the final readable state without parallax or scroll-jacking
+- **Don't:** Force scroll effects
+- **Code Example Good:** @media (prefers-reduced-motion)
+- **Code Example Bad:** ScrollTrigger.create()
+- **Severity:** High
+
+### Result 3
+- **Category:** Navigation
+- **Issue:** Smooth Scroll
+- **Platform:** Web
+- **Description:** Anchor links should scroll smoothly to target section
+- **Do:** Use scroll-behavior: smooth on html element
+- **Don't:** Jump directly without transition
+- **Code Example Good:** html { scroll-behavior: smooth; }
+- **Code Example Bad:** <a href='#section'> without CSS
+- **Severity:** High

@@ -1,0 +1,17 @@
+/* No preflight: preserve the approved PDF layout and existing component CSS.
+   Prefix utilities so legacy classes (container, hidden, etc.) remain intact. */
+@layer theme, base, components, utilities;
+@import 'tailwindcss/theme.css' layer(theme) prefix(tw);
+@import 'tailwindcss/utilities.css' layer(utilities) prefix(tw);
+@source '../';
+@theme {
+  --color-primary: #0A6847;
+  --color-primary-900: #053D29;
+  --color-fresh: #21A878;
+  --color-accent: #F28A3D;
+  --color-neutral-50: #F3F6F4;
+  --color-neutral-200: #D9E1DE;
+  --color-neutral-700: #46514D;
+  --color-neutral-900: #17211E;
+  --font-sans: 'YekanBakh', sans-serif;
+}
