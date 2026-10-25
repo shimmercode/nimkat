@@ -7,6 +7,11 @@ import { useState } from 'react';
 import { Link } from '../routing/navigation';
 import heroStudent from '../assets/hero-student.png';
 import heroTeacher from '../assets/hero-teacher.png';
+import qlTeachers from '../assets/ql-teachers.png';
+import qlStudents from '../assets/ql-students.png';
+import qlDiscounts from '../assets/ql-discounts.png';
+import qlClub from '../assets/ql-club.png';
+import qlRecords from '../assets/ql-records.png';
 import {
   IconSearch, IconGlobe, IconMapPin, IconStar, IconLock, IconRefresh, IconCap, IconCrown,
   IconBulb, IconTag, IconBench, IconCoins, IconUsers, IconUserPlus, IconCalendar,
@@ -35,14 +40,20 @@ function Stars({ n = 5 }) {
 }
 
 /* ================= HERO ================= */
+const QL_ILLUST_MAP = {
+  'اساتید برتر': qlTeachers,
+  'نوابغ نیمکت': qlStudents,
+  'تخفیف‌ها': qlDiscounts,
+  'نیمکت کلاب': qlClub,
+  'رکوردها': qlRecords,
+};
+
 export function HeroBlock({ node, editorPreview = false }) {
   const d = node.props;
-  const [mode, setMode] = useState('online');
   return (
-    <HeroFrame editorPreview={editorPreview}>
+    <section className={`hero ${editorPreview ? 'nk-hero-editor' : ''}`}>
       <div className="container hero-grid hero-wide">
         <div>
-          <HeroEyebrow label={d.eyebrowLabel} href={d.eyebrowHref} />
           <h1>
             {d.titleLine1}
             <br />
@@ -74,18 +85,27 @@ export function HeroBlock({ node, editorPreview = false }) {
       </div>
 
       <div className="container quick-links hero-wide">
-        {(d.quickLinks || []).map((q) => (
-          <Link to={q.to} className="quick-card" key={q.title}>
-            <span className={`quick-icon ${q.orange ? 'orange' : ''}`}>
-              <Ic name={q.icon} size={28} />
-              {q.pin && <i className="pin">✦</i>}
-            </span>
-            <b>{q.title}</b>
-            <span>{q.sub}</span>
-          </Link>
-        ))}
+        {(d.quickLinks || []).map((q) => {
+          const illust = QL_ILLUST_MAP[q.title];
+          return (
+            <Link to={q.to} className="quick-card" key={q.title}>
+              <span className={`quick-icon ${q.orange ? 'orange' : ''} ${illust ? 'has-illust' : ''}`}>
+                {illust ? (
+                  <img className="quick-illust" src={illust.src || illust} alt="" aria-hidden="true" />
+                ) : (
+                  <>
+                    <Ic name={q.icon} size={28} />
+                    {q.pin && <i className="pin">✦</i>}
+                  </>
+                )}
+              </span>
+              <b>{q.title}</b>
+              <span>{q.sub}</span>
+            </Link>
+          );
+        })}
       </div>
-    </HeroFrame>
+    </section>
   );
 }
 

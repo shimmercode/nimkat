@@ -115,6 +115,16 @@ describe('Phase 1–9 Frontend Product Recovery & Route Integrity', () => {
     expect(home).toContain('<section className="hero">');
     expect(home).not.toContain('<HeroFrame>');
     expect(home).not.toContain('<ActionPanel');
+    for (const qlAsset of ['ql-teachers.png', 'ql-students.png', 'ql-discounts.png', 'ql-club.png', 'ql-records.png']) {
+      expect(home).toContain(qlAsset);
+    }
+
+    const heroSearch = fs.readFileSync(path.join(ROOT, 'src/components/HeroSearch.jsx'), 'utf8');
+    expect(heroSearch).toContain('className="hero-search"');
+    expect(heroSearch).toContain('className="segmented"');
+    expect(heroSearch).toContain('className="search-bar"');
+    expect(heroSearch).toContain('className="sfield hero-select-field"');
+    expect(heroSearch).toContain('hero-search-btn');
 
     const clubTeaser = fs.readFileSync(path.join(ROOT, 'src/components/ClubTeaser.jsx'), 'utf8');
     expect(clubTeaser).toContain('هر کلاس، یک قدم تا نیمکت طلایی');

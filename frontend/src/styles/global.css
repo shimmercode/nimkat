@@ -358,20 +358,20 @@ button.chip { cursor: pointer; transition: all 0.15s ease; }
 .hero .lead { font-size: 18px; line-height: 2.15; color: var(--muted); margin-top: 16px; max-width: 600px; }
 
 .hero-visual { position: relative; height: 612px; }
-.hero-photo { position: absolute; }
-.hero-visual .photo-1 { width: 269px; height: 368px; top: 13px; right: -1px; }
-.hero-visual .photo-2 { width: 315px; height: 490px; top: 116px; left: -8px; }
+.hero-photo { position: absolute; object-fit: contain; }
+.hero-visual .photo-1 { width: 260px; height: 359px; top: 37px; right: 0; z-index: 1; }
+.hero-visual .photo-2 { width: 329px; height: 394px; top: 218px; left: -8px; z-index: 1; }
 .bubble {
-  position: absolute; background: var(--white); border-radius: 16px; padding: 12px 14px;
-  font-size: 12px; font-weight: 700; color: var(--ink); text-align: center;
+  position: absolute; background: var(--white); border-radius: 15px 15px 3px 15px; padding: 11px 16px;
+  font-size: 14px; font-weight: 700; color: var(--ink); text-align: center;
   box-shadow: 0 10px 28px rgba(23, 33, 30, 0.14);
   white-space: nowrap; z-index: 2;
 }
-.bubble.dark { background: var(--n700); color: #fff; }
-.bubble.b1 { top: 1px; right: 270px; width: 222px; }
-.bubble.b2 { top: 60px; right: 270px; width: 174px; }
-.bubble.b3 { top: 121px; right: 303px; width: 230px; height: 76px; white-space: normal; line-height: 1.95; padding: 12px 14px; display: flex; align-items: center; justify-content: center; }
-.bubble.b4 { top: 210px; right: 293px; width: 239px; }
+.bubble.dark { background: var(--n700); color: #fff; border-radius: 15px 15px 15px 3px; }
+.bubble.b1 { top: 11px; right: 270px; width: 222px; }
+.bubble.b2 { top: 72px; right: 270px; width: 174px; }
+.bubble.b3 { top: 133px; right: 303px; width: 230px; height: 74px; white-space: normal; line-height: 1.85; padding: 12px 16px; display: flex; align-items: center; justify-content: center; text-align: right; }
+.bubble.b4 { top: 223px; right: 292px; width: 239px; }
 
 .hero-search {
   margin-top: 24px; background: var(--white); border: 1px solid var(--border);
@@ -412,6 +412,17 @@ button.chip { cursor: pointer; transition: all 0.15s ease; }
 .quick-icon {
   width: 62px; height: 62px; border-radius: var(--r-lg); display: grid; place-items: center;
   background: #E8ECEA; color: var(--primary); position: relative;
+}
+.quick-icon.has-illust {
+  background: transparent;
+  width: 60px;
+  height: 64px;
+}
+.quick-illust {
+  width: 57px;
+  height: 63px;
+  object-fit: contain;
+  display: block;
 }
 .quick-icon.orange { background: var(--accent-50); color: var(--accent-800); }
 .quick-icon .pin {

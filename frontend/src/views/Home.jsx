@@ -7,6 +7,11 @@ import PageRenderer from '../render/PageRenderer.jsx';
 import { Link } from '../routing/navigation';
 import heroStudent from '../assets/hero-student.png';
 import heroTeacher from '../assets/hero-teacher.png';
+import qlTeachers from '../assets/ql-teachers.png';
+import qlStudents from '../assets/ql-students.png';
+import qlDiscounts from '../assets/ql-discounts.png';
+import qlClub from '../assets/ql-club.png';
+import qlRecords from '../assets/ql-records.png';
 import {
   IconSearch, IconGlobe, IconMapPin, IconStar, IconLock, IconRefresh, IconCap, IconCrown,
   IconBulb, IconTag, IconBench, IconCoins, IconGift, IconUsers, IconUserPlus, IconCalendar,
@@ -19,11 +24,11 @@ import { toast } from '../utils/toast.js';
 
 /* ---------------- data (per Home page.pdf) ---------------- */
 const QUICK_LINKS = [
-  { icon: IconMedal, title: 'اساتید برتر', sub: 'پروفایل و امتیاز', to: '/classes', orange: false, pin: true },
-  { icon: IconBulb, title: 'نوابغ نیمکت', sub: 'برترین‌های ماه', to: '/#top-students', orange: false, pin: true },
-  { icon: IconTag, title: 'تخفیف‌ها', sub: 'پیشنهادهای ویژه', to: '/#group-classes', orange: false, pin: true },
-  { icon: IconBench, title: 'نیمکت کلاب', sub: 'باشگاه مشتریان', to: '/#club', orange: false, pin: false },
-  { icon: IconCrown, title: 'رکوردها', sub: 'آمار نیمکت', to: '/#stats', orange: false, pin: true },
+  { icon: IconMedal, illust: qlTeachers, title: 'اساتید برتر', sub: 'پروفایل و امتیاز', to: '/classes', orange: false, pin: true },
+  { icon: IconBulb, illust: qlStudents, title: 'نوابغ نیمکت', sub: 'برترین‌های ماه', to: '/#top-students', orange: false, pin: true },
+  { icon: IconTag, illust: qlDiscounts, title: 'تخفیف‌ها', sub: 'پیشنهادهای ویژه', to: '/#group-classes', orange: false, pin: true },
+  { icon: IconBench, illust: qlClub, title: 'نیمکت کلاب', sub: 'باشگاه مشتریان', to: '/#club', orange: false, pin: false },
+  { icon: IconCrown, illust: qlRecords, title: 'رکوردها', sub: 'آمار نیمکت', to: '/#stats', orange: false, pin: true },
 ];
 
 const SUBJECT_FILTERS = ['همه', 'ریاضی', 'فیزیک', 'زبان انگلیسی', 'ادبیات', 'عربی', 'علوم', 'برنامه‌نویسی'];
@@ -315,8 +320,8 @@ export default function Home({ initialSchema = null } = {}) {
             <img className="hero-photo photo-1" src={heroStudent.src || heroStudent} alt="شاگرد نیمکت" />
             <img className="hero-photo photo-2" src={heroTeacher.src || heroTeacher} alt="استاد نیمکت" />
             <div className="bubble b1">توی درس ریاضی مشکل دارم</div>
-            <div className="bubble b2">می‌تونید کمکم کنید؟</div>
-            <div className="bubble dark b3">ما در نیمکت برای کمک به شما<br />آماده‌ایم</div>
+            <div className="bubble b2">میتونید کمکم کنید؟</div>
+            <div className="bubble dark b3">ما در نیمکت برای کمک به شما<br />آماده ایم</div>
             <div className="bubble dark b4">اولین کلاس خودتون رو رزرو کنید</div>
           </div>
         </div>
@@ -325,9 +330,15 @@ export default function Home({ initialSchema = null } = {}) {
         <div className="container quick-links hero-wide">
           {QUICK_LINKS.map((q) => (
             <Link to={q.to} className="quick-card" key={q.title}>
-              <span className={`quick-icon ${q.orange ? 'orange' : ''}`}>
-                <q.icon size={28} />
-                {q.pin && <i className="pin">✦</i>}
+              <span className={`quick-icon ${q.orange ? 'orange' : ''} ${q.illust ? 'has-illust' : ''}`}>
+                {q.illust ? (
+                  <img className="quick-illust" src={q.illust.src || q.illust} alt="" aria-hidden="true" />
+                ) : (
+                  <>
+                    <q.icon size={28} />
+                    {q.pin && <i className="pin">✦</i>}
+                  </>
+                )}
               </span>
               <b>{q.title}</b>
               <span>{q.sub}</span>
