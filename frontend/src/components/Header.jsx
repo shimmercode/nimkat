@@ -1,11 +1,10 @@
 'use client';
-import { Link, useNavigate,useLocation } from '../routing/navigation';
-import { useEffect, useState } from 'react';
-import { DesktopNavigation, MobileNavigation } from './ui/twenty-first/navigation.jsx';
+import { NavLink, Link, useNavigate } from '../routing/navigation';
 import { useAuth } from '../auth.jsx';
-import { IconSearch, IconUser, IconBench } from './icons.jsx';
+import { IconBench, IconSearch, IconUser } from './icons.jsx';
+import { MobileNavigation } from './ui/twenty-first/navigation.jsx';
 
-export function Brand({ dark = false, compact = false }) {
+export function Brand({ dark = false }) {
   return (
     <Link to="/" className="brand">
       <span className="brand-logo">
@@ -13,14 +12,12 @@ export function Brand({ dark = false, compact = false }) {
         <i className="dot" />
       </span>
       <span>
-        <span className="brand-name" style={dark ? { color: '#fff' } : undefined}>
+        <span className="brand-name" style={dark ? { color: '#fff' } : {}}>
           نیمکت
         </span>
-        {!compact && (
-          <span className="brand-tag" style={{ display: 'block' }}>
-            پلتفرم آموزش آنلاین و حضوری
-          </span>
-        )}
+        <span className="brand-tag" style={{ display: 'block' }}>
+          پلتفرم آموزش آنلاین و حضوری
+        </span>
       </span>
     </Link>
   );
@@ -29,38 +26,60 @@ export function Brand({ dark = false, compact = false }) {
 export default function Header() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const {pathname}=useLocation();
-  const editSlug=pathname==='/'?'home':pathname==='/classes'?'classes':/^\/teachers\/\d+$/.test(pathname)?'teacher-'+pathname.split('/').at(-1):/^\/classes\/\d+$/.test(pathname)?'class-'+pathname.split('/').at(-1):pathname==='/blog'?'blog':pathname.startsWith('/blog/')?'article-layout':pathname==='/club'?'club':pathname.startsWith('/p/')?pathname.split('/').at(-1):'home';
-  const [scrolled, setScrolled] = useState(false);
-  useEffect(() => {
-    const update = () => setScrolled(window.scrollY > 24);
-    update(); window.addEventListener('scroll', update, { passive: true });
-    return () => window.removeEventListener('scroll', update);
-  }, []);
+
+  const panelPath =
+    user?.role === 'teacher'
+      ? '/teacher'
+      : user?.role === 'admin'
+        ? '/admin/analytics'
+        : user?.role === 'parent'
+          ? '/parent'
+          : '/panel';
+
+  const chatPath = user
+    ? user.role === 'teacher'
+      ? '/teacher/chat'
+      : '/panel/chat'
+    : '/login?next=/panel/chat';
 
   return (
-    <header className="site-header nk-header" data-scrolled={scrolled}>
+    <header className="site-header">
       <div className="container inner">
         <Brand />
 
-        <DesktopNavigation user={user} />
+        <nav className="main-nav" aria-label="منوی اصلی">
+          <NavLink to="/classes" className={({ isActive }) => (isActive ? 'active' : '')}>
+            کلاس‌ها و اساتید
+          </NavLink>
+          <Link to="/classes?kind=گروهی">کلاس‌های گروهی</Link>
+          <Link to={chatPath}>نیم‌چت</Link>
+          <NavLink to="/club" className={({ isActive }) => (isActive ? 'active' : '')}>
+            نیمکت کلاب
+          </NavLink>
+          <NavLink to="/parent-guide" className={({ isActive }) => (isActive ? 'active' : '')}>
+            ویژه والدین
+          </NavLink>
+          <NavLink to="/blog" className={({ isActive }) => (isActive ? 'active' : '')}>
+            مجله
+          </NavLink>
+        </nav>
 
         <div className="header-actions">
-          <button className="btn-icon-round nk-header-search" aria-label="جستجو" onClick={() => navigate('/classes')}>
+          <button
+            className="btn-icon-round"
+            type="button"
+            aria-label="جستجو"
+            onClick={() => navigate('/classes')}
+          >
             <IconSearch size={20} />
           </button>
           {user ? (
             <>
-              <Link to={user.role === 'admin' ? `/editor/${editSlug}` : user.role === 'teacher' ? '/teacher' : user.role==='parent'?'/parent':'/panel'} className="btn btn-outline">
+              <Link to={panelPath} className="btn btn-outline">
                 <IconUser size={18} />
-                {user.role === 'admin' ? 'ویرایش همین صفحه' : user.name.split(' ')[0]}
+                {user.name || 'پنل من'}
               </Link>
-              <button
-                className="btn btn-ghost btn-sm nk-header-logout"
-                onClick={async () => {
-                  if (await logout()) navigate('/');
-                }}
-              >
+              <button className="btn btn-ghost btn-sm" type="button" onClick={() => logout()}>
                 خروج
               </button>
             </>
@@ -70,11 +89,11 @@ export default function Header() {
               ورود / ثبت‌نام
             </Link>
           )}
-          <Link to="/login?mode=teacher" className="btn btn-primary nk-teacher-link">
+          <Link to="/login?mode=teacher" className="btn btn-primary">
             استاد شوید
           </Link>
+          <MobileNavigation user={user} logout={logout} />
         </div>
-        <MobileNavigation user={user} onLogout={logout} />
       </div>
     </header>
   );

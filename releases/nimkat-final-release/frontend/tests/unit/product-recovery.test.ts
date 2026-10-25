@@ -90,4 +90,34 @@ describe('Phase 1–9 Frontend Product Recovery & Route Integrity', () => {
     expect(content).toContain('confirmClaimReward');
     expect(content).toContain('role="dialog"');
   });
+
+  it('Header, Footer, PanelLayout, Home, StudentHome, and TeacherHome match the attached UI PDFs', () => {
+    const header = fs.readFileSync(path.join(ROOT, 'src/components/Header.jsx'), 'utf8');
+    expect(header).toContain('<header className="site-header">');
+    expect(header).not.toContain('nk-header');
+    for (const navLabel of ['کلاس‌ها و اساتید', 'کلاس‌های گروهی', 'نیم‌چت', 'نیمکت کلاب', 'ویژه والدین', 'مجله']) {
+      expect(header).toContain(navLabel);
+    }
+
+    const footer = fs.readFileSync(path.join(ROOT, 'src/components/Footer.jsx'), 'utf8');
+    expect(footer).toContain('<footer className="site-footer">');
+    expect(footer).not.toContain('nk-footer');
+    for (const colTitle of ['مقاطع تحصیلی', 'دسترسی سریع', 'پشتیبانی', 'مجوزها', 'نماد اعتماد', 'ساماندهی']) {
+      expect(footer).toContain(colTitle);
+    }
+
+    const panelLayout = fs.readFileSync(path.join(ROOT, 'src/layouts/PanelLayout.jsx'), 'utf8');
+    expect(panelLayout).toContain('<div className="panel-page">');
+    expect(panelLayout).toContain('<div className="panel-top">');
+    expect(panelLayout).toContain('<div className="container panel-body">');
+
+    const home = fs.readFileSync(path.join(ROOT, 'src/views/Home.jsx'), 'utf8');
+    expect(home).toContain('<section className="hero">');
+    expect(home).not.toContain('<HeroFrame>');
+    expect(home).not.toContain('<ActionPanel');
+
+    const clubTeaser = fs.readFileSync(path.join(ROOT, 'src/components/ClubTeaser.jsx'), 'utf8');
+    expect(clubTeaser).toContain('هر کلاس، یک قدم تا نیمکت طلایی');
+    expect(clubTeaser).toContain('club-levels');
+  });
 });

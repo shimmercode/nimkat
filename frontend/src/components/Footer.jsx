@@ -1,106 +1,94 @@
 'use client';
 import { Link } from '../routing/navigation';
 import { Brand } from './Header.jsx';
-import FooterGrid from './ui/twenty-first/footer-grid.jsx';
-import { IconArrowLeft, IconHeadset, IconBook, IconArrowRight } from './icons.jsx';
-
-const support = () => window.dispatchEvent(new Event('nimkat:open-support'));
-
-const groups = [
-  {
-    title: 'برای یادگرفتن',
-    items: ['ابتدایی', 'متوسطه اول', 'متوسطه دوم', 'کنکور'].map((title) => ({
-      title,
-      href: `/classes?grade=${encodeURIComponent(title)}`,
-    })),
-  },
-  {
-    title: 'دنیای نیمکت',
-    items: [
-      { title: 'کلاس‌ها و اساتید', href: '/classes' },
-      { title: 'نیمکت کلاب', href: '/club' },
-      { title: 'مجله نیمکت', href: '/blog' },
-      { title: 'راهنمای والدین', href: '/parent-guide' },
-      { title: 'استاد شوید', href: '/login?mode=teacher' },
-    ],
-  },
-  {
-    title: 'پشتیبانی و قوانین',
-    items: [
-      { title: 'گفتگو با پشتیبانی', onClick: support },
-      { title: 'سؤالات متداول', href: '/faq' },
-      { title: 'تماس با ما', href: '/contact' },
-      { title: 'شرایط لغو و بازگشت وجه', href: '/cancellation-policy' },
-      { title: 'قوانین و مقررات', href: '/terms' },
-      { title: 'حریم خصوصی', href: '/privacy' },
-    ],
-  },
-];
+import { IconSend, IconCamera, IconVideo, IconPhone, IconShield, IconCap } from './icons.jsx';
 
 export default function Footer() {
   return (
-    <footer className="site-footer nk-footer">
+    <footer className="site-footer">
       <div className="container">
-        <div className="nk-footer-top">
-          <div>
-            <span className="nk-overline">یک انتخاب خوب، یک شروع تازه</span>
-            <h2>
-              برای قدم بعدی،
-              <br />
-              روی نیمکت حساب کن.
-            </h2>
-          </div>
-          <Link to="/classes" className="nk-footer-discover">
-            <span>کلاس مناسبم را پیدا کنم</span>
-            <span className="nk-footer-arrow">
-              <IconArrowLeft size={24} />
-            </span>
-          </Link>
-        </div>
-
-        <FooterGrid groups={groups}>
-          <div className="nk-footer-brand">
+        <div className="cols">
+          <div className="footer-brand">
             <Brand dark />
-            <p>
-              هر هدفی یک نقطهٔ شروع دارد. نیمکت، جایی برای پیدا کردن استاد مناسب و ساختن مسیر یادگیری توست؛ آنلاین یا حضوری.
+            <p className="footer-desc">
+              نیمکت شاگرد و استاد را بر اساس مقطع، درس و هدف آموزشی به هم می‌رساند؛ از کلاس خصوصی
+              آنلاین تا کلاس گروهی حضوری در محله‌ی خودتان.
             </p>
-            <div className="nk-footer-chips">
-              <button type="button" onClick={support}>
-                <IconHeadset size={18} />
-                پشتیبانی نیمکت
-              </button>
-              <Link to="/blog">
-                <IconBook size={18} />
-                مجله نیمکت
+            <div className="footer-socials">
+              <Link to="/contact" aria-label="تلگرام">
+                <IconSend size={18} />
               </Link>
+              <Link to="/contact" aria-label="اینستاگرام">
+                <IconCamera size={18} />
+              </Link>
+              <Link to="/classes" aria-label="ویدیوهای آموزشی">
+                <IconVideo size={18} />
+              </Link>
+              <a href="tel:02191004560" aria-label="تماس تلفنی">
+                <IconPhone size={18} />
+              </a>
+            </div>
+            <div className="footer-tel num">
+              <IconPhone size={16} />
+              <span>۰۲۱-۹۱۰۰۴۵۶۰</span>
+              <span style={{ opacity: 0.5 }}>·</span>
+              <span>شنبه تا پنجشنبه ۸ تا ۲۰</span>
             </div>
           </div>
-        </FooterGrid>
 
-        <div className="nk-footer-bottom">
-          <span>© ۱۴۰۵ نیمکت · یادگیری، نزدیک‌تر از همیشه.</span>
-          <nav aria-label="منابع سایت">
-            <Link to="/sitemap">نقشهٔ سایت</Link>
-            <Link to="/privacy">حریم خصوصی</Link>
+          <div>
+            <h4>مقاطع تحصیلی</h4>
+            <Link to="/classes?grade=ابتدایی">ابتدایی</Link>
+            <Link to="/classes?grade=متوسطه اول">متوسطه اول</Link>
+            <Link to="/classes?grade=متوسطه دوم">متوسطه دوم</Link>
+            <Link to="/classes?grade=کنکور">کنکور</Link>
+            <Link to="/classes?q=مهارتی">مهارتی</Link>
+          </div>
+
+          <div>
+            <h4>دسترسی سریع</h4>
+            <Link to="/classes">جستجوی کلاس</Link>
+            <Link to="/panel/chat">نیم‌چت</Link>
+            <Link to="/club">نیمکت کلاب</Link>
+            <Link to="/blog">مجله نیمکت</Link>
+            <Link to="/login?mode=teacher">استاد شوید</Link>
+          </div>
+
+          <div>
+            <h4>پشتیبانی</h4>
+            <Link to="/faq">سوالات متداول</Link>
             <Link to="/terms">قوانین و مقررات</Link>
-            <Link to="/cancellation-policy">شرایط لغو</Link>
-            <a href="/rss.xml">RSS مجله</a>
-            <a href="/sitemap.xml">XML Sitemap</a>
-            <button
-              type="button"
-              onClick={() =>
-                window.scrollTo({
-                  top: 0,
-                  behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth',
-                })
-              }
-            >
-              بازگشت به بالا <IconArrowRight size={16} />
-            </button>
-          </nav>
+            <Link to="/privacy">حریم خصوصی</Link>
+            <Link to="/cancellation-policy">شرایط لغو و بازگشت وجه</Link>
+            <Link to="/contact">تماس با ما</Link>
+          </div>
+
+          <div>
+            <h4>مجوزها</h4>
+            <div className="footer-badges">
+              <div className="footer-badge">
+                <IconShield size={24} />
+                نماد اعتماد
+                <br />
+                الکترونیکی
+              </div>
+              <div className="footer-badge">
+                <IconCap size={24} />
+                ساماندهی
+                <br />
+                کسب‌وکار مجازی
+              </div>
+            </div>
+          </div>
         </div>
-        <div className="nk-footer-wordmark" aria-hidden="true">
-          نیمکت<span>جای تو برای رشد.</span>
+
+        <div className="footer-bottom">
+          <span>© ۱۴۰۵ نیمکت. همه‌ی حقوق محفوظ است.</span>
+          <div className="links">
+            <Link to="/terms">قوانین</Link>
+            <Link to="/privacy">حریم خصوصی</Link>
+            <Link to="/sitemap">نقشه سایت</Link>
+          </div>
         </div>
       </div>
     </footer>

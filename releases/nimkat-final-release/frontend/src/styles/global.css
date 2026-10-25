@@ -313,7 +313,7 @@ button.chip { cursor: pointer; transition: all 0.15s ease; }
 
 /* ---------- footer ---------- */
 .site-footer { background: var(--n900); color: #cfd8d4; margin-top: 40px; }
-.site-footer .cols { display: grid; grid-template-columns: 1.6fr 1fr 1fr 1fr 1fr 1fr; gap: 32px; padding: 64px 0 40px; }
+.site-footer .cols { display: grid; grid-template-columns: 1.6fr 1fr 1fr 1fr 1.15fr; gap: 32px; padding: 64px 0 40px; }
 .site-footer h4 { color: #fff; font-size: 15px; margin-bottom: 18px; }
 .site-footer a { display: block; font-size: 14px; padding: 5px 0; color: #b9c4bf; }
 .site-footer a:hover { color: var(--accent); }

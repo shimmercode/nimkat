@@ -1,8 +1,6 @@
 'use client';
 import ClubTeaser from '../components/ClubTeaser.jsx';
 import BlogTeasers from '../components/BlogTeasers.jsx';
-import { HeroFrame, HeroEyebrow } from '../components/ui/twenty-first/hero-frame.jsx';
-import ActionPanel from '../components/ui/twenty-first/action-panel.jsx';
 import HeroSearch from '../components/HeroSearch.jsx';
 import { useState, useEffect } from 'react';
 import PageRenderer from '../render/PageRenderer.jsx';
@@ -21,11 +19,11 @@ import { toast } from '../utils/toast.js';
 
 /* ---------------- data (per Home page.pdf) ---------------- */
 const QUICK_LINKS = [
-  { icon: IconCap, title: 'اساتید برتر', sub: 'پروفایل و امتیاز', to: '/classes', orange: false, pin: true },
-  { icon: IconCrown, title: 'نوابغ نیمکت', sub: 'برترین‌های ماه', to: '/#top-students', orange: false, pin: true },
+  { icon: IconMedal, title: 'اساتید برتر', sub: 'پروفایل و امتیاز', to: '/classes', orange: false, pin: true },
+  { icon: IconBulb, title: 'نوابغ نیمکت', sub: 'برترین‌های ماه', to: '/#top-students', orange: false, pin: true },
   { icon: IconTag, title: 'تخفیف‌ها', sub: 'پیشنهادهای ویژه', to: '/#group-classes', orange: false, pin: true },
   { icon: IconBench, title: 'نیمکت کلاب', sub: 'باشگاه مشتریان', to: '/#club', orange: false, pin: false },
-  { icon: IconChart, title: 'رکوردها', sub: 'آمار نیمکت', to: '/#stats', orange: false, pin: true },
+  { icon: IconCrown, title: 'رکوردها', sub: 'آمار نیمکت', to: '/#stats', orange: false, pin: true },
 ];
 
 const SUBJECT_FILTERS = ['همه', 'ریاضی', 'فیزیک', 'زبان انگلیسی', 'ادبیات', 'عربی', 'علوم', 'برنامه‌نویسی'];
@@ -33,32 +31,32 @@ const SUBJECT_FILTERS = ['همه', 'ریاضی', 'فیزیک', 'زبان انگ�
 const TOP_TEACHERS = [
   {
     id: 1, name: 'سارا محمدی', letter: 'س', color: 'orange', subject: 'ریاضی — متوسطه اول', rank: 1, rating: '۴٫۹',
-    badges: ['پرفروش', 'وقت‌شناس'], classes: '۱٬۸۷۴', students: '۴۶۲', score: '۴٫۹', subjectKey: 'ریاضی',
+    badges: ['پرفروش', 'وقت‌شناس'], classes: '۱۸۴', students: '۳۹۲', score: '۴٫۹', subjectKey: 'ریاضی',
   },
   {
-    id: 2, name: 'امیر رضایی', letter: 'ا', color: 'green', subject: 'فیزیک — کنکور', rank: 2, rating: '۴٫۹',
-    badges: ['پرطرفدار', 'متخصص'], classes: '۱٬۳۱۱', students: '۴۰۸', score: '۴٫۸', subjectKey: 'فیزیک',
+    id: 2, name: 'امیر رضایی', letter: 'ا', color: 'green', subject: 'فیزیک — کنکور', rank: 2, rating: '۴٫۹۵',
+    badges: ['پرطرفدار', 'متخصص'], classes: '۲۲۱', students: '۵۰۸', score: '۴٫۹۵', subjectKey: 'فیزیک',
   },
   {
-    id: 3, name: 'نگار سلطانی', letter: 'ن', color: 'green', subject: 'زبان انگلیسی', rank: 3, rating: '۴٫۸',
-    badges: ['مکالمه', 'کودکان'], classes: '۹۱۷', students: '۲۳۴', score: '۴٫۸', subjectKey: 'زبان انگلیسی',
+    id: 3, name: 'نگار سلطانی', letter: 'ن', color: 'green', subject: 'زبان انگلیسی', rank: 3, rating: '۴٫۸۷',
+    badges: ['مکالمه', 'کودکان'], classes: '۱۶۷', students: '۳۴۲', score: '۴٫۸۷', subjectKey: 'زبان انگلیسی',
   },
   {
-    id: 6, name: 'حسین نوری', letter: 'ح', color: 'green', subject: 'ریاضی — کنکور', rank: null, rating: '۵٫۰',
-    badges: ['رتبه برتر', 'نخبه'], classes: '۷۴۱', students: '۲۹۸', score: '۵٫۰', subjectKey: 'ریاضی',
+    id: 6, name: 'حسین نوری', letter: 'ح', color: 'green', subject: 'ریاضی — کنکور', rank: null, rating: '۵',
+    badges: ['رتبه برتر', 'نخبه'], classes: '۲۹۸', students: '۷۴۱', score: '۵', subjectKey: 'ریاضی',
   },
   {
-    id: 7, name: 'مریم کاظمی', letter: 'م', color: 'orange', subject: 'ادبیات — متوسطه', rank: null, rating: '۴٫۹',
-    badges: ['صبور', 'خلاق'], classes: '۲۸۹', students: '۱۵۶', score: '۴٫۹', subjectKey: 'ادبیات',
+    id: 7, name: 'مریم کاظمی', letter: 'م', color: 'orange', subject: 'ادبیات — متوسطه', rank: null, rating: '۴٫۹۲',
+    badges: ['خلاق', 'صبور'], classes: '۱۵۶', students: '۲۸۹', score: '۴٫۹۲', subjectKey: 'ادبیات',
   },
 ];
 
 const TOP_STUDENTS = [
-  { name: 'آرمین رستمی', letter: 'آ', color: 'orange', grade: 'پایه نهم', score: '۲٬۹۵۰', classes: '۸۸', rank: 1 },
-  { name: 'یسنا کریمی', letter: 'ی', color: 'green', grade: 'پایه هشتم', score: '۲٬۹۰۰', classes: '۸۲', rank: 2 },
-  { name: 'پرهام نوری', letter: 'پ', color: 'green', grade: 'پایه هفتم', score: '۲٬۸۸۰', classes: '۷۸', rank: 3 },
-  { name: 'رعنا سلطانی', letter: 'ر', color: 'green', grade: 'پایه ششم', score: '۲٬۹۶۰', classes: '۸۵', rank: null },
-  { name: 'بردیا مهدوی', letter: 'ب', color: 'orange', grade: 'پایه نهم', score: '۲٬۸۵۰', classes: '۷۵', rank: null },
+  { name: 'آرمین رستمی', letter: 'آ', color: 'orange', grade: 'پایه نهم', score: '۴٫۹۵', classes: '۴۸', rank: 1 },
+  { name: 'یسنا کریمی', letter: 'ی', color: 'green', grade: 'پایه هشتم', score: '۴٫۹', classes: '۴۲', rank: 2 },
+  { name: 'پرهام نوری', letter: 'پ', color: 'green', grade: 'پایه هفتم', score: '۴٫۸۸', classes: '۳۷', rank: 3 },
+  { name: 'رعنا سلطانی', letter: 'ر', color: 'green', grade: 'پایه ششم', score: '۴٫۹۲', classes: '۳۵', rank: null },
+  { name: 'بردیا مهدوی', letter: 'ب', color: 'orange', grade: 'پایه نهم', score: '۴٫۸۵', classes: '۳۱', rank: null },
 ];
 
 const TESTIMONIALS = [
@@ -274,7 +272,7 @@ export default function Home({ initialSchema = null } = {}) {
     }
   };
 
-  const perSession = 1500000;
+  const perSession = 180000;
   const discount = sessions >= 8 ? 0.1 : 0;
   const total = perSession * sessions * (1 - discount);
 
@@ -283,18 +281,17 @@ export default function Home({ initialSchema = null } = {}) {
   return (
     <>
       {/* ============ HERO ============ */}
-      <HeroFrame>
+      <section className="hero">
         <div className="container hero-grid hero-wide">
           <div>
-            <HeroEyebrow />
-          <h1>
-              استاد مناسب را پیدا کن،
+            <h1>
+              استاد مناسبت را پیدا کن،
               <br />
-              <span className="hl-green">نیمکت را رزرو کن.</span>
+              <span className="hl-green">نیمکتت را رزرو کن.</span>
             </h1>
             <p className="lead">
               کلاس خصوصی یا گروهی، آنلاین یا در خانه‌ی خودتان. قیمت هر جلسه، ظرفیت باقی‌مانده و نظر
-              شاگردان قبلی را قبل از پرداخت می‌بینید.
+              شاگردهای قبلی را قبل از پرداخت می‌بینید.
             </p>
 
             <HeroSearch />
@@ -302,7 +299,7 @@ export default function Home({ initialSchema = null } = {}) {
             <div className="hero-trust">
               <span className="item">
                 <Stars />
-                <b style={{ color: 'var(--ink)' }}>۴٫۸</b> از ۵۰۰+ نظر ثبت‌شده
+                <b style={{ color: 'var(--ink)' }}>۴٫۸</b> از ۱۲٬۴۰۰ نظر ثبت‌شده
               </span>
               <span className="item">
                 <IconLock size={17} /> پرداخت امن بانکی
@@ -337,7 +334,7 @@ export default function Home({ initialSchema = null } = {}) {
             </Link>
           ))}
         </div>
-      </HeroFrame>
+      </section>
 
       {/* ============ BOOKING PROCESS (visual steps) ============ */}
       <section className="section-tight" id="how">
@@ -733,14 +730,14 @@ export default function Home({ initialSchema = null } = {}) {
                   <b style={{ fontSize: 14 }}>پشتیبانی تلفنی</b>
                   <div className="t-small t-muted num">۰۲۱-۹۱۰۰۴۵۶۰</div>
                 </div>
-                <span className="chip soft-green" style={{ marginRight: 'auto' }}>چت آنلاین</span>
-              </div>
-              <div className="row">
-                <IconSparkle size={22} style={{ color: 'var(--accent-800)' }} />
-                <div>
-                  <b style={{ fontSize: 14 }}>پشتیبانی تلفنی</b>
-                  <div className="t-small t-muted">شنبه تا پنجشنبه ۸ تا ۲۰</div>
-                </div>
+                <button
+                  type="button"
+                  className="chip soft-green"
+                  style={{ marginRight: 'auto', border: 'none', cursor: 'pointer' }}
+                  onClick={() => window.dispatchEvent(new Event('nimkat:open-support'))}
+                >
+                  چت آنلاین
+                </button>
               </div>
             </div>
           </div>
@@ -789,16 +786,6 @@ export default function Home({ initialSchema = null } = {}) {
               </div>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* ============ FINAL CTA ============ */}
-      <section className="section-tight">
-        <div className="container">
-          <ActionPanel title="همین حالا نیمکتت را رزرو کن" sub="اولین جلسه با ضمانت تغییر استاد؛ پرداخت امن و بازگشت وجه تا ۲۴ ساعت قبل از کلاس." buttons={[
-            {label:'شروع رزرو کلاس',href:'/classes',variant:'orange'},
-            {label:'ثبت‌نام رایگان',href:'/login',variant:'ghost'},
-          ]}/>
         </div>
       </section>
     </>
