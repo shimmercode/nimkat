@@ -1,9 +1,10 @@
 'use client';
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Link, useLocation } from '../routing/navigation';
 import {
   IconGlobe, IconMapPin, IconStar, IconCheck, IconClock, IconCalendar,
   IconArrowLeft, IconChevronLeft, IconChevronRight, IconInfo, IconUsers, IconShield, IconX,
+  IconSearch, IconFilter, IconSparkle, IconHeart, IconUser, IconUserPlus,
 } from '../components/icons.jsx';
 import { faNum, faPrice } from '../utils/fa.js';
 import { api } from '../api.js';
@@ -44,26 +45,32 @@ function mapApiClass(c) {
     teacher: t.name || 'سارا محمدی',
     teacherGender: c.teacher_gender || t.gender || undefined,
     letter: (t.name || 'س')[0],
-    color: c.id % 2 ? 'orange' : 'green',
+    color: c.id % 2 ? 'green' : 'tint-green',
     role: `${t.level || 'متخصص'} · دبیر ${c.subject || 'فیزیک'}`,
     level: t.level || 'متخصص',
     badges: Array.isArray(c.badges) ? c.badges : [],
     rating: faNum(c.rating || 4.8),
     ratingNum: Number(c.rating || 4.8),
     reviews: faNum(c.reviews_count || 0),
-    title: isPrivate ? undefined : c.title,
+    title: c.title || 'کلاس آموزشی نیمکت',
     subtitle: isPrivate ? c.title : undefined,
     meta: isPrivate
-      ? `${c.mode || 'آنلاین'} (${c.platform || 'اسکای‌روم'}) · جلسات ${faNum(c.session_minutes || 90)} دقیقه‌ای`
-      : [`ظرفیت ${faNum(c.capacity || 10)} نفر`, `${c.days || ''} ${c.time || ''}`.trim(), `${faNum(c.sessions || 8)} جلسه · ${c.platform || c.mode}`],
+      ? `${c.mode || 'آنلاین'} · ${c.platform || 'اسکای‌روم'} · جلسات ${faNum(c.session_minutes || 90)} دقیقه‌ای`
+      : [
+          `ظرفیت ${faNum(c.capacity || 10)} نفر`,
+          `${c.days || ''} ${c.time || ''}`.trim(),
+          `${faNum(c.sessions || 8)} جلسه · ${c.platform || c.mode}`,
+        ],
     tags: isPrivate ? ['امتحان نهایی', 'تقویتی', 'کنکور'] : undefined,
-    slots: isPrivate ? ['شنبه ۱۶:۰۰', 'دوشنبه ۱۸:۰۰', 'چهارشنبه ۱۷:۰۰'] : undefined,
+    slots: isPrivate
+      ? ['شنبه ۱۶:۰۰', 'دوشنبه ۱۸:۰۰', 'چهارشنبه ۱۷:۰۰']
+      : [`${c.days || 'پنجشنبه'} ${c.time || '۱۶:۰۰'}`.trim()],
     seatsLeft: Math.max(0, (c.capacity || 0) - (c.taken || 0)),
     progress: c.capacity ? Math.min(100, Math.round(((c.taken || 0) / c.capacity) * 100)) : 0,
     capacityText: `${faNum(c.taken || 0)} از ${faNum(c.capacity || 0)} نفر ثبت‌نام کرده‌اند`,
     price: c.price || 280000,
-    unit: isPrivate ? 'هر جلسه ۹۰ دقیقه' : 'هر نفر / جلسه',
-    discount: isPrivate ? '۱۰٪ تخفیف از جلسه‌ی ۸ به بعد' : '۲۰٪ تخفیف دوستانه تا ۵ نفر',
+    unit: isPrivate ? 'هر جلسه' : 'هر نفر / جلسه',
+    discount: isPrivate ? '۱۰٪ تخفیف ۸ جلسه' : '۲۰٪ تخفیف دوستانه تا ۵ نفر',
     full: c.capacity ? (c.taken || 0) >= c.capacity : false,
   };
 }
@@ -128,6 +135,15 @@ export default function ClassesSearch({ content = {}, preview = false } = {}) {
   const [suggestBusy, setSuggestBusy] = useState(false);
   const [suggestDone, setSuggestDone] = useState(false);
   const [suggestError, setSuggestError] = useState('');
+  const mountedRef = useRef(true);
+  const hydratedQueryRef = useRef(false);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     const params = new URLSearchParams(search || '');
@@ -153,21 +169,44 @@ export default function ClassesSearch({ content = {}, preview = false } = {}) {
     if (qSubject) setLesson(qSubject);
     if (qSearch !== null) setQuery(qSearch);
     setPage(1);
+    hydratedQueryRef.current = true;
   }, [search]);
+
+  useEffect(() => {
+    if (!hydratedQueryRef.current || preview || typeof window === 'undefined') return;
+    if (window.location.pathname !== '/classes') return;
+    const params = new URLSearchParams();
+    if (kind !== 'همه') params.set('kind', kind);
+    if (mode !== 'هر دو') params.set('mode', mode);
+    if (segment !== 'همه') params.set('grade', segment);
+    if (field !== 'همه') params.set('field', field);
+    if (gradeLevel !== 'همه') params.set('gradeLevel', gradeLevel);
+    if (lesson !== 'همه') params.set('subject', lesson);
+    if (query.trim()) params.set('q', query.trim());
+    const qs = params.toString();
+    const nextUrl = qs ? `/classes?${qs}` : '/classes';
+    if (`${window.location.pathname}${window.location.search}` !== nextUrl) {
+      window.history.replaceState(null, '', nextUrl);
+    }
+  }, [kind, mode, segment, field, gradeLevel, lesson, query, preview]);
 
   const loadCatalog = useCallback(() => {
     setLoading(true);
     setCatalogError('');
     api('/classes')
       .then((d) => {
+        if (!mountedRef.current) return;
         setCatalog(Array.isArray(d.classes) ? d.classes.map(mapApiClass) : []);
         setSuggested(Array.isArray(d.suggested) ? d.suggested : []);
       })
       .catch((e) => {
+        if (!mountedRef.current) return;
         setCatalog([]);
         setCatalogError(e.message || 'دریافت فهرست کلاس‌ها ممکن نشد.');
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (mountedRef.current) setLoading(false);
+      });
   }, []);
 
   useEffect(() => {
@@ -272,8 +311,8 @@ export default function ClassesSearch({ content = {}, preview = false } = {}) {
   const sorted = useMemo(() => {
     return [...filtered].sort((a, b) => {
       if (sort === 'کمترین قیمت') return a.price - b.price;
-      if (sort === 'بالاترین امتیاز') return b.ratingNum - a.ratingNum;
-      if (sort === 'نزدیک‌ترین جلسه') return (a.seatsLeft ?? 99) - (b.seatsLeft ?? 99);
+      if (sort === 'بالاترین امتیاز' || sort === 'بیشترین امتیاز') return b.ratingNum - a.ratingNum;
+      if (sort === 'نزدیک‌ترین جلسه' || sort === 'نزدیک‌ترین زمان') return (a.seatsLeft ?? 99) - (b.seatsLeft ?? 99);
       return 0;
     });
   }, [filtered, sort]);
@@ -295,10 +334,10 @@ export default function ClassesSearch({ content = {}, preview = false } = {}) {
     if (content.title && lesson === 'همه' && segment === 'همه' && gradeLevel === 'همه') return content.title;
     const parts = ['کلاس'];
     if (lesson !== 'همه') parts.push(lesson);
-    if (gradeLevel !== 'همه') parts.push(`پایه ${gradeLevel}`);
+    if (gradeLevel !== 'همه') parts.push(gradeLevel);
     else if (segment !== 'همه') parts.push(segment);
     if (kind !== 'همه') parts.push(`(${kind})`);
-    return parts.length > 1 ? parts.join(' ') : 'جستجوی کلاس و استاد';
+    return parts.length > 1 ? parts.join(' ') : 'کلاس فیزیک یازدهم';
   }, [content.title, lesson, gradeLevel, segment, kind]);
 
   const submitTeacherSuggestion = async (e) => {
@@ -331,123 +370,45 @@ export default function ClassesSearch({ content = {}, preview = false } = {}) {
     }
   };
 
+  const suggestedItems = suggested.length
+    ? suggested
+    : [
+        { id: 1, name: 'سارا محمدی', subject: 'فیزیک و ریاضی', level: 'متخصص', rating: 4.9, reviews_count: 312, price: 450000, badge: 'برتر ماه', tone: 'dark' },
+        { id: 2, name: 'امیر رضایی', subject: 'فیزیک کنکور', level: 'متخصص', rating: 4.9, reviews_count: 221, price: 520000, badge: 'برتر ماه', tone: 'dark' },
+        { id: 4, name: 'کاوه مرادی', subject: 'فیزیک یازدهم', level: 'کارشناس', rating: 4.8, reviews_count: 148, price: 350000, badge: 'برتر ماه', tone: 'dark' },
+        { id: 3, name: 'نگار سلطانی', subject: 'فیزیک پایه', level: 'متخصص', rating: 4.8, reviews_count: 180, price: 220000, badge: 'مناسب سطح شما', tone: 'soft-orange' },
+        { id: 5, name: 'رضا جعفری', subject: 'حل تمرین', level: 'کارشناس', rating: 4.7, reviews_count: 96, price: 350000, badge: 'نزدیک محل شما', tone: 'soft' },
+      ];
+
   return (
     <>
-      {/* ---------- top search strip ---------- */}
-      <div style={{ background: '#fff', borderBottom: '1px solid var(--border)', padding: '22px 0' }}>
+      {/* ---------- page-head (matches CLASSES.pdf & global.css) ---------- */}
+      <div className="page-head">
         <div className="container">
           <div className="crumbs" style={{ marginBottom: 14 }}>
             <Link to="/">خانه</Link>
             <span className="sep">›</span>
             <Link to="/classes">کلاس‌ها</Link>
-            {segment !== 'همه' && (
-              <>
-                <span className="sep">›</span>
-                <span>{segment}</span>
-              </>
-            )}
-            {lesson !== 'همه' && (
-              <>
-                <span className="sep">›</span>
-                <span className="here">{lesson}</span>
-              </>
-            )}
+            <span className="sep">›</span>
+            <span className="here">
+              {lesson !== 'همه' ? lesson : 'فیزیک'} · {segment !== 'همه' ? segment : 'متوسطه دوم'}
+            </span>
           </div>
 
           <div
             style={{
-              display: 'grid',
-              gridTemplateColumns: 'auto repeat(4, 1fr) auto',
-              gap: 12,
-              alignItems: 'center',
+              display: 'flex',
+              alignItems: 'flex-end',
+              justifyContent: 'space-between',
+              gap: 16,
+              flexWrap: 'wrap',
             }}
-            className="search-strip"
           >
-            <div className="segmented" role="group" aria-label="نوع کلاس">
-              {['همه', 'خصوصی', 'گروهی', 'دوستانه'].map((k) => (
-                <button
-                  key={k}
-                  type="button"
-                  className={kind === k ? 'is-active' : ''}
-                  aria-pressed={kind === k}
-                  onClick={() => {
-                    setKind(k);
-                    setPage(1);
-                  }}
-                >
-                  {k === 'همه' ? 'همهٔ کلاس‌ها' : `کلاس ${k}`}
-                </button>
-              ))}
-            </div>
-
             <div>
-              <div className="field-label">مقطع</div>
-              <select
-                aria-label="مقطع"
-                className="select"
-                value={segment}
-                onChange={(e) => handleSegmentChange(e.target.value)}
-              >
-                {SEGMENTS.map((s) => (
-                  <option key={s} value={s}>
-                    {s === 'همه' ? 'همهٔ مقاطع' : s}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <div className="field-label">رشته</div>
-              <select
-                aria-label="رشته"
-                className="select"
-                value={field}
-                onChange={(e) => {
-                  setField(e.target.value);
-                  setPage(1);
-                }}
-              >
-                {validFields.map((f) => (
-                  <option key={f} value={f}>
-                    {f === 'همه' ? 'همهٔ رشته‌ها' : f}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <div className="field-label">پایه</div>
-              <select
-                aria-label="پایه"
-                className="select"
-                value={gradeLevel}
-                onChange={(e) => {
-                  setGradeLevel(e.target.value);
-                  setPage(1);
-                }}
-              >
-                {validGrades.map((g) => (
-                  <option key={g} value={g}>
-                    {g === 'همه' ? 'همهٔ پایه‌ها' : g}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <div className="field-label">درس</div>
-              <select
-                aria-label="درس"
-                className="select"
-                value={lesson}
-                onChange={(e) => {
-                  setLesson(e.target.value);
-                  setPage(1);
-                }}
-              >
-                {validSubjects.map((s) => (
-                  <option key={s} value={s}>
-                    {s === 'همه' ? 'همهٔ دروس' : s}
-                  </option>
-                ))}
-              </select>
+              <h1 className="t-h2">{dynamicHeading}</h1>
+              <p className="t-small t-muted num" style={{ marginTop: 6 }}>
+                {faNum(sorted.length)} استاد و کلاس فعال با شرایط انتخابی شما پیدا شد.
+              </p>
             </div>
 
             <div className="segmented" role="group" aria-label="شیوه برگزاری">
@@ -462,90 +423,259 @@ export default function ClassesSearch({ content = {}, preview = false } = {}) {
                     setPage(1);
                   }}
                 >
+                  {m === 'آنلاین' && <IconGlobe size={15} />}
+                  {m === 'حضوری' && <IconMapPin size={15} />}
                   {m}
                 </button>
               ))}
             </div>
           </div>
+
+          {/* Search & Kind Switch Box */}
+          <div
+            className="card"
+            style={{
+              marginTop: 22,
+              padding: 20,
+              borderRadius: 'var(--r-2xl)',
+              boxShadow: 'var(--shadow-sm)',
+            }}
+          >
+            <div className="kind-switch" role="group" aria-label="نوع کلاس">
+              {[
+                { key: 'خصوصی', title: 'کلاس خصوصی', sub: 'یک‌به‌یک با استاد', icon: IconUser },
+                { key: 'گروهی', title: 'کلاس گروهی', sub: 'دوره‌های ثبت‌نامی ۴ تا ۱۲ نفر', icon: IconUsers },
+                { key: 'دوستانه', title: 'کلاس دوستانه', sub: 'تا ۵ نفر · تخفیف پلکانی', icon: IconUserPlus },
+              ].map((item) => {
+                const isActive = kind === item.key;
+                const IconComp = item.icon;
+                return (
+                  <button
+                    key={item.key}
+                    type="button"
+                    aria-pressed={isActive}
+                    className={`radio-card ${isActive ? 'is-active' : ''}`}
+                    onClick={() => {
+                      setKind((cur) => (cur === item.key ? 'همه' : item.key));
+                      setPage(1);
+                    }}
+                  >
+                    <span
+                      className="avatar sq-40 tint-green"
+                      style={{
+                        background: isActive ? 'var(--primary)' : 'var(--n50)',
+                        color: isActive ? '#fff' : 'var(--primary)',
+                      }}
+                    >
+                      <IconComp size={19} />
+                    </span>
+                    <div style={{ flex: 1 }}>
+                      <b style={{ display: 'block', fontSize: 14.5 }}>{item.title}</b>
+                      <span className="t-caption t-muted">{item.sub}</span>
+                    </div>
+                    <span className="radio-dot" />
+                  </button>
+                );
+              })}
+            </div>
+
+            <div
+              className="search-fields"
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+                gap: 12,
+                alignItems: 'end',
+                marginTop: 16,
+              }}
+            >
+              <div>
+                <div className="field-label" style={{ marginBottom: 6 }}>مقطع</div>
+                <select
+                  aria-label="مقطع"
+                  className="select"
+                  value={segment}
+                  onChange={(e) => handleSegmentChange(e.target.value)}
+                >
+                  {SEGMENTS.map((s) => (
+                    <option key={s} value={s}>
+                      {s === 'همه' ? 'همهٔ مقاطع' : s}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <div className="field-label" style={{ marginBottom: 6 }}>رشته</div>
+                <select
+                  aria-label="رشته"
+                  className="select"
+                  value={field}
+                  onChange={(e) => {
+                    setField(e.target.value);
+                    setPage(1);
+                  }}
+                >
+                  {validFields.map((f) => (
+                    <option key={f} value={f}>
+                      {f === 'همه' ? 'همهٔ رشته‌ها' : f}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <div className="field-label" style={{ marginBottom: 6 }}>پایه</div>
+                <select
+                  aria-label="پایه"
+                  className="select"
+                  value={gradeLevel}
+                  onChange={(e) => {
+                    setGradeLevel(e.target.value);
+                    setPage(1);
+                  }}
+                >
+                  {validGrades.map((g) => (
+                    <option key={g} value={g}>
+                      {g === 'همه' ? 'همهٔ پایه‌ها' : g}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <div className="field-label" style={{ marginBottom: 6 }}>درس</div>
+                <select
+                  aria-label="درس"
+                  className="select"
+                  value={lesson}
+                  onChange={(e) => {
+                    setLesson(e.target.value);
+                    setPage(1);
+                  }}
+                >
+                  {validSubjects.map((s) => (
+                    <option key={s} value={s}>
+                      {s === 'همه' ? 'همهٔ دروس' : s}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <button
+                type="button"
+                className="btn btn-primary"
+                style={{ height: 48 }}
+                onClick={() => setPage(1)}
+              >
+                <IconSearch size={17} /> به‌روزرسانی
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* ---------- suggested teachers ---------- */}
+      {/* ---------- suggested teachers ("پیشنهاد نیمکت برای شما") ---------- */}
       <section className="section-tight" style={{ paddingBottom: 12 }}>
         <div className="container">
           <div className="section-head" style={{ marginBottom: 18 }}>
             <div className="titles">
-              <span className="eyebrow orange">پیشنهاد ویژه</span>
-              <h2 className="t-h3" style={{ marginTop: 4 }}>
-                {content.suggestedTitle ?? 'اساتید پیشنهادی این ماه'}
+              <h2 className="t-h4" style={{ fontSize: 20 }}>
+                {content.suggestionsTitle ?? content.suggestedTitle ?? 'پیشنهاد نیمکت برای شما'}
               </h2>
+              <p className="t-caption t-muted">
+                ۳ استاد برتر این ماه و پیشنهاد بر اساس سطح و محل شما
+              </p>
             </div>
             <button
               type="button"
               className="link-more"
               onClick={() => setHowModalOpen(true)}
               aria-haspopup="dialog"
-              style={{ cursor: 'pointer', background: 'none', border: 'none' }}
+              style={{ cursor: 'pointer', background: 'none', border: 'none', fontSize: 13.5 }}
             >
-              <IconInfo size={17} /> چطور انتخاب می‌کنیم؟
+              <IconInfo size={16} /> چطور انتخاب می‌کنیم؟
             </button>
           </div>
 
-          <div className="grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
-            {(suggested.length
-              ? suggested
-              : [
-                  { id: 1, name: 'سارا محمدی', subject: 'فیزیک', level: 'متخصص', rating: 4.9, reviews_count: 312, price: 450000 },
-                  { id: 2, name: 'امیر رضایی', subject: 'فیزیک', level: 'متخصص', rating: 4.95, reviews_count: 221, price: 520000 },
-                  { id: 4, name: 'کاوه مرادی', subject: 'فیزیک', level: 'کارشناس', rating: 4.8, reviews_count: 148, price: 350000 },
-                ]
-            ).map((s, idx) => (
-              <div
-                key={s.id || s.name}
-                className="card"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 14,
-                  padding: '18px 20px',
-                  borderColor: idx === 0 ? 'var(--accent)' : 'var(--border)',
-                }}
-              >
-                <div className={`avatar sq-64 ${idx % 2 === 0 ? 'orange' : 'green'}`}>{(s.name || 'س')[0]}</div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <b style={{ fontSize: 15.5 }}>{s.name}</b>
-                    <span className="chip soft-orange">برتر ماه</span>
+          <div className="row-scroll">
+            {suggestedItems.map((s, idx) => {
+              const badgeText = s.badge || 'برتر ماه';
+              const badgeClass =
+                s.tone === 'soft-orange'
+                  ? 'soft-orange'
+                  : s.tone === 'soft'
+                    ? 'outline'
+                    : 'dark';
+              return (
+                <div
+                  key={s.id || s.name}
+                  className="sugg-card"
+                  style={{
+                    borderColor: idx === 2 ? 'var(--accent)' : undefined,
+                  }}
+                >
+                  <span className={`chip ${badgeClass}`} style={{ fontSize: 11.5 }}>
+                    {badgeText}
+                  </span>
+                  <div
+                    className={`avatar sq-64 ${
+                      idx === 0
+                        ? ''
+                        : idx === 1
+                          ? 'green'
+                          : idx === 2
+                            ? 'tint-green'
+                            : idx === 3
+                              ? 'tint-orange'
+                              : 'gray'
+                    }`}
+                  >
+                    {(s.name || 'س')[0]}
                   </div>
-                  <div className="t-caption t-muted" style={{ marginTop: 2 }}>
-                    دبیر {s.subject} · {s.level}
+                  <b style={{ fontSize: 15 }}>{s.name}</b>
+                  <span className="t-caption t-muted">
+                    {s.subject || 'فیزیک'} {s.level ? `· ${s.level}` : ''}
+                  </span>
+                  <div
+                    className="num"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 4,
+                      fontSize: 13,
+                      fontWeight: 800,
+                    }}
+                  >
+                    <IconStar size={14} style={{ color: 'var(--accent)' }} /> {faNum(s.rating || 4.8)}
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 8, fontSize: 12.5 }}>
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontWeight: 800 }}>
-                      <IconStar size={13} style={{ color: 'var(--accent)' }} /> {faNum(s.rating)}
-                    </span>
-                    <span className="t-muted">({faNum(s.reviews_count)} نظر)</span>
-                    <span className="num" style={{ marginRight: 'auto', fontWeight: 800 }}>
-                      از {faPrice(s.price)} ت
-                    </span>
-                  </div>
+                  <Link
+                    to={`/teachers/${s.id || 1}`}
+                    className="btn btn-outline btn-sm btn-block"
+                    style={{ marginTop: 4 }}
+                  >
+                    پروفایل و زمان‌ها
+                  </Link>
                 </div>
-                <Link to={`/teachers/${s.id || 1}`} className="btn btn-outline-green" style={{ padding: '9px 14px' }}>
-                  پروفایل
-                </Link>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
 
-      {/* ---------- main layout ---------- */}
+      {/* ---------- main filter-layout ---------- */}
       <section className="section-tight" style={{ paddingTop: 18 }}>
         <div className="container filter-layout">
-          {/* ============ sidebar filters (right in RTL) ============ */}
-          <aside className="filter-box" style={{ gridColumn: 1 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-              <b style={{ fontSize: 16 }}>فیلترها</b>
+          {/* ============ sidebar filters (.filter-side) ============ */}
+          <aside className="filter-side">
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                paddingBottom: 14,
+                borderBottom: '1px solid var(--border)',
+              }}
+            >
+              <b style={{ fontSize: 16, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                <IconFilter size={17} /> {content.filtersTitle ?? 'فیلترها'}
+              </b>
               <button
                 type="button"
                 onClick={clearFilters}
@@ -555,8 +685,10 @@ export default function ClassesSearch({ content = {}, preview = false } = {}) {
               </button>
             </div>
 
-            <div className="filter-sec">
-              <h4>جستجوی نام استاد یا کلاس</h4>
+            <div className="filter-block">
+              <div className="ft">
+                <span>جستجوی نام استاد یا کلاس</span>
+              </div>
               <input
                 type="search"
                 className="input"
@@ -570,18 +702,13 @@ export default function ClassesSearch({ content = {}, preview = false } = {}) {
               />
             </div>
 
-            <div className="filter-sec">
-              <h4>محدوده قیمت (هر جلسه)</h4>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5, color: 'var(--muted)' }}>
-                <span className="num">۱۰۰٬۰۰۰ ت</span>
-                <b className="num" style={{ color: 'var(--primary)' }}>
-                  تا {faPrice(price)} ت
-                </b>
+            <div className="filter-block">
+              <div className="ft">
+                <span>قیمت هر جلسه</span>
               </div>
               <input
                 type="range"
                 aria-label="حداکثر قیمت هر جلسه"
-                className="range"
                 min={100000}
                 max={600000}
                 step={20000}
@@ -590,13 +717,20 @@ export default function ClassesSearch({ content = {}, preview = false } = {}) {
                   setPrice(Number(e.target.value));
                   setPage(1);
                 }}
-                style={{ marginTop: 10 }}
               />
+              <div className="range-row">
+                <span className="num">۱۰۰٬۰۰۰</span>
+                <b className="num" style={{ color: 'var(--ink)' }}>
+                  {faPrice(price)} تومان
+                </b>
+              </div>
             </div>
 
-            <div className="filter-sec">
-              <h4>روزهای هفته</h4>
-              <div className="day-grid">
+            <div className="filter-block">
+              <div className="ft">
+                <span>روزهای هفته</span>
+              </div>
+              <div className="day-chips">
                 {['ش', 'ی', 'د', 'س', 'چ', 'پ', 'ج'].map((d) => (
                   <button
                     key={d}
@@ -611,15 +745,18 @@ export default function ClassesSearch({ content = {}, preview = false } = {}) {
               </div>
             </div>
 
-            <div className="filter-sec">
-              <h4>ساعت</h4>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            <div className="filter-block">
+              <div className="ft">
+                <span>ساعت</span>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
                 {['صبح', 'ظهر', 'عصر', 'شب'].map((h) => (
                   <button
                     key={h}
                     type="button"
                     aria-pressed={hour === h}
                     className={`opt-chip ${hour === h ? 'is-on' : ''}`}
+                    style={{ padding: '7px 8px', fontSize: 12.5 }}
                     onClick={() => {
                       setHour((cur) => (cur === h ? '' : h));
                       setPage(1);
@@ -631,110 +768,132 @@ export default function ClassesSearch({ content = {}, preview = false } = {}) {
               </div>
             </div>
 
-            <div className="filter-sec">
-              <h4>امتیاز استاد</h4>
-              {[
-                { l: '۴٫۵ به بالا', n: faNum(facetCounts.rate45) },
-                { l: '۴ به بالا', n: faNum(facetCounts.rate40) },
-              ].map((r) => (
-                <div
-                  key={r.l}
-                  role="checkbox"
-                  aria-checked={rating === r.l}
-                  tabIndex={0}
-                  className={`check-row ${rating === r.l ? 'is-on' : ''}`}
-                  onClick={() => {
-                    setRating((cur) => (cur === r.l ? '' : r.l));
-                    setPage(1);
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      setRating((cur) => (cur === r.l ? '' : r.l));
-                      setPage(1);
-                    }
-                  }}
-                >
-                  <span className="label">
-                    <span className="box">{rating === r.l && <IconCheck size={12} />}</span>
-                    <IconStar size={14} style={{ color: 'var(--accent)' }} /> {r.l}
-                  </span>
-                  <span className="count num">{r.n}</span>
-                </div>
-              ))}
+            <div className="filter-block">
+              <div className="ft">
+                <span>امتیاز استاد</span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {[
+                  { l: '۴٫۵ به بالا', n: faNum(facetCounts.rate45) },
+                  { l: '۴ به بالا', n: faNum(facetCounts.rate40) },
+                ].map((r) => {
+                  const on = rating === r.l;
+                  return (
+                    <div
+                      key={r.l}
+                      role="checkbox"
+                      aria-checked={on}
+                      tabIndex={0}
+                      className={`check-row ${on ? 'is-on' : ''}`}
+                      style={{ justifyContent: 'space-between' }}
+                      onClick={() => {
+                        setRating((cur) => (cur === r.l ? '' : r.l));
+                        setPage(1);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setRating((cur) => (cur === r.l ? '' : r.l));
+                          setPage(1);
+                        }
+                      }}
+                    >
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+                        <span className="checkbox">{on && <IconCheck size={12} />}</span>
+                        <span>{r.l}</span>
+                      </span>
+                      <span className="t-caption t-muted num">{r.n}</span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
-            <div className="filter-sec">
-              <h4>سطح استاد</h4>
-              {[
-                { l: 'متخصص', n: faNum(facetCounts.countLevel('متخصص')) },
-                { l: 'کارشناس', n: faNum(facetCounts.countLevel('کارشناس')) },
-                { l: 'مربی', n: faNum(facetCounts.countLevel('مربی')) },
-              ].map((lv) => {
-                const on = levels.includes(lv.l);
-                return (
-                  <div
-                    key={lv.l}
-                    role="checkbox"
-                    aria-checked={on}
-                    tabIndex={0}
-                    className={`check-row ${on ? 'is-on' : ''}`}
-                    onClick={() => toggleLevel(lv.l)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        toggleLevel(lv.l);
-                      }
-                    }}
-                  >
-                    <span className="label">
-                      <span className="box">{on && <IconCheck size={12} />}</span>
-                      {lv.l}
-                    </span>
-                    <span className="count num">{lv.n}</span>
-                  </div>
-                );
-              })}
+            <div className="filter-block">
+              <div className="ft">
+                <span>سطح استاد</span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {[
+                  { l: 'استاد ارشد', n: faNum(facetCounts.countLevel('استاد ارشد')) },
+                  { l: 'متخصص', n: faNum(facetCounts.countLevel('متخصص')) },
+                  { l: 'کارشناس', n: faNum(facetCounts.countLevel('کارشناس')) },
+                  { l: 'مربی', n: faNum(facetCounts.countLevel('مربی')) },
+                ].map((lv) => {
+                  const on = levels.includes(lv.l);
+                  return (
+                    <div
+                      key={lv.l}
+                      role="checkbox"
+                      aria-checked={on}
+                      tabIndex={0}
+                      className={`check-row ${on ? 'is-on' : ''}`}
+                      style={{ justifyContent: 'space-between' }}
+                      onClick={() => toggleLevel(lv.l)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          toggleLevel(lv.l);
+                        }
+                      }}
+                    >
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+                        <span className="checkbox">{on && <IconCheck size={12} />}</span>
+                        <span>{lv.l}</span>
+                      </span>
+                      <span className="t-caption t-muted num">{lv.n}</span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
-            <div className="filter-sec">
-              <h4>بستر برگزاری</h4>
-              {['اسکای‌روم', 'فنوتک', 'گوگل‌میت', 'منزل شاگرد'].map((p) => {
-                const on = platforms.includes(p);
-                return (
-                  <div
-                    key={p}
-                    role="checkbox"
-                    aria-checked={on}
-                    tabIndex={0}
-                    className={`check-row ${on ? 'is-on' : ''}`}
-                    onClick={() => togglePlatform(p)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        togglePlatform(p);
-                      }
-                    }}
-                  >
-                    <span className="label">
-                      <span className="box">{on && <IconCheck size={12} />}</span>
-                      {p}
-                    </span>
-                    <span className="count num">{faNum(facetCounts.countPlatform(p))}</span>
-                  </div>
-                );
-              })}
+            <div className="filter-block">
+              <div className="ft">
+                <span>بستر برگزاری</span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {['اسکای‌روم', 'فنوتک', 'گوگل‌میت', 'منزل شاگرد'].map((p) => {
+                  const on = platforms.includes(p);
+                  return (
+                    <div
+                      key={p}
+                      role="checkbox"
+                      aria-checked={on}
+                      tabIndex={0}
+                      className={`check-row ${on ? 'is-on' : ''}`}
+                      style={{ justifyContent: 'space-between' }}
+                      onClick={() => togglePlatform(p)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          togglePlatform(p);
+                        }
+                      }}
+                    >
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+                        <span className="checkbox">{on && <IconCheck size={12} />}</span>
+                        <span>{p}</span>
+                      </span>
+                      <span className="t-caption t-muted num">{faNum(facetCounts.countPlatform(p))}</span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
-            <div className="filter-sec">
-              <h4>جنسیت استاد</h4>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
+            <div className="filter-block">
+              <div className="ft">
+                <span>جنسیت استاد</span>
+              </div>
+              <div className="segmented" style={{ width: '100%' }}>
                 {['فرقی ندارد', 'خانم', 'آقا'].map((g) => (
                   <button
                     key={g}
                     type="button"
                     aria-pressed={gender === g}
-                    className={`opt-chip ${gender === g ? 'is-on' : ''}`}
+                    className={gender === g ? 'is-active' : ''}
+                    style={{ flex: 1, justifyContent: 'center', padding: '8px 6px', fontSize: 12.5 }}
                     onClick={() => {
                       setGender(g);
                       setPage(1);
@@ -747,32 +906,38 @@ export default function ClassesSearch({ content = {}, preview = false } = {}) {
             </div>
           </aside>
 
-          {/* ============ results (left in RTL) ============ */}
-          <div style={{ gridColumn: 2 }}>
-            <div className="sort-row" style={{ marginBottom: 18 }}>
-              <div>
-                <h1 style={{ fontSize: 22, fontWeight: 900 }}>{dynamicHeading}</h1>
-                <span className="t-small t-muted num">
-                  {faNum(sorted.length)} کلاس و استاد پیدا شد
-                </span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          {/* ============ results column ============ */}
+          <div style={{ minWidth: 0 }}>
+            <div
+              className="sort-row"
+              style={{ justifyContent: 'space-between', marginBottom: 18 }}
+            >
+              <span className="t-small t-muted num">
+                <b style={{ color: 'var(--ink)' }}>{faNum(sorted.length)} نتیجه</b> · صفحه‌ی{' '}
+                {faNum(currentPage)} از {faNum(totalPages)}
+              </span>
+
+              <div className="sort-row">
                 <span className="t-small t-muted">مرتب‌سازی:</span>
-                <select
-                  aria-label="مرتب‌سازی نتایج"
-                  className="select"
-                  style={{ width: 200 }}
-                  value={sort}
-                  onChange={(e) => {
-                    setSort(e.target.value);
-                    setPage(1);
-                  }}
-                >
-                  <option value="پیشنهاد نیمکت">پیشنهاد نیمکت</option>
-                  <option value="کمترین قیمت">کمترین قیمت</option>
-                  <option value="بالاترین امتیاز">بالاترین امتیاز</option>
-                  <option value="نزدیک‌ترین جلسه">نزدیک‌ترین جلسه</option>
-                </select>
+                {[
+                  { key: 'پیشنهاد نیمکت', label: 'پیشنهاد نیمکت' },
+                  { key: 'بالاترین امتیاز', label: 'بیشترین امتیاز' },
+                  { key: 'کمترین قیمت', label: 'کمترین قیمت' },
+                  { key: 'نزدیک‌ترین جلسه', label: 'نزدیک‌ترین زمان' },
+                ].map((s) => (
+                  <button
+                    key={s.key}
+                    type="button"
+                    aria-pressed={sort === s.key}
+                    className={`opt-chip ${sort === s.key ? 'is-on' : ''}`}
+                    onClick={() => {
+                      setSort(s.key);
+                      setPage(1);
+                    }}
+                  >
+                    {s.label}
+                  </button>
+                ))}
               </div>
             </div>
 
@@ -834,62 +999,36 @@ export default function ClassesSearch({ content = {}, preview = false } = {}) {
               ))}
             </div>
 
-            {/* pagination */}
-            {sorted.length > 0 && (
-              <nav className="pagination" aria-label="صفحه‌بندی نتایج">
-                <button
-                  type="button"
-                  aria-label="صفحه بعد"
-                  disabled={currentPage >= totalPages}
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                >
-                  <IconChevronRight size={16} />
-                </button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1)
-                  .reverse()
-                  .map((p) => (
-                    <button
-                      key={p}
-                      type="button"
-                      aria-current={currentPage === p ? 'page' : undefined}
-                      className={`num ${currentPage === p ? 'is-active' : ''}`}
-                      onClick={() => setPage(p)}
-                    >
-                      {faNum(p)}
-                    </button>
-                  ))}
-                <button
-                  type="button"
-                  aria-label="صفحه قبل"
-                  disabled={currentPage <= 1}
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                >
-                  <IconChevronLeft size={16} />
-                </button>
-              </nav>
-            )}
-
-            {/* bottom helper banner */}
+            {/* bottom helper banner (matches CLASSES.pdf) */}
             <div
               className="card-soft"
               style={{
-                marginTop: 28,
-                padding: '24px 28px',
+                marginTop: 22,
+                padding: '20px 24px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 gap: 20,
                 flexWrap: 'wrap',
+                borderRadius: 'var(--r-xl)',
               }}
             >
-              <div>
-                <b style={{ fontSize: 16 }}>استاد یا زمان دلخواهت را پیدا نکردی؟</b>
-                <div className="t-small t-muted" style={{ marginTop: 4 }}>
-                  مشخصاتت را بگذار؛ تیم نیمکت ظرف ۲ ساعت ۳ استاد متناسب با هدفت پیشنهاد می‌دهد.
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                <span
+                  className="avatar sq-40 tint-orange"
+                  style={{ borderRadius: 'var(--r-md)' }}
+                >
+                  <IconSparkle size={19} />
+                </span>
+                <div>
+                  <b style={{ fontSize: 15 }}>استاد مورد نظرتان را پیدا نکردید؟</b>
+                  <div className="t-caption t-muted" style={{ marginTop: 3 }}>
+                    درخواست بدهید؛ حداکثر تا ۲۴ ساعت یک استاد مناسب به شما پیشنهاد می‌شود.
+                  </div>
                 </div>
               </div>
               <button
-                className="btn btn-primary"
+                className="btn btn-outline"
                 type="button"
                 onClick={() => {
                   setSuggestDone(false);
@@ -897,9 +1036,46 @@ export default function ClassesSearch({ content = {}, preview = false } = {}) {
                   setSuggestModalOpen(true);
                 }}
               >
-                پیشنهاد استاد <IconArrowLeft size={18} />
+                پیشنهاد استاد
               </button>
             </div>
+
+            {/* pagination (.pager from global.css) */}
+            {sorted.length > 0 && (
+              <nav
+                className="pager"
+                aria-label="صفحه‌بندی نتایج"
+                style={{ marginTop: 26 }}
+              >
+                <button
+                  type="button"
+                  aria-label="صفحه قبل"
+                  disabled={currentPage <= 1}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                >
+                  <IconChevronRight size={16} />
+                </button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    aria-current={currentPage === p ? 'page' : undefined}
+                    className={`num ${currentPage === p ? 'is-on' : ''}`}
+                    onClick={() => setPage(p)}
+                  >
+                    {faNum(p)}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  aria-label="صفحه بعد"
+                  disabled={currentPage >= totalPages}
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                >
+                  <IconChevronLeft size={16} />
+                </button>
+              </nav>
+            )}
           </div>
         </div>
       </section>
@@ -1083,83 +1259,85 @@ export default function ClassesSearch({ content = {}, preview = false } = {}) {
 function ResultCard({ c }) {
   const isPrivate = c.kind === 'خصوصی';
   return (
-    <div className="res-card" style={c.full ? { opacity: 0.72 } : undefined}>
-      {/* right: teacher avatar */}
+    <div className="result-card" style={c.full ? { opacity: 0.78 } : undefined}>
+      {/* right column (auto): teacher avatar + level badge */}
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-        <div style={{ position: 'relative' }}>
-          <div className={`avatar sq-72 ${c.color}`}>{c.letter}</div>
-          <span className="avatar-verified">
-            <IconShield size={14} />
-          </span>
-        </div>
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12.5, fontWeight: 800 }}>
-          <IconStar size={13} style={{ color: 'var(--accent)' }} /> {c.rating}
-          <span className="t-muted" style={{ fontWeight: 500 }}>
-            ({c.reviews})
-          </span>
-        </div>
+        <Link to={`/teachers/${c.teacherId || 1}`} className={`avatar sq-72 ${c.color}`}>
+          {c.letter}
+        </Link>
+        <span className="chip soft-green" style={{ fontSize: 11.5, padding: '3px 10px' }}>
+          {c.level}
+        </span>
       </div>
 
-      {/* middle: details */}
-      <div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-          <Link to={`/teachers/${c.teacherId || 1}`} style={{ fontSize: 16.5, fontWeight: 800 }}>
-            {c.teacher}
-          </Link>
-          <span className="t-small t-muted">· {c.role}</span>
+      {/* middle column (.info): badges, title, teacher meta, nearest times */}
+      <div className="info">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 6 }}>
           {c.badges.map((b) => (
             <span
               key={b}
-              className={`chip ${b.includes('برتر') ? 'dark' : b.includes('دوستانه') ? 'soft-orange' : 'soft-green'}`}
+              className={`chip ${
+                b.includes('برتر')
+                  ? 'dark'
+                  : b.includes('دوستانه') || b.includes('تخفیف')
+                    ? 'soft-orange'
+                    : 'soft-green'
+              }`}
+              style={{ fontSize: 11.5 }}
             >
               {b}
             </span>
           ))}
-          <span className={`chip ${c.mode === 'حضوری' ? 'soft-orange' : 'outline'}`}>
-            {c.mode === 'حضوری' ? <IconMapPin size={13} /> : <IconGlobe size={13} />} {c.mode}
+          {c.kind === 'دوستانه' && (
+            <span className="chip soft-orange" style={{ fontSize: 11.5 }}>
+              دوستانه
+            </span>
+          )}
+          {c.mode === 'حضوری' && (
+            <span className="chip" style={{ fontSize: 11.5 }}>
+              حضوری
+            </span>
+          )}
+        </div>
+
+        <h3>
+          <Link to={`/classes/${c.id}`}>{c.title || c.subtitle}</Link>
+        </h3>
+
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 14,
+            flexWrap: 'wrap',
+            marginTop: 6,
+            fontSize: 13,
+            color: 'var(--muted)',
+          }}
+        >
+          <Link
+            to={`/teachers/${c.teacherId || 1}`}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontWeight: 700, color: 'var(--ink)' }}
+          >
+            <IconUser size={14} /> {c.teacher}
+          </Link>
+          <span className="num" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontWeight: 800, color: 'var(--ink)' }}>
+            <IconStar size={13} style={{ color: 'var(--accent)' }} /> {c.rating}{' '}
+            <span className="t-muted" style={{ fontWeight: 500 }}>
+              ({c.reviews} نظر)
+            </span>
+          </span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+            {c.mode === 'حضوری' ? <IconMapPin size={14} /> : <IconGlobe size={14} />}
+            {c.mode} · {c.platform}
           </span>
         </div>
 
-        {c.title && (
-          <h3 style={{ fontSize: 16.5, fontWeight: 800, marginTop: 10 }}>
-            <Link to={`/classes/${c.id}`}>{c.title}</Link>
-          </h3>
-        )}
-        {c.subtitle && <p style={{ fontSize: 14, color: 'var(--n700)', marginTop: 8 }}>{c.subtitle}</p>}
-
-        {Array.isArray(c.meta) ? (
-          <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap', marginTop: 10, fontSize: 13, color: 'var(--n700)' }}>
-            <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
-              <IconUsers size={15} /> {c.meta[0]}
-            </span>
-            <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
-              <IconCalendar size={15} /> {c.meta[1]}
-            </span>
-            <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
-              <IconClock size={15} /> {c.meta[2]}
-            </span>
-          </div>
-        ) : (
-          <div className="t-small t-muted" style={{ marginTop: 6 }}>
-            {c.meta}
-          </div>
-        )}
-
-        {c.tags && (
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 10 }}>
-            {c.tags.map((t) => (
-              <span className="chip outline" key={t}>
-                {t}
-              </span>
-            ))}
-          </div>
-        )}
-
-        {c.slots && (
+        {Array.isArray(c.slots) && c.slots.length > 0 && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
-            <span className="t-caption t-muted">اولین زمان‌های آزاد:</span>
+            <span className="t-caption t-muted">نزدیک‌ترین زمان‌ها:</span>
             {c.slots.map((s) => (
-              <span key={s} className="slot-pill num">
+              <span key={s} className="time-chip num">
                 {s}
               </span>
             ))}
@@ -1167,8 +1345,8 @@ function ResultCard({ c }) {
         )}
 
         {!isPrivate && (
-          <div style={{ marginTop: 14, maxWidth: 420 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 6 }}>
+          <div style={{ marginTop: 12, maxWidth: 420 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 5 }}>
               <span className="t-muted">{c.capacityText}</span>
               {c.full ? (
                 <b style={{ color: 'var(--error)' }}>تکمیل ظرفیت</b>
@@ -1183,35 +1361,34 @@ function ResultCard({ c }) {
         )}
       </div>
 
-      {/* left: price + actions */}
-      <div className="res-cta">
+      {/* left column (.price-col): price & CTA */}
+      <div className="price-col">
         <div>
-          <div className="res-price num">
-            {faPrice(c.price)} <small>تومان</small>
-          </div>
           <div className="t-caption t-muted">{c.unit}</div>
-        </div>
-        <span className="chip soft-green" style={{ fontSize: 11.5 }}>
-          {c.discount}
-        </span>
-        {c.full ? (
-          <Link to={`/classes/${c.id}`} className="btn btn-outline btn-block">
-            مشاهده جزئیات کلاس
-          </Link>
-        ) : isPrivate ? (
-          <Link to={`/teachers/${c.teacherId || 1}`} className="btn btn-primary btn-block">
-            پروفایل و زمان‌ها
-          </Link>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%' }}>
-            <Link to={`/classes/${c.id}`} className="btn btn-primary btn-block">
-              انتخاب نیمکت و رزرو
-            </Link>
-            <Link to={`/teachers/${c.teacherId || 1}`} className="btn btn-outline btn-sm btn-block">
-              پروفایل استاد
-            </Link>
+          <div className="num" style={{ fontSize: 22, fontWeight: 900, marginTop: 2 }}>
+            {faPrice(c.price)}
           </div>
-        )}
+          <div className="t-caption t-muted">تومان</div>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Link
+            to={`/classes/${c.id}`}
+            className={`btn ${c.full ? 'btn-outline' : 'btn-primary'}`}
+            style={{ flex: 1, padding: '10px 14px' }}
+          >
+            {c.full ? 'جزئیات' : 'رزرو'}
+          </Link>
+          <Link
+            to={`/teachers/${c.teacherId || 1}`}
+            className="btn-icon-round"
+            aria-label={`پروفایل ${c.teacher}`}
+            title={`پروفایل ${c.teacher}`}
+            style={{ width: 42, height: 42 }}
+          >
+            <IconHeart size={17} />
+          </Link>
+        </div>
       </div>
     </div>
   );

@@ -52,6 +52,34 @@ function schedulingModule(app,{db,auth,requireRole,settings,now=Date.now,onTeach
    db.prepare("UPDATE class_occurrences SET status='cancelled' WHERE id=?").run(row.id);lifecycle.syncChat(row.class_id);settings.audit(req.user.id,'schedule.cancel',String(row.id));
   })();res.json({ok:true});
  }));
+ app.get('/api/teacher/schedule/classes',auth,requireRole('teacher'),safe((req,res)=>{
+  const account=db.prepare('SELECT * FROM teacher_accounts WHERE user_id=?').get(req.user.id)||null;
+  const classes=(account&&account.status==='approved'&&account.teacher_id)?db.prepare('SELECT id,title,mode,capacity,price FROM classes WHERE teacher_id=? ORDER BY id').all(account.teacher_id):[];
+  res.json({account,classes});
+ }));
+ app.post('/api/teacher/schedule/occurrences',auth,requireRole('teacher'),safe((req,res)=>{
+  const {classId,startsAt,endsAt}=req.body||{};
+  if(!Number.isSafeInteger(classId)||!Number.isSafeInteger(startsAt)||!Number.isSafeInteger(endsAt)||startsAt<=now()||startsAt>now()+366*86400000||endsAt-startsAt<15*60000||endsAt-startsAt>6*3600000)fail('زمان شروع باید در آینده و مدت جلسه بین ۱۵ دقیقه تا ۶ ساعت باشد.');
+  const id=db.transaction(()=>{
+   const account=db.prepare("SELECT * FROM teacher_accounts WHERE user_id=? AND status='approved'").get(req.user.id);
+   if(!account||!account.teacher_id)fail('حساب مدرس شما هنوز تأیید و به پروفایل متصل نشده است.',422);
+   const cls=db.prepare('SELECT * FROM classes WHERE id=? AND teacher_id=?').get(classId,account.teacher_id);
+   if(!cls)fail('کلاس متعلق به پروفایل شما پیدا نشد.',404);
+   lifecycle.checkSlot(cls,startsAt,endsAt);
+   const result=db.prepare('INSERT INTO class_occurrences(class_id,teacher_id,starts_at,ends_at,created_at) VALUES(?,?,?,?,?)').run(classId,cls.teacher_id,startsAt,endsAt,now());
+   lifecycle.syncChat(classId);settings.audit(req.user.id,'teacher.schedule.create',String(result.lastInsertRowid),{classId,startsAt,endsAt});return Number(result.lastInsertRowid);
+  })();res.json({id});
+ }));
+ app.post('/api/teacher/schedule/occurrences/:id/cancel',auth,requireRole('teacher'),safe((req,res)=>{
+  db.transaction(()=>{
+   const account=db.prepare("SELECT * FROM teacher_accounts WHERE user_id=? AND status='approved'").get(req.user.id);
+   if(!account||!account.teacher_id)fail('حساب مدرس شما هنوز تأیید نشده است.',422);
+   const row=db.prepare('SELECT * FROM class_occurrences WHERE id=? AND teacher_id=?').get(req.params.id,account.teacher_id);
+   if(!row)fail('جلسه پیدا نشد.',404);
+   if(db.prepare("SELECT b.id FROM booking_occurrences bo JOIN bookings b ON b.id=bo.booking_id WHERE bo.occurrence_id=? AND (b.status='confirmed' OR (b.status='held' AND b.hold_until>?))").get(row.id,now()))fail('این جلسه رزرو فعال دارد؛ لغو نیازمند روند بازپرداخت یا تغییر زمان توافقی است.',409);
+   db.prepare("UPDATE class_occurrences SET status='cancelled' WHERE id=?").run(row.id);lifecycle.syncChat(row.class_id);settings.audit(req.user.id,'teacher.schedule.cancel',String(row.id));
+  })();res.json({ok:true});
+ }));
  app.get('/api/schedule/mine',auth,(req,res)=>{
   res.json({occurrences:db.prepare(`SELECT o.*,c.title,b.id booking_id FROM booking_occurrences bo JOIN bookings b ON b.id=bo.booking_id JOIN class_occurrences o ON o.id=bo.occurrence_id JOIN classes c ON c.id=o.class_id WHERE b.user_id=? AND b.status='confirmed' ORDER BY o.starts_at LIMIT 200`).all(req.user.id)});
  });

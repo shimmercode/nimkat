@@ -253,7 +253,19 @@ function SeatGrid({ selected, onSelect, taken = [1, 2, 4, 5, 6, 9, 10, 12], book
 export default function Home({ initialSchema = null } = {}) {
   const [pubSchema, setPubSchema] = useState(initialSchema);
   useEffect(() => {
-    api('/pages/home').then((d) => { if (d.page?.schema) setPubSchema(d.page.schema); }).catch(() => {});
+    let active = true;
+    api('/pages/home')
+      .then((d) => {
+        if (!active) return;
+        const next = d.page?.schema || null;
+        if (next) {
+          setPubSchema((prev) => (JSON.stringify(prev) === JSON.stringify(next) ? prev : next));
+        }
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
   }, []);
   const [subject, setSubject] = useState('همه');
   const [faqOpen, setFaqOpen] = useState(0);
