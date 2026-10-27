@@ -262,3 +262,77 @@ test('Phase 4: NimChat room categories, persisted room notification settings, an
   assert.equal(reportRes.status, 200);
   assert.equal(reportRes.data.ok, true);
 });
+
+test('Phase 6: Teacher calendar slot creation, conflict detection, unbooked cancellation, and student privacy in /api/calendar', async (t) => {
+  const f = await createFullServerFixture(t);
+  const teacher = await f.loginAs('09128887766', 'teacher');
+  const student = await f.loginAs('09128887755', 'student');
+
+  // Unapproved teacher cannot create occurrences yet
+  const beforeApprove = await teacher.request('/teacher/schedule/classes');
+  assert.equal(beforeApprove.status, 200);
+  assert.equal(beforeApprove.data.classes.length, 0);
+
+  const nowMs = Date.now();
+  const rejectUnapproved = await teacher.request('/teacher/schedule/occurrences', {
+    method: 'POST',
+    body: { classId: 1, startsAt: nowMs + 5 * 86400000, endsAt: nowMs + 5 * 86400000 + 5400000 },
+  });
+  assert.equal(rejectUnapproved.status, 422);
+
+  // Link and approve teacher for teacher_id = 1
+  const teacherMe = await teacher.request('/auth/me');
+  const teacherUserId = teacherMe.data.user.id;
+  f.db
+    .prepare(
+      "INSERT OR REPLACE INTO teacher_accounts(user_id, teacher_id, status, bio, subject, version, review_note, created_at) VALUES(?, 1, 'approved', 'مدرس ریاضی', 'ریاضی', 1, 'تأیید', ?)"
+    )
+    .run(teacherUserId, nowMs);
+
+  const afterApprove = await teacher.request('/teacher/schedule/classes');
+  assert.equal(afterApprove.status, 200);
+  assert.ok(afterApprove.data.classes.length >= 1);
+  const myClassId = afterApprove.data.classes[0].id;
+
+  // Create a valid future slot
+  const start1 = nowMs + 10 * 86400000;
+  const end1 = start1 + 90 * 60000;
+  const createdSlot = await teacher.request('/teacher/schedule/occurrences', {
+    method: 'POST',
+    body: { classId: myClassId, startsAt: start1, endsAt: end1 },
+  });
+  assert.equal(createdSlot.status, 200);
+  assert.equal(typeof createdSlot.data.id, 'number');
+
+  // Overlapping slot must be rejected with 409
+  const overlapSlot = await teacher.request('/teacher/schedule/occurrences', {
+    method: 'POST',
+    body: { classId: myClassId, startsAt: start1 + 15 * 60000, endsAt: end1 + 15 * 60000 },
+  });
+  assert.equal(overlapSlot.status, 409);
+
+  // Teacher calendar includes the newly created slot with booked_count and students array
+  const tCal = await teacher.request(`/calendar?from=${start1 - 86400000}&to=${end1 + 86400000}`);
+  assert.equal(tCal.status, 200);
+  const foundInTeacherCal = tCal.data.occurrences.find((o) => o.id === createdSlot.data.id);
+  assert.ok(foundInTeacherCal);
+  assert.equal(foundInTeacherCal.booked_count, 0);
+  assert.ok(Array.isArray(foundInTeacherCal.students));
+
+  // Student calendar does NOT expose unbooked teacher occurrences or other students' names
+  const sCal = await student.request(`/calendar?from=${start1 - 86400000}&to=${end1 + 86400000}`);
+  assert.equal(sCal.status, 200);
+  assert.equal(
+    sCal.data.occurrences.find((o) => o.id === createdSlot.data.id),
+    undefined
+  );
+
+  // Teacher can cancel their unbooked future slot
+  const cancelRes = await teacher.request(`/teacher/schedule/occurrences/${createdSlot.data.id}/cancel`, {
+    method: 'POST',
+    body: {},
+  });
+  assert.equal(cancelRes.status, 200);
+  assert.equal(cancelRes.data.ok, true);
+});
+

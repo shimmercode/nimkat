@@ -361,22 +361,30 @@ export function TopStudentsBlock({ node }) {
           </div>
         </div>
         <div className="row-scroll">
-          {(d.students || []).map((s) => (
-            <div className="s-card" key={s.name}>
-              <div className="s-avatar-wrap">
-                {s.rank && Number(String(s.rank).replace(/[۰-۹]/g, (x) => '۰۱۲۳۴۵۶۷۸۹'.indexOf(x))) <= 3 && (
-                  <span className="s-crown"><IconCrown size={16} /></span>
-                )}
-                <div className="s-avatar" style={{ background: s.color === 'green' ? 'var(--secondary)' : 'var(--accent)' }}>{s.letter}</div>
+          {(d.students || []).map((s) => {
+            const numericRank = Number(String(s.rank || '').replace(/[۰-۹]/g, (x) => '۰۱۲۳۴۵۶۷۸۹'.indexOf(x)));
+            const isRank1 = numericRank === 1;
+            return (
+              <div className="s-card" key={s.name} data-testid={`top-student-card-${numericRank || s.name}`}>
+                <div className="s-avatar-wrap student-avatar-ring-wrap">
+                  <span
+                    className={`student-avatar-ring ${isRank1 ? 'student-avatar-ring--rank1' : ''}`}
+                    aria-hidden="true"
+                  />
+                  {s.rank && numericRank <= 3 && (
+                    <span className="s-crown"><IconCrown size={16} /></span>
+                  )}
+                  <div className="s-avatar" style={{ background: s.color === 'green' ? 'var(--secondary)' : 'var(--accent)', position: 'relative', zIndex: 1 }}>{s.letter}</div>
+                </div>
+                <b style={{ fontSize: 15.5 }}>{s.name}</b>
+                <span style={{ fontSize: 12.5, color: 'var(--muted)' }}>{s.grade}</span>
+                <div className="stats">
+                  <div><div className="v">{s.score}</div><div className="l">امتیاز</div></div>
+                  <div><div className="v">{s.classes}</div><div className="l">کلاس</div></div>
+                </div>
               </div>
-              <b style={{ fontSize: 15.5 }}>{s.name}</b>
-              <span style={{ fontSize: 12.5, color: 'var(--muted)' }}>{s.grade}</span>
-              <div className="stats">
-                <div><div className="v">{s.score}</div><div className="l">امتیاز</div></div>
-                <div><div className="v">{s.classes}</div><div className="l">کلاس</div></div>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>

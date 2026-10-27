@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from '../routing/navigation';
 import { useAuth } from '../auth.jsx';
 import { api } from '../api.js';
-import { faNum } from '../utils/fa.js';
+import { faNum, faPrice } from '../utils/fa.js';
 import {
   IconBench, IconSearch, IconBell, IconHome, IconBook, IconChat, IconChart,
   IconWallet, IconFile, IconCap, IconCrown, IconHeadset, IconUser, IconLogout,
@@ -220,6 +220,21 @@ export default function PanelLayout({ role: propRole = '', variant = '', childre
               placeholder="جستجو در کلاس‌ها، فایل‌ها و پیام‌ها"
             />
           </form>
+
+          {!isAdmin && (
+            <Link
+              to={isTeacher ? '/teacher/finance' : isParent ? '/parent/finance' : '/panel/finance'}
+              className="nk-header-wallet-btn"
+              aria-label="کیف پول و امور مالی"
+              title="مشاهده کیف پول، افزایش موجودی و تراکنش‌ها"
+            >
+              <IconWallet size={17} />
+              <span className="nk-header-wallet-label">کیف پول:</span>
+              <strong className="nk-header-wallet-val num">
+                {typeof summary?.wallet === 'number' ? `${faPrice(summary.wallet)} تومان` : 'مشاهده'}
+              </strong>
+            </Link>
+          )}
 
           <Link className="btn-icon-round" to={notifLink} aria-label="اعلان‌ها" style={{ position: 'relative' }}>
             <IconBell size={19} />

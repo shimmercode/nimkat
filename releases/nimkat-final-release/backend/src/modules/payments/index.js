@@ -61,7 +61,24 @@ function paymentModule(app, { db, auth, settings, providers, scheduling, onConfi
     db.prepare("UPDATE bookings SET status='expired' WHERE schema_version=2 AND status='held' AND hold_until<=?").run(now());
     vouchers.releaseExpired();
   }
-  const paymentView = (row) => ({ id: row.id, bookingId: row.booking_id, purpose: row.purpose, amountRial: row.amount_rial, amount: row.amount_rial / 10, status: row.status, redirectUrl: row.redirect_url, reference: row.reference, createdAt: row.created_at });
+  const paymentView = (row) => {
+    const isLocalDev = Boolean(row.authority && String(row.authority).startsWith('LOCALDEV_'));
+    return {
+      id: row.id,
+      bookingId: row.booking_id,
+      purpose: row.purpose,
+      amountRial: row.amount_rial,
+      amount: row.amount_rial / 10,
+      status: row.status,
+      redirectUrl: row.redirect_url,
+      paymentUrl: row.redirect_url,
+      reference: row.reference,
+      createdAt: row.created_at,
+      verifiedAt: row.verified_at || null,
+      mode: isLocalDev ? 'local_dev' : undefined,
+      authority: isLocalDev && process.env.NODE_ENV !== 'production' ? row.authority : undefined,
+    };
+  };
   async function initiate(intent, config, user) {
     if (intent.status !== 'creating') return paymentView(intent);
     try {
@@ -123,13 +140,19 @@ function paymentModule(app, { db, auth, settings, providers, scheduling, onConfi
       settings.audit(req.user.id, 'booking.created', String(id), { method, amountRial: q.amount_rial });
       return { id, paymentId };
     })();
-    if (method === 'wallet') { onConfirmed(result.id); return res.json({ ok: true, bookingId: result.id, status: 'confirmed', total: q.total }); }
+    if (method === 'wallet') { onConfirmed(result.id); return res.json({ ok: true, bookingId: result.id, status: 'confirmed', sessions: Number(body.sessions) || 1, total: q.total }); }
     const intent = db.prepare('SELECT * FROM payment_intents WHERE id=?').get(result.paymentId);
     res.json({ ok: true, bookingId: result.id, status: 'held', total: q.total, payment: await initiate(intent, config, req.user) });
   }));
   app.post('/api/wallet/charge', auth, safe(async (req, res) => {
-    const { amount, idempotencyKey: key } = req.body || {};
-    if (!Number.isSafeInteger(amount) || amount < 10000 || amount > 100000000 || !keyPattern.test(key || '')) throw error('مبلغ یا شناسهٔ درخواست شارژ نامعتبر است.');
+    const { amount: rawAmount, idempotencyKey: key } = req.body || {};
+    const normalized = typeof rawAmount === 'string'
+      ? rawAmount.replace(/[۰-۹]/g, (d) => String(d.charCodeAt(0) - 1776)).replace(/[٠-٩]/g, (d) => String(d.charCodeAt(0) - 1632)).replace(/[,٬\s]/g, '')
+      : rawAmount;
+    const amount = typeof normalized === 'string' && /^\d+$/.test(normalized) ? Number(normalized) : normalized;
+    if (!Number.isSafeInteger(amount) || amount < 1000 || amount > 100000000 || !keyPattern.test(key || '')) {
+      throw error('مبلغ شارژ باید عدد صحیح بین ۱٬۰۰۰ تا ۱۰۰٬۰۰۰٬۰۰۰ تومان و همراه با شناسهٔ معتبر باشد.');
+    }
     const hash = crypto.createHash('sha256').update(`wallet:${amount}`).digest('hex');
     const existing = db.prepare('SELECT * FROM payment_intents WHERE user_id=? AND idempotency_key=?').get(req.user.id, key);
     if (existing) {
@@ -156,13 +179,53 @@ function paymentModule(app, { db, auth, settings, providers, scheduling, onConfi
     const payment = db.prepare('SELECT * FROM payment_intents WHERE id=?').get(req.params.id);
     if (!payment) throw error('پرداخت پیدا نشد.', 404);
     const resultUrl = `/payment/result?id=${encodeURIComponent(payment.id)}`;
-    if (['paid', 'paid_unallocated', 'sandbox_paid'].includes(payment.status)) return res.redirect(303, resultUrl);
+    const wantsJson = req.query.format === 'json';
+    if (['paid', 'paid_unallocated', 'sandbox_paid'].includes(payment.status)) {
+      if (wantsJson) return res.json({ ok: true, idempotent: true, idempotentReplay: true, walletBalance: Math.floor(walletBalance(payment.user_id) / 10), payment: paymentView(payment) });
+      return res.redirect(303, resultUrl);
+    }
     if (!payment.authority || req.query.Authority !== payment.authority) throw error('شناسهٔ بازگشت با درخواست درگاه مطابقت ندارد.');
-    if (req.query.Status !== 'OK') return res.redirect(303, `${resultUrl}&cancelled=1`);
+    if (req.query.Status !== 'OK') {
+      db.transaction(() => {
+        const fresh = db.prepare('SELECT * FROM payment_intents WHERE id=?').get(payment.id);
+        if (fresh && fresh.status === 'pending') {
+          db.prepare("UPDATE payment_intents SET status='cancelled' WHERE id=?").run(payment.id);
+          if (payment.booking_id) {
+            db.prepare("UPDATE bookings SET status='cancelled',hold_until=NULL WHERE id=? AND status='held'").run(payment.booking_id);
+            db.prepare('DELETE FROM booking_seats WHERE booking_id=?').run(payment.booking_id);
+            vouchers.release(payment.booking_id);
+          }
+          settings.audit(payment.user_id, 'payment.cancelled', payment.id);
+        }
+      })();
+      if (wantsJson) {
+        const updated = db.prepare('SELECT * FROM payment_intents WHERE id=?').get(payment.id);
+        return res.json({ ok: false, cancelled: true, payment: paymentView(updated) });
+      }
+      return res.redirect(303, `${resultUrl}&cancelled=1`);
+    }
     const config = settings.open(payment.config_enc, `payment:${payment.id}`);
     let verified;
     try { verified = await providers.verifyPayment(config, { authority: payment.authority, amount: payment.amount_rial }); }
-    catch { settings.audit(null, 'payment.verify_failed', payment.id); return res.redirect(303, `${resultUrl}&verifyFailed=1`); }
+    catch {
+      db.transaction(() => {
+        const fresh = db.prepare('SELECT * FROM payment_intents WHERE id=?').get(payment.id);
+        if (fresh && fresh.status === 'pending') {
+          db.prepare("UPDATE payment_intents SET status='failed' WHERE id=?").run(payment.id);
+          if (payment.booking_id) {
+            db.prepare("UPDATE bookings SET status='failed',hold_until=NULL WHERE id=? AND status='held'").run(payment.booking_id);
+            db.prepare('DELETE FROM booking_seats WHERE booking_id=?').run(payment.booking_id);
+            vouchers.release(payment.booking_id);
+          }
+        }
+        settings.audit(null, 'payment.verify_failed', payment.id);
+      })();
+      if (wantsJson) {
+        const updated = db.prepare('SELECT * FROM payment_intents WHERE id=?').get(payment.id);
+        return res.status(502).json({ ok: false, verifyFailed: true, error: 'تأیید تراکنش از درگاه ناموفق بود.', payment: paymentView(updated) });
+      }
+      return res.redirect(303, `${resultUrl}&verifyFailed=1`);
+    }
     let confirmed = false;
     db.transaction(() => {
       expire();
@@ -170,7 +233,7 @@ function paymentModule(app, { db, auth, settings, providers, scheduling, onConfi
       if (['paid', 'paid_unallocated', 'sandbox_paid'].includes(fresh.status)) return;
       const booking = payment.booking_id && db.prepare('SELECT * FROM bookings WHERE id=?').get(payment.booking_id);
       const allocated = !config.sandbox && booking && booking.status === 'held' && booking.hold_until > now();
-      const reference = `${config.sandbox ? 'sandbox' : 'live'}:zarinpal:${verified.reference}`;
+      const reference = `${config.sandbox ? 'sandbox' : config.localDev ? 'dev' : 'live'}:${config.localDev ? 'local_dev' : 'zarinpal'}:${verified.reference}`;
       const duplicate = db.prepare('SELECT id FROM payment_intents WHERE reference=? AND id!=?').get(reference, payment.id);
       if (duplicate) throw error('این رسید قبلاً برای پرداخت دیگری ثبت شده است.', 409);
       journal(`payment:${payment.id}`, payment.purpose, [{ account: config.sandbox ? 'sandbox:clearing' : 'gateway:clearing', amount: -payment.amount_rial }, { account: config.sandbox ? `sandbox:user:${payment.user_id}` : allocated ? 'platform:escrow' : `user:${payment.user_id}`, amount: payment.amount_rial }]);
@@ -182,6 +245,10 @@ function paymentModule(app, { db, auth, settings, providers, scheduling, onConfi
       settings.audit(null, 'payment.verified', payment.id, { amountRial: payment.amount_rial, status });
     })();
     if (confirmed) onConfirmed(payment.booking_id);
+    if (wantsJson) {
+      const updated = db.prepare('SELECT * FROM payment_intents WHERE id=?').get(payment.id);
+      return res.json({ ok: true, walletBalance: Math.floor(walletBalance(payment.user_id) / 10), payment: paymentView(updated) });
+    }
     res.redirect(303, resultUrl);
   }));
   app.get('/api/admin/payments', auth, (req, res) => {

@@ -325,6 +325,34 @@ function seed() {
     days: 'به انتخاب شما', time: 'زمان‌های آزاد', desc: 'این کلاس برای شاگردهایی است که در فیزیک یازدهم با مفاهیم مشکل دارند یا برای امتحان نوبت اول آماده می‌شوند. هر جلسه ۳۰ دقیقه مرور مفهوم، ۴۵ دقیقه حل مسئلهٔ هم‌سطح امتحان و ۱۵ دقیقه جمع‌بندی و تکلیف دارد. جزوه و تمرین‌ها بعد از هر جلسه در بخش فایل‌های پنل شما قرار می‌گیرد.',
     syllabus, rules, badges: J(['جلسهٔ اول با ضمانت']), deadline: '', location: 'آنلاین · اسکای‌روم',
   });
+  insC.run({
+    id: 6, title: 'شیمی کنکور؛ مفاهیم، استوکیومتری و حل تست زمان‌دار', teacher_id: 2, kind: 'group',
+    mode: 'آنلاین', platform: 'اسکای‌روم', grade: 'کنکور', field: 'تجربی و ریاضی', subject: 'شیمی',
+    sessions: 8, session_minutes: 90, price: 520000, rating: 4.9, reviews_count: 289, capacity: 10, taken: 4,
+    days: 'شنبه‌ها و دوشنبه‌ها', time: '۱۷:۰۰', desc: 'بررسی مفهومی و تستی شیمی کنکور همراه با تحلیل تیپ‌های پرتکرار و آزمونک پایان هر جلسه.',
+    syllabus, rules, badges: J(['برتر ماه', 'جلسهٔ اول با ضمانت']), deadline: 'ثبت‌نام فعال', location: 'آنلاین · اسکای‌روم',
+  });
+  insC.run({
+    id: 7, title: 'هندسه و گسسته؛ آموزش مفهومی و تیپ‌بندی تست‌ها', teacher_id: 6, kind: 'group',
+    mode: 'آنلاین', platform: 'اسکای‌روم', grade: 'دوازدهم', field: 'ریاضی فیزیک', subject: 'ریاضی',
+    sessions: 8, session_minutes: 90, price: 390000, rating: 4.7, reviews_count: 142, capacity: 8, taken: 3,
+    days: 'یکشنبه‌ها و سه‌شنبه‌ها', time: '۱۶:۳۰', desc: 'آموزش گام‌به‌گام قضایای هندسه و مباحث نظریه اعداد و گراف در ریاضیات گسسته.',
+    syllabus, rules, badges: J(['جلسهٔ اول با ضمانت']), deadline: 'ثبت‌نام فعال', location: 'آنلاین · اسکای‌روم',
+  });
+  insC.run({
+    id: 8, title: 'زیست‌شناسی جامع کنکور؛ تحلیل ترکیبی شکل‌ها و نکات', teacher_id: 7, kind: 'group',
+    mode: 'آنلاین', platform: 'اسکای‌روم', grade: 'کنکور', field: 'علوم تجربی', subject: 'زیست',
+    sessions: 8, session_minutes: 90, price: 490000, rating: 4.9, reviews_count: 198, capacity: 12, taken: 5,
+    days: 'شنبه‌ها و چهارشنبه‌ها', time: '۱۸:۰۰', desc: 'بررسی خط‌به‌خط کتاب درسی و تحلیل ترکیبی تصاویر زیست‌شناسی برای تسلط کامل در کنکور.',
+    syllabus, rules, badges: J(['جلسهٔ اول با ضمانت']), deadline: 'ثبت‌نام فعال', location: 'آنلاین · اسکای‌روم',
+  });
+  insC.run({
+    id: 9, title: 'حسابان و ریاضیات دوازدهم؛ کارگاه حل مسئله و امتحان نهایی', teacher_id: 4, kind: 'group',
+    mode: 'آنلاین', platform: 'اسکای‌روم', grade: 'دوازدهم', field: 'ریاضی فیزیک', subject: 'ریاضی',
+    sessions: 8, session_minutes: 90, price: 380000, rating: 4.8, reviews_count: 184, capacity: 10, taken: 4,
+    days: 'یکشنبه‌ها و چهارشنبه‌ها', time: '۱۷:۳۰', desc: 'آموزش کامل مشتق، کاربرد مشتق و انتگرال با حل سؤالات استاندارد امتحان نهایی و کنکور.',
+    syllabus, rules, badges: J(['برتر ماه', 'جلسهٔ اول با ضمانت']), deadline: 'ثبت‌نام فعال', location: 'آنلاین · اسکای‌روم',
+  });
 
   const insR = db.prepare('INSERT INTO reviews (teacher_id,author,role_label,letter,color,rating,text,date_label,helpful,class_label,replied,reply) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)');
   insR.run(1, 'زهرا کریمی', 'شاگرد تأییدشده', 'ز', 'green', 5, 'قبل از کلاس فکر می‌کردم فیزیک یعنی حفظ فرمول. خانم محمدی هر فرمول را اول با یک مثال توضیح می‌دهند. نمرهٔ نوبت اولم از ۱۴ به ۱۸ رسید.', 'دو هفته پیش', 24, 'فیزیک دهم · ۱۲ جلسه', 0, null);

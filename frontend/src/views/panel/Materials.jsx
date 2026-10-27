@@ -10,6 +10,7 @@ export default function Materials() {
   const [sessions, setSessions] = useState([]);
   const [selected, setSelected] = useState('all');
   const [items, setItems] = useState(null);
+  const [reloading, setReloading] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [busy, setBusy] = useState(false);
@@ -30,19 +31,26 @@ export default function Materials() {
 
   const loadMaterials = useCallback(() => {
     let active = true;
-    setItems(null);
+    setReloading(true);
     setError('');
     if (!selected) {
       setItems([]);
+      setReloading(false);
       return () => {};
     }
     const endpoint = selected === 'all' ? '/materials/mine' : `/materials?occurrenceId=${selected}`;
     api(endpoint)
       .then((d) => {
-        if (active) setItems(d.materials || []);
+        if (active) {
+          setItems(d.materials || []);
+          setReloading(false);
+        }
       })
       .catch((e) => {
-        if (active) setError(e.message);
+        if (active) {
+          setError(e.message);
+          setReloading(false);
+        }
       });
     return () => {
       active = false;

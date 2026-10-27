@@ -45,16 +45,26 @@ export default function ClassDetail({ content = {}, preview = false, entityId } 
   const [payMethod, setPayMethod] = useState('gateway');
   const [level, setLevel] = useState('متوسط');
   const [goal, setGoal] = useState('امتحان نهایی');
-  const [sessions, setSessions] = useState(8);
+  const [sessions, setSessions] = useState(1);
   const friend=false;
   const [classKind,setClassKind]=useState(initialEntity?.class?.kind);
   const [coupon, setCoupon] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [quote, setQuote] = useState(null);
   const [occurrenceIds,setOccurrenceIds]=useState([]);
-  useEffect(()=>{setOccurrenceIds([]);},[id,sessions]);
+  const [availableOccurrences, setAvailableOccurrences] = useState([]);
+  const [scheduleLoading, setScheduleLoading] = useState(true);
+  useEffect(()=>{setOccurrenceIds([]);},[id]);
   const [paid, setPaid] = useState(null);
   const friends=[];
+
+  const handleOccurrencesChange = (list, isLoading) => {
+    setAvailableOccurrences(Array.isArray(list) ? list : []);
+    setScheduleLoading(Boolean(isLoading));
+    if (!isLoading && Array.isArray(list) && list.length > 0 && sessions > list.length) {
+      setSessions(list.length);
+    }
+  };
 
   const people = friend ? Math.max(1, friends.length) : 1;
   const per = quote ? quote.gross / Math.max(1, sessions * people) : (classInfo?.price || 280000);
@@ -122,23 +132,59 @@ export default function ClassDetail({ content = {}, preview = false, entityId } 
       navigate('/login');
       return;
     }
-    if(occurrenceIds.length!==sessions){toast('ابتدا زمان همهٔ جلسات را انتخاب کنید.', 'err');return;}
+    if (!scheduleLoading && availableOccurrences.length === 0) {
+      toast('در حال حاضر جلسهٔ آزادی برای رزرو این کلاس ثبت نشده است.', 'err');
+      return;
+    }
+    const effectiveSessions = availableOccurrences.length > 0 ? Math.min(sessions, availableOccurrences.length) : sessions;
+    const chosenIds =
+      occurrenceIds.length === effectiveSessions
+        ? occurrenceIds
+        : availableOccurrences.length >= effectiveSessions
+          ? availableOccurrences.slice(0, effectiveSessions).map((o) => o.id)
+          : occurrenceIds;
+    if (chosenIds.length !== effectiveSessions) {
+      toast('ابتدا زمان همهٔ جلسات را انتخاب کنید.', 'err');
+      return;
+    }
     setPayBusy(true);
-    const fingerprint = JSON.stringify([id, sessions, people, appliedCoupon, occurrenceIds, payMethod]);
+    const fingerprint = JSON.stringify([id, effectiveSessions, people, appliedCoupon, chosenIds, payMethod]);
     const key = paymentAttempt?.fingerprint === fingerprint ? paymentAttempt.key : crypto.randomUUID();
     setPaymentAttempt({ fingerprint, key });
     try {
       const r = await api('/bookings', {
         method: 'POST',
-        body: { classId: Number(id) || 5, sessions, people, coupon: appliedCoupon || undefined, idempotencyKey: key, occurrenceIds, method: payMethod },
+        body: {
+          classId: Number(id) || 5,
+          sessions: effectiveSessions,
+          people,
+          coupon: appliedCoupon || undefined,
+          idempotencyKey: key,
+          occurrenceIds: chosenIds,
+          method: payMethod,
+        },
       });
-      if (r.status === 'confirmed') { setPaid(r); toast('رزرو تأیید شد'); }
-      else if (r.payment?.redirectUrl && r.payment.status === 'pending') window.location.assign(r.payment.redirectUrl);
-      else if (['failed', 'expired'].includes(r.status)) { setPaymentAttempt(null); toast('درخواست قبلی بسته شده؛ دوباره تلاش کنید.', 'err'); }
-      else toast('درخواست در حال بررسی است؛ هنوز رزرو تأیید نشده.', 'err');
+      if (r.status === 'confirmed') {
+        setPaid(r);
+        if (typeof window !== 'undefined') window.dispatchEvent(new Event('nk:wallet-updated'));
+        toast('رزرو تأیید شد');
+      } else if (r.payment?.redirectUrl && r.payment.status === 'pending') {
+        if (r.payment.redirectUrl.startsWith('/')) {
+          navigate(r.payment.redirectUrl);
+        } else {
+          window.location.assign(r.payment.redirectUrl);
+        }
+      } else if (['failed', 'expired'].includes(r.status)) {
+        setPaymentAttempt(null);
+        toast('درخواست قبلی بسته شده؛ دوباره تلاش کنید.', 'err');
+      } else {
+        toast('درخواست در حال بررسی است؛ هنوز رزرو تأیید نشده.', 'err');
+      }
     } catch (e) {
       toast(e.message || 'خطا در ثبت رزرو', 'err');
-    } finally { setPayBusy(false); }
+    } finally {
+      setPayBusy(false);
+    }
   };
 
   if (notFoundError && !classInfo) {
@@ -219,12 +265,57 @@ export default function ClassDetail({ content = {}, preview = false, entityId } 
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div className="field-label">تعداد جلسات</div>
                 <div className="stepper">
-                  <button type="button" onClick={() => setSessions(Math.min(16, sessions + 1))}>+</button>
+                  <button
+                    type="button"
+                    aria-label="افزایش تعداد جلسات"
+                    disabled={!scheduleLoading && availableOccurrences.length === 0}
+                    onClick={() =>
+                      setSessions(
+                        Math.min(
+                          availableOccurrences.length > 0 ? availableOccurrences.length : 16,
+                          sessions + 1
+                        )
+                      )
+                    }
+                  >
+                    +
+                  </button>
                   <span className="val num">{faNum(sessions)}</span>
-                  <button type="button" onClick={() => setSessions(Math.max(3, sessions - 1))}>−</button>
+                  <button
+                    type="button"
+                    aria-label="کاهش تعداد جلسات"
+                    disabled={sessions <= 1}
+                    onClick={() => setSessions(Math.max(1, sessions - 1))}
+                  >
+                    −
+                  </button>
                 </div>
               </div>
-              <div className="field-hint" style={{ marginTop: 8 }}>تخفیف پلکانی خودکار اعمال می‌شود</div>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 10 }} role="group" aria-label="انتخاب سریع تعداد جلسات">
+                {[
+                  { n: 1, label: '۱ جلسه (تک‌جلسه)' },
+                  { n: 4, label: '۴ جلسه (۵٪ تخفیف)' },
+                  { n: 8, label: '۸ جلسه (۱۰٪ تخفیف)' },
+                  { n: 16, label: '۱۶ جلسه (۱۵٪ تخفیف)' },
+                ].map((opt) => {
+                  const maxAllowed = availableOccurrences.length > 0 ? availableOccurrences.length : 16;
+                  const disabledOpt = !scheduleLoading && availableOccurrences.length > 0 && opt.n > maxAllowed;
+                  return (
+                    <button
+                      key={opt.n}
+                      type="button"
+                      disabled={disabledOpt}
+                      className={`opt-chip ${sessions === opt.n ? 'is-on' : ''}`}
+                      onClick={() => setSessions(Math.min(maxAllowed, opt.n))}
+                    >
+                      {opt.label}
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="field-hint" style={{ marginTop: 8 }}>
+                امکان رزرو تک‌جلسه‌ای (۱ جلسه) یا پکیج چندجلسه‌ای با تخفیف پلکانی خودکار
+              </div>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
@@ -316,7 +407,13 @@ export default function ClassDetail({ content = {}, preview = false, entityId } 
               </div>
             ) : (
               <>
-                <SchedulePicker classId={Number(id)||5} count={sessions} selected={occurrenceIds} onChange={setOccurrenceIds} />
+                <SchedulePicker
+                  classId={Number(id) || 5}
+                  count={sessions}
+                  selected={occurrenceIds}
+                  onChange={setOccurrenceIds}
+                  onOccurrencesChange={handleOccurrencesChange}
+                />
                 <div className="segmented" style={{ width: '100%' }} role="group" aria-label="روش پرداخت">
                   <button type="button" className={payMethod === 'gateway' ? 'is-active' : ''} onClick={() => setPayMethod('gateway')} style={{ flex: 1, justifyContent: 'center' }}>
                     درگاه بانکی
@@ -325,8 +422,16 @@ export default function ClassDetail({ content = {}, preview = false, entityId } 
                     کیف پول
                   </button>
                 </div>
-                <button className="btn btn-primary btn-lg btn-block" data-testid="pay-btn" type="button" onClick={payNow} disabled={payBusy}>
-                  پرداخت کل رزرو · {faPrice(quote?.total ?? share * people)} تومان
+                <button
+                  className="btn btn-primary btn-lg btn-block"
+                  data-testid="pay-btn"
+                  type="button"
+                  onClick={payNow}
+                  disabled={payBusy || (!scheduleLoading && availableOccurrences.length === 0)}
+                >
+                  {!scheduleLoading && availableOccurrences.length === 0
+                    ? 'جلسه‌ای برای رزرو موجود نیست'
+                    : `پرداخت کل رزرو · ${faPrice(quote?.total ?? share * people)} تومان`}
                 </button>
               </>
             )}

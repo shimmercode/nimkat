@@ -121,7 +121,7 @@ export function GroupClassesBlock({ node }) {
               <div className="price-line">
                 <span className="l">{d.sessionsLabel}</span>
                 <div className="stepper">
-                  <button type="button" onClick={() => setSessions(Math.max(4, sessions - 1))}>−</button>
+                  <button type="button" onClick={() => setSessions(Math.max(1, sessions - 1))}>−</button>
                   <span className="val num">{faNum(sessions)}</span>
                   <button type="button" onClick={() => setSessions(Math.min(16, sessions + 1))}>+</button>
                 </div>

@@ -1,8 +1,12 @@
 'use client';
-import { NavLink, Link, useNavigate } from '../routing/navigation';
+import { useState, useEffect, useCallback, useRef, useId } from 'react';
+import { NavLink, Link, useNavigate, useLocation } from '../routing/navigation';
 import { useAuth } from '../auth.jsx';
-import { IconBench, IconSearch, IconUser } from './icons.jsx';
+import { api } from '../api.js';
+import { faPrice } from '../utils/fa.js';
+import { IconBench, IconSearch, IconUser, IconWallet, IconChevronDown, IconX } from './icons.jsx';
 import { MobileNavigation } from './ui/twenty-first/navigation.jsx';
+import LiveSearch from './LiveSearch.jsx';
 
 export function Brand({ dark = false }) {
   return (
@@ -26,6 +30,14 @@ export function Brand({ dark = false }) {
 export default function Header() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [walletMenuOpen, setWalletMenuOpen] = useState(false);
+  const [walletBalance, setWalletBalance] = useState(null);
+  const [walletLoading, setWalletLoading] = useState(false);
+  const [walletError, setWalletError] = useState('');
+  const walletMenuId = useId();
+  const walletRef = useRef(null);
 
   const panelPath =
     user?.role === 'teacher'
@@ -36,11 +48,87 @@ export default function Header() {
           ? '/parent'
           : '/panel';
 
+  const financePath =
+    user?.role === 'teacher'
+      ? '/teacher/finance'
+      : user?.role === 'admin'
+        ? '/admin/refunds'
+        : user?.role === 'parent'
+          ? '/parent/finance'
+          : '/panel/finance';
+
   const chatPath = user
     ? user.role === 'teacher'
       ? '/teacher/chat'
       : '/panel/chat'
     : '/login?next=/panel/chat';
+
+  const fetchWalletBalance = useCallback(() => {
+    if (!user) {
+      setWalletBalance(null);
+      setWalletError('');
+      setWalletLoading(false);
+      return () => {};
+    }
+    let alive = true;
+    setWalletLoading(true);
+    setWalletError('');
+    api('/wallet')
+      .then((res) => {
+        if (!alive) return;
+        setWalletBalance(typeof res?.balance === 'number' ? res.balance : 0);
+      })
+      .catch((err) => {
+        if (!alive) return;
+        setWalletError(err?.message || 'خطا در دریافت موجودی');
+      })
+      .finally(() => {
+        if (alive) setWalletLoading(false);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [user]);
+
+  useEffect(() => {
+    const cleanup = fetchWalletBalance();
+    const onWalletUpdated = () => fetchWalletBalance();
+    if (typeof window !== 'undefined') {
+      window.addEventListener('nk:wallet-updated', onWalletUpdated);
+    }
+    return () => {
+      cleanup();
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('nk:wallet-updated', onWalletUpdated);
+      }
+    };
+  }, [fetchWalletBalance, pathname]);
+
+  useEffect(() => {
+    setSearchOpen(false);
+    setWalletMenuOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!walletMenuOpen && !searchOpen) return undefined;
+    const onKey = (e) => {
+      if (e.key === 'Escape') {
+        setWalletMenuOpen(false);
+        setSearchOpen(false);
+      }
+    };
+    const onDown = (e) => {
+      if (walletMenuOpen && walletRef.current && !walletRef.current.contains(e.target)) {
+        setWalletMenuOpen(false);
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    document.addEventListener('mousedown', onDown);
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.removeEventListener('mousedown', onDown);
+    };
+  }, [walletMenuOpen, searchOpen]);
 
   return (
     <header className="site-header">
@@ -69,12 +157,94 @@ export default function Header() {
             className="btn-icon-round"
             type="button"
             aria-label="جستجو"
-            onClick={() => navigate('/classes')}
+            aria-expanded={searchOpen}
+            onClick={() => setSearchOpen((v) => !v)}
           >
-            <IconSearch size={20} />
+            {searchOpen ? <IconX size={20} /> : <IconSearch size={20} />}
           </button>
           {user ? (
             <>
+              <div ref={walletRef} className="nk-wallet-pill-wrap" style={{ position: 'relative' }}>
+                <button
+                  type="button"
+                  className="nk-wallet-pill"
+                  aria-expanded={walletMenuOpen}
+                  aria-controls={walletMenuId}
+                  aria-label="کیف پول و موجودی حساب"
+                  onClick={() => setWalletMenuOpen((v) => !v)}
+                >
+                  <IconWallet size={17} />
+                  <span className="nk-wallet-pill__label">کیف پول:</span>
+                  <span className="nk-wallet-pill__balance num" data-testid="header-wallet-balance">
+                    {walletLoading && walletBalance === null
+                      ? 'در حال دریافت…'
+                      : walletError && walletBalance === null
+                        ? 'خطا در دریافت'
+                        : `${faPrice(walletBalance ?? 0)} تومان`}
+                  </span>
+                  <IconChevronDown size={14} />
+                </button>
+                {walletMenuOpen && (
+                  <div
+                    id={walletMenuId}
+                    role="region"
+                    aria-label="جزئیات کیف پول"
+                    className="nk-wallet-dropdown"
+                  >
+                    <div className="nk-wallet-dropdown__head">
+                      <span className="t-caption t-muted">موجودی قابل استفاده</span>
+                      <strong className="num" style={{ fontSize: 17, color: 'var(--primary)' }}>
+                        {walletLoading
+                          ? 'در حال بروزرسانی…'
+                          : walletError
+                            ? 'خطا در دریافت موجودی'
+                            : `${faPrice(walletBalance ?? 0)} تومان`}
+                      </strong>
+                    </div>
+                    {walletError && (
+                      <div style={{ marginTop: 8 }}>
+                        <div className="t-caption" style={{ color: 'var(--error)', marginBottom: 6 }}>
+                          {walletError}
+                        </div>
+                        <button
+                          type="button"
+                          className="btn btn-outline btn-sm"
+                          style={{ width: '100%' }}
+                          onClick={() => fetchWalletBalance()}
+                        >
+                          تلاش مجدد برای دریافت موجودی
+                        </button>
+                      </div>
+                    )}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
+                      <Link
+                        to={`${financePath}#wallet-charge`}
+                        className="btn btn-primary btn-sm"
+                        style={{ justifyContent: 'center' }}
+                        onClick={() => setWalletMenuOpen(false)}
+                      >
+                        + افزایش موجودی (شارژ کیف پول)
+                      </Link>
+                      <Link
+                        to={financePath}
+                        className="btn btn-outline btn-sm"
+                        style={{ justifyContent: 'center' }}
+                        onClick={() => setWalletMenuOpen(false)}
+                      >
+                        مشاهده جزئیات کیف پول و امور مالی
+                      </Link>
+                      <Link
+                        to={`${financePath}#wallet-history`}
+                        className="btn btn-ghost btn-sm"
+                        style={{ justifyContent: 'center' }}
+                        onClick={() => setWalletMenuOpen(false)}
+                      >
+                        تاریخچه تراکنش‌ها و رسیدها
+                      </Link>
+                    </div>
+                  </div>
+                )}
+              </div>
               <Link to={panelPath} className="btn btn-outline">
                 <IconUser size={18} />
                 {user.name || 'پنل من'}
@@ -95,6 +265,18 @@ export default function Header() {
           <MobileNavigation user={user} logout={logout} />
         </div>
       </div>
+
+      {searchOpen && (
+        <div style={{ borderTop: '1px solid var(--n200)', background: '#fff' }}>
+          <div className="container" style={{ paddingTop: 10, paddingBottom: 14 }}>
+            <LiveSearch
+              autoFocus
+              placeholder="جستجوی زنده نام کلاس، استاد یا درس در نیمکت…"
+              inputAriaLabel="جستجوی زنده در هدر سایت"
+            />
+          </div>
+        </div>
+      )}
     </header>
   );
 }
