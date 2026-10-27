@@ -2,6 +2,8 @@
 import ClubTeaser from '../components/ClubTeaser.jsx';
 import BlogTeasers from '../components/BlogTeasers.jsx';
 import HeroSearch from '../components/HeroSearch.jsx';
+import HomeBrandLoader from '../components/HomeBrandLoader.jsx';
+import FirstRegistrationPromoModal from '../components/FirstRegistrationPromoModal.jsx';
 import { useState, useEffect } from 'react';
 import PageRenderer from '../render/PageRenderer.jsx';
 import { Link } from '../routing/navigation';
@@ -171,15 +173,23 @@ function TeacherCard({ t }) {
 }
 
 function StudentCard({ s }) {
+  const isRank1 = Number(s.rank) === 1;
   return (
-    <div className="s-card">
-      <div className="s-avatar-wrap">
+    <div className="s-card" data-testid={`top-student-card-${s.rank || s.name}`}>
+      <div className="s-avatar-wrap student-avatar-ring-wrap">
+        <span
+          className={`student-avatar-ring ${isRank1 ? 'student-avatar-ring--rank1' : ''}`}
+          aria-hidden="true"
+        />
         {s.rank && s.rank <= 3 && (
           <span className="s-crown">
             <IconCrown size={16} />
           </span>
         )}
-        <div className={`s-avatar ${s.color === 'green' ? '' : ''}`} style={{ background: s.color === 'green' ? 'var(--secondary)' : 'var(--accent)' }}>
+        <div
+          className={`s-avatar ${s.color === 'green' ? '' : ''}`}
+          style={{ background: s.color === 'green' ? 'var(--secondary)' : 'var(--accent)', position: 'relative', zIndex: 1 }}
+        >
           {s.letter}
         </div>
       </div>
@@ -250,11 +260,35 @@ function SeatGrid({ selected, onSelect, taken = [1, 2, 4, 5, 6, 9, 10, 12], book
 
 /* ---------------- page ---------------- */
 /** @param {{ initialSchema?: import('../types/page-builder').PageSchema | null }} [props] */
-export default function Home({ initialSchema = null } = {}) {
+export default function Home({ initialSchema = null, user = null, preview = false } = {}) {
   const [pubSchema, setPubSchema] = useState(initialSchema);
+  const [homePromo, setHomePromo] = useState(null);
+  const [homeLoading, setHomeLoading] = useState(false);
+
   useEffect(() => {
-    api('/pages/home').then((d) => { if (d.page?.schema) setPubSchema(d.page.schema); }).catch(() => {});
-  }, []);
+    let active = true;
+    if (!preview) setHomeLoading(true);
+    Promise.all([
+      api('/pages/home').catch(() => null),
+      api('/promotions/home').catch(() => null),
+    ])
+      .then(([pageRes, promoRes]) => {
+        if (!active) return;
+        const next = pageRes?.page?.schema || null;
+        if (next) {
+          setPubSchema((prev) => (JSON.stringify(prev) === JSON.stringify(next) ? prev : next));
+        }
+        if (promoRes?.firstRegistrationDiscount) {
+          setHomePromo(promoRes.firstRegistrationDiscount);
+        }
+      })
+      .finally(() => {
+        if (active) setHomeLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [preview]);
   const [subject, setSubject] = useState('همه');
   const [faqOpen, setFaqOpen] = useState(0);
   const [seat, setSeat] = useState(7);
@@ -281,10 +315,19 @@ export default function Home({ initialSchema = null } = {}) {
   const discount = sessions >= 8 ? 0.1 : 0;
   const total = perSession * sessions * (1 - discount);
 
-  if (pubSchema) return <PageRenderer schema={pubSchema} />;
+  if (pubSchema) {
+    return (
+      <>
+        {homeLoading && !preview && <HomeBrandLoader overlay />}
+        <PageRenderer schema={pubSchema} />
+        <FirstRegistrationPromoModal promo={homePromo} user={user} preview={preview} />
+      </>
+    );
+  }
 
   return (
     <>
+      {homeLoading && !preview && <HomeBrandLoader overlay />}
       {/* ============ HERO ============ */}
       <section className="hero">
         <div className="container hero-grid hero-wide">
@@ -529,7 +572,7 @@ export default function Home({ initialSchema = null } = {}) {
                 <div className="price-line">
                   <span className="l">تعداد جلسات</span>
                   <div className="stepper">
-                    <button type="button" onClick={() => setSessions(Math.max(4, sessions - 1))}>−</button>
+                    <button type="button" onClick={() => setSessions(Math.max(1, sessions - 1))}>−</button>
                     <span className="val num">{faNum(sessions)}</span>
                     <button type="button" onClick={() => setSessions(Math.min(16, sessions + 1))}>+</button>
                   </div>
@@ -799,6 +842,7 @@ export default function Home({ initialSchema = null } = {}) {
           </div>
         </div>
       </section>
+      <FirstRegistrationPromoModal promo={homePromo} user={user} preview={preview} />
     </>
   );
 }

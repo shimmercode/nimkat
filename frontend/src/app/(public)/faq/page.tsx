@@ -111,7 +111,7 @@ export default function FaqPage() {
               <div className="t-small t-muted">پشتیبانی نیمکت از شنبه تا پنجشنبه ساعت ۸ تا ۲۰ پاسخگوی شماست.</div>
             </div>
           </div>
-          <div style={{ display: 'flex', gap: 10 }}>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             <Link href="/contact" className="btn btn-primary">
               تماس با ما و مشاوره <IconArrowLeft size={16} />
             </Link>

@@ -241,6 +241,7 @@ export default function TeacherHome() {
                 style={{
                   display: 'flex',
                   alignItems: 'center',
+                  flexWrap: 'wrap',
                   gap: 16,
                   padding: '13px 0',
                   borderBottom: i < TODAY.length - 1 ? '1px solid var(--border)' : 'none',
@@ -359,7 +360,7 @@ export default function TeacherHome() {
           <span className="chip soft-orange">{reqStatus}</span>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 0.7fr', gap: 14 }}>
+        <div className="grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 0.7fr', gap: 14 }}>
           {['درس', 'نام دوره', 'تعداد جلسات'].map((l) => (
             <label key={l} className="field">
               <span className="field-label">{l}</span>
@@ -372,7 +373,7 @@ export default function TeacherHome() {
           ))}
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginTop: 14 }}>
+        <div className="grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginTop: 14 }}>
           {['حداقل / حداکثر فراگیر', 'شروع', 'مدت هر جلسه', 'بازه‌ی قیمت پیشنهادی'].map((l) => (
             <label key={l} className="field">
               <span className="field-label">{l}</span>
@@ -398,7 +399,7 @@ export default function TeacherHome() {
           <span className="field-hint">
             <IconInfo size={14} /> قیمت نهایی را مدیر آموزشی در همین بازه تعیین می‌کند.
           </span>
-          <div style={{ display: 'flex', gap: 12 }}>
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
             <button className="btn btn-outline" type="button" onClick={() => submitRequest('draft')}>
               ذخیره‌ی پیش‌نویس
             </button>

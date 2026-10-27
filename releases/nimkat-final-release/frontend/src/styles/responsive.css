@@ -1,8 +1,19 @@
 /* Responsive hardening; desktop PDF geometry is intentionally untouched. */
 .grid > *, .hero-grid > *, .filter-layout > *, .sc-layout > *, .club-hero > *,
 .site-footer .cols > * { min-width: 0; }
+@media (min-width: 1101px) and (max-width: 1480px) {
+  .site-header .brand-tag { display: none !important; }
+  .site-header .inner { gap: 12px; }
+  .main-nav { gap: 14px; font-size: 13.5px; }
+  .header-actions { gap: 8px; }
+  .header-actions .btn { padding-inline: 12px; font-size: 13px; }
+  .nk-wallet-pill__label { display: none; }
+}
 @media (max-width: 1100px) {
   .main-nav { display: none; }
+  .site-header .inner { height: auto; min-height: 76px; flex-wrap: wrap; padding-block: 10px; gap: 12px; }
+  .header-actions { flex-wrap: wrap; gap: 8px; }
+  .nk-wallet-pill__label { display: none; }
   .grid[style*="grid-template-columns"] { grid-template-columns: minmax(0, 1fr) !important; }
   .grid > [style*="grid-column"], .sc-layout > [style*="grid-column"] {
     grid-column: auto !important; grid-row: auto !important;
@@ -47,6 +58,14 @@
   .gc-actions .btn { white-space: normal; }
   .tp-section-head { flex-wrap: wrap; gap: 12px; }
   .tp-section-head .chip { white-space: normal; }
+  .tp-card { grid-template-columns: minmax(0, 1fr) !important; padding: 20px; }
+  .tp-card > *, .tp-stats > *, .book-box, .booking-box, .booking-box *, .sc-layout .card, .sc-layout *, .tp-hero * { min-width: 0; max-width: 100%; }
+  .book-box, .booking-box, .sc-layout .card, .tech-test { padding: 18px !important; }
+  .sc-layout .card-soft { flex-wrap: wrap; padding: 12px 14px !important; }
+  .booking-box .btn, .book-box .btn { white-space: normal; text-align: center; padding-inline: 12px; }
+  .select, .input { min-width: 0; max-width: 100%; }
+  .segmented { flex-wrap: wrap; max-width: 100%; }
+  .tip-band { flex-wrap: wrap; padding: 18px; }
 }
 @media (max-width: 1100px) {
   .sc-layout > * { grid-column: 1 !important; grid-row: auto !important; }

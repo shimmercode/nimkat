@@ -26,9 +26,20 @@ function lifecycleModule(app,{db,auth,requireRole,settings,now=Date.now}){
  app.get('/api/calendar',auth,safe((req,res)=>{
   expire();const from=Number(req.query.from||now()-30*86400000),to=Number(req.query.to||now()+90*86400000),offset=Number(req.query.offset||0);
   if(!Number.isSafeInteger(from)||!Number.isSafeInteger(to)||to<=from||to-from>366*86400000||!Number.isSafeInteger(offset)||offset<0||offset>100000)fail('بازهٔ تقویم حداکثر یک سال است.');
-  const rows=db.prepare(`SELECT DISTINCT o.*,c.title,c.mode,t.name teacher_name FROM class_occurrences o JOIN classes c ON c.id=o.class_id JOIN teachers t ON t.id=o.teacher_id WHERE o.starts_at>=? AND o.starts_at<? AND (?='admin' OR EXISTS(SELECT 1 FROM teacher_accounts a WHERE a.teacher_id=o.teacher_id AND a.user_id=? AND a.status='approved') OR EXISTS(SELECT 1 FROM booking_occurrences bo JOIN bookings b ON b.id=bo.booking_id WHERE bo.occurrence_id=o.id AND b.user_id=? AND b.status='confirmed' AND b.schema_version=2)) ORDER BY o.starts_at,o.id LIMIT 101 OFFSET ?`).all(from,to,req.user.role,req.user.id,req.user.id,offset);
+  const rows=db.prepare(`SELECT DISTINCT o.*,c.title,c.mode,c.capacity,t.name teacher_name,
+   (SELECT COUNT(*) FROM booking_occurrences bo JOIN bookings b ON b.id=bo.booking_id WHERE bo.occurrence_id=o.id AND b.status='confirmed' AND b.schema_version=2) booked_count,
+   EXISTS(SELECT 1 FROM schedule_proposals sp WHERE sp.occurrence_id=o.id AND sp.status='pending' AND sp.expires_at>?) pending_proposal,
+   (SELECT b.id FROM booking_occurrences bo JOIN bookings b ON b.id=bo.booking_id WHERE bo.occurrence_id=o.id AND b.user_id=? AND b.status='confirmed' AND b.schema_version=2 LIMIT 1) booking_id
+   FROM class_occurrences o JOIN classes c ON c.id=o.class_id JOIN teachers t ON t.id=o.teacher_id WHERE o.starts_at>=? AND o.starts_at<? AND (?='admin' OR EXISTS(SELECT 1 FROM teacher_accounts a WHERE a.teacher_id=o.teacher_id AND a.user_id=? AND a.status='approved') OR EXISTS(SELECT 1 FROM booking_occurrences bo JOIN bookings b ON b.id=bo.booking_id WHERE bo.occurrence_id=o.id AND b.user_id=? AND b.status='confirmed' AND b.schema_version=2)) ORDER BY o.starts_at,o.id LIMIT 101 OFFSET ?`).all(now(),req.user.id,from,to,req.user.role,req.user.id,req.user.id,offset);
+  const myTeacherId=db.prepare("SELECT teacher_id FROM teacher_accounts WHERE user_id=? AND status='approved'").get(req.user.id)?.teacher_id||null;
+  const listStudents=db.prepare("SELECT u.name FROM booking_occurrences bo JOIN bookings b ON b.id=bo.booking_id JOIN users u ON u.id=b.user_id WHERE bo.occurrence_id=? AND b.status='confirmed' AND b.schema_version=2 ORDER BY b.id");
+  const occurrences=rows.slice(0,100).map(r=>({
+   ...r,
+   pending_proposal:Boolean(r.pending_proposal),
+   students:(req.user.role==='admin'||(myTeacherId&&r.teacher_id===myTeacherId))?listStudents.all(r.id).map(s=>s.name):undefined,
+  }));
   const changes=db.prepare("SELECT p.*,v.decision FROM schedule_proposals p JOIN schedule_votes v ON v.proposal_id=p.id WHERE v.user_id=? AND p.status='pending' ORDER BY p.created_at").all(req.user.id);
-  res.json({timezone:'Asia/Tehran',occurrences:rows.slice(0,100),hasMore:rows.length>100,changes});
+  res.json({timezone:'Asia/Tehran',occurrences,hasMore:rows.length>100,changes});
  }));
  app.post('/api/admin/schedule/batches',...admin,safe((req,res)=>{
   const {classId,occurrences,key}=req.body||{};

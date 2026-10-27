@@ -6,9 +6,7 @@ export default function SiteLayout({ children }) {
   return (
     <>
       <Header />
-      <main>
-        <PageTransition>{children}</PageTransition>
-      </main>
+      <PageTransition>{children}</PageTransition>
       <Footer />
     </>
   );

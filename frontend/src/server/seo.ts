@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 export const siteUrl = () => {
- const value=process.env.SITE_URL || process.env.PUBLIC_SITE_URL || (process.env.NODE_ENV !== 'production' ? 'https://nimkat.ir' : '');
+ const value=process.env.SITE_URL || process.env.PUBLIC_SITE_URL || 'https://nimkat.ir';
  if(!value)return null;
  try{const u=new URL(value);return u.protocol==='https:'?u.origin:null;}catch{return null;}
 };

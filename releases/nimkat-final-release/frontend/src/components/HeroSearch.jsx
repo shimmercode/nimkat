@@ -3,14 +3,15 @@ import { useState, useMemo } from 'react';
 import { useNavigate } from '../routing/navigation';
 import { IconGlobe, IconMapPin, IconSearch, IconChevronDown } from './icons.jsx';
 import { HERO_SEGMENTS, subjectsForSegment } from '../utils/curriculum.js';
+import LiveSearch from './LiveSearch.jsx';
 
 const TYPES = ['خصوصی', 'گروهی', 'نیمه‌خصوصی'];
 const GRADES = HERO_SEGMENTS;
 
 /**
  * Interactive Hero search box — matches Home page.pdf 1:1 (.hero-search > .top + .search-bar)
- * while filtering subjects dynamically by selected educational segment (curriculum.js)
- * and navigating to /classes with query params on submit.
+ * while filtering subjects dynamically by selected educational segment (curriculum.js),
+ * providing live autocomplete search, and navigating to /classes with query params on submit.
  */
 export default function HeroSearch({ data = {} }) {
   const nav = useNavigate();
@@ -18,6 +19,7 @@ export default function HeroSearch({ data = {} }) {
   const [type, setType] = useState(data.searchFields?.[0]?.value || 'خصوصی');
   const [grade, setGrade] = useState(data.searchFields?.[1]?.value || 'متوسطه دوم');
   const [subject, setSubject] = useState(data.searchFields?.[2]?.value || 'فیزیک');
+  const [liveQuery, setLiveQuery] = useState('');
 
   const availableSubjects = useMemo(() => {
     const list = subjectsForSegment(grade, false);
@@ -43,6 +45,7 @@ export default function HeroSearch({ data = {} }) {
       grade,
       subject: safeSubject,
     });
+    if (liveQuery.trim()) qs.set('q', liveQuery.trim());
     nav(`/classes?${qs.toString()}`);
   };
 
@@ -68,6 +71,26 @@ export default function HeroSearch({ data = {} }) {
           </button>
         </div>
         <span className="note">{data.searchNote || 'گام ۱ از ۲ · شیوه‌ی برگزاری'}</span>
+      </div>
+      <div style={{ marginTop: 10 }}>
+        <LiveSearch
+          variant="hero"
+          showSubmitButton={false}
+          value={liveQuery}
+          onChange={setLiveQuery}
+          placeholder="جستجوی سریع نام درس، استاد یا موضوع کلاس…"
+          onSubmitQuery={(val) => {
+            const qs = new URLSearchParams({
+              mode: mode === 'online' ? 'آنلاین' : 'حضوری',
+              type,
+              segment: grade,
+              grade,
+              subject: safeSubject,
+            });
+            if (val.trim()) qs.set('q', val.trim());
+            nav(`/classes?${qs.toString()}`);
+          }}
+        />
       </div>
       <div className="search-bar">
         <label className="sfield hero-select-field">

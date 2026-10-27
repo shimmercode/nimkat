@@ -1,0 +1,12 @@
+node_modules
+**/node_modules
+frontend/.next
+frontend/test-results
+frontend/playwright-report
+backend/data/*.db
+backend/data/*.db-*
+.git
+.env
+.env.*
+!.env.example
+*.zip

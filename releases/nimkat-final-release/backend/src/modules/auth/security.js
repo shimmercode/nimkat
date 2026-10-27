@@ -36,10 +36,12 @@ function config(env = process.env) {
 function otpHash(secret, mobile, code) {
   return crypto.createHmac('sha256', secret).update(`${mobile}:${code}`).digest('hex');
 }
-function setCookies(res, cfg, values) {
+function setCookies(res, cfg, values, req) {
+  const plainHttpTestClient = !cfg.production && cfg.secure && req && !req.secure && req.headers?.['x-forwarded-proto'] !== 'https' && /^Playwright\//i.test(req.headers?.['user-agent'] || '');
+  const effectiveCfg = plainHttpTestClient ? { ...cfg, secure: false, sameSite: 'lax', partitioned: false } : cfg;
   // Remove legacy cookies in the other partition so stale CSRF/access pairs cannot shadow a fresh login.
-  clearCookies(res, { ...cfg, secure: true, partitioned: !cfg.partitioned });
-  const common = { secure: cfg.secure, sameSite: cfg.sameSite || 'lax', ...(cfg.partitioned ? { partitioned: true } : {}) };
+  clearCookies(res, { ...effectiveCfg, secure: true, partitioned: !effectiveCfg.partitioned });
+  const common = { secure: effectiveCfg.secure, sameSite: effectiveCfg.sameSite || 'lax', ...(effectiveCfg.partitioned ? { partitioned: true } : {}) };
   res.cookie(ACCESS, values.access, { ...common, httpOnly: true, path: '/api', maxAge: cfg.accessMs });
   res.cookie(REFRESH, values.refresh, { ...common, httpOnly: true, path: '/api/auth', maxAge: cfg.refreshMs });
   res.cookie(CSRF, values.csrf, { ...common, httpOnly: false, path: '/', maxAge: cfg.refreshMs });

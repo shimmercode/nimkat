@@ -156,11 +156,11 @@ export default function StudentHome() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
-      <h2 className="sr-only" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0,0,0,0)' }}>
+      <h2 className="sr-only">
         داشبورد شاگرد
       </h2>
       {overview && overview.upcoming?.length === 0 && (
-        <span style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0,0,0,0)' }}>
+        <span className="sr-only">
           جلسهٔ جاری یا آینده‌ای ندارید.
         </span>
       )}
