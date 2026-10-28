@@ -60,6 +60,7 @@ function sameOrigin(req, cfg) {
     const parsed = new URL(origin);
     if (!['http:', 'https:'].includes(parsed.protocol)) return false;
     if (cfg.origins.length) return cfg.origins.includes(parsed.origin);
+    if (!cfg.production && (parsed.host.endsWith('.vercel.app') || parsed.host.endsWith('.onrender.com'))) return true;
     const hosts = [req.headers.host, req.headers['x-forwarded-host']].filter(Boolean);
     return hosts.includes(parsed.host);
   } catch { return false; }
