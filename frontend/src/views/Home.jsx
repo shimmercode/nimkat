@@ -285,16 +285,23 @@ export default function Home({ initialSchema = null, user = null, preview = fals
   const [pubSchema, setPubSchema] = useState(initialSchema);
   const [homePromo, setHomePromo] = useState(null);
   const [homeLoading, setHomeLoading] = useState(() => !preview);
+  const [homeExiting, setHomeExiting] = useState(false);
 
   useEffect(() => {
     let active = true;
-    const minTimer = new Promise((resolve) => setTimeout(resolve, 680));
-    if (!preview) setHomeLoading(true);
-    const dismissEarly = () => {
-      if (active) setHomeLoading(false);
+    let exitTimeout = null;
+    const minTimer = new Promise((resolve) => setTimeout(resolve, 1800));
+    if (!preview) {
+      setHomeLoading(true);
+      setHomeExiting(false);
+    }
+    const startSmoothExit = () => {
+      if (!active) return;
+      setHomeExiting(true);
+      exitTimeout = setTimeout(() => {
+        if (active) setHomeLoading(false);
+      }, 650);
     };
-    window.addEventListener('pointerdown', dismissEarly, { passive: true });
-    window.addEventListener('keydown', dismissEarly, { passive: true });
     Promise.all([
       api('/pages/home').catch(() => null),
       api('/promotions/home').catch(() => null),
@@ -311,12 +318,11 @@ export default function Home({ initialSchema = null, user = null, preview = fals
         }
       })
       .finally(() => {
-        if (active) setHomeLoading(false);
+        startSmoothExit();
       });
     return () => {
       active = false;
-      window.removeEventListener('pointerdown', dismissEarly);
-      window.removeEventListener('keydown', dismissEarly);
+      if (exitTimeout) clearTimeout(exitTimeout);
     };
   }, [preview]);
   const [subject, setSubject] = useState('همه');
@@ -348,7 +354,7 @@ export default function Home({ initialSchema = null, user = null, preview = fals
   if (pubSchema) {
     return (
       <>
-        {homeLoading && !preview && <HomeBrandLoader overlay />}
+        {homeLoading && !preview && <HomeBrandLoader overlay exiting={homeExiting} />}
         <PageRenderer schema={pubSchema} />
         <FirstRegistrationPromoModal promo={homePromo} user={user} preview={preview} />
       </>
@@ -357,7 +363,7 @@ export default function Home({ initialSchema = null, user = null, preview = fals
 
   return (
     <>
-      {homeLoading && !preview && <HomeBrandLoader overlay />}
+      {homeLoading && !preview && <HomeBrandLoader overlay exiting={homeExiting} />}
       {/* ============ HERO ============ */}
       <section className="hero">
         <div className="container hero-grid hero-wide">
