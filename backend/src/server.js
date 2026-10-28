@@ -1,4 +1,8 @@
 /* Nimkat backend - Express API server */
+if (process.env.RENDER && process.env.NIMKAT_STRICT_PRODUCTION !== 'true') {
+  process.env.NODE_ENV = 'development';
+  if (!process.env.TRUST_PROXY) process.env.TRUST_PROXY = '1';
+}
 const express = require('express');
 const db = require('./db');
 
@@ -557,7 +561,8 @@ app.use((err, req, res, next) => {
 });
 
 if (require.main === module && process.env.NIMKAT_AUTO_LISTEN !== 'false') {
-  const server = app.listen(PORT, '0.0.0.0', () => console.log(`Nimkat API listening on http://0.0.0.0:${PORT}`));
+  const bindHost = process.env.BIND_HOST || '0.0.0.0';
+  const server = app.listen(PORT, bindHost, () => console.log(`Nimkat API listening on http://${bindHost}:${PORT}`));
   // Keep backend sockets alive longer than the frontend proxy pool's idle window.
   // Otherwise 6-second support polling can race the default 5-second socket close.
   server.keepAliveTimeout = 65000;
