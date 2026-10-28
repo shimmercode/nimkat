@@ -9,6 +9,7 @@ import {
 import { faNum, faPrice } from '../utils/fa.js';
 import { api } from '../api.js';
 import { toast } from '../utils/toast.js';
+import { teacherAvatarUrl } from '../utils/avatars.js';
 import { useInitialEntity } from '../render/EntityContext.jsx';
 import LiveSearch, { normalizePersianQuery } from '../components/LiveSearch.jsx';
 import {
@@ -659,7 +660,7 @@ export default function ClassesSearch({ content = {}, preview = false } = {}) {
                     {badgeText}
                   </span>
                   <div
-                    className={`avatar sq-64 ${
+                    className={`avatar sq-64 has-photo ${
                       idx === 0
                         ? ''
                         : idx === 1
@@ -671,7 +672,7 @@ export default function ClassesSearch({ content = {}, preview = false } = {}) {
                               : 'gray'
                     }`}
                   >
-                    {(s.name || 'س')[0]}
+                    <img src={teacherAvatarUrl(s)} alt={s.name} className="nk-avatar-img" loading="lazy" />
                   </div>
                   <b style={{ fontSize: 15 }}>{s.name}</b>
                   <span className="t-caption t-muted">
@@ -1306,8 +1307,8 @@ function ResultCard({ c }) {
     <div className="result-card" style={c.full ? { opacity: 0.78 } : undefined}>
       {/* right column (auto): teacher avatar + level badge */}
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-        <Link to={`/teachers/${c.teacherId || 1}`} className={`avatar sq-72 ${c.color}`}>
-          {c.letter}
+        <Link to={`/teachers/${c.teacherId || 1}`} className={`avatar sq-72 ${c.color} has-photo`}>
+          <img src={teacherAvatarUrl(c.teacherId, c.teacher)} alt={c.teacher} className="nk-avatar-img" loading="lazy" />
         </Link>
         <span className="chip soft-green" style={{ fontSize: 11.5, padding: '3px 10px' }}>
           {c.level}

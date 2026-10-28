@@ -61,8 +61,17 @@ function panelModule(app, { db, auth, finance, club, now = Date.now }) {
         mobile: u.mobile || '',
         subtitle: u.subtitle || '',
         alias: p.alias || '',
+        nationalCode: p.nationalCode || '',
+        age: p.age || '',
+        birthDate: p.birthDate || '',
+        educationDegree: p.educationDegree || '',
+        schoolName: p.schoolName || '',
+        emergencyPhone: p.emergencyPhone || '',
         province: p.province || '',
         city: p.city || '',
+        postalCode: p.postalCode || '',
+        address: p.address || '',
+        avatar: p.avatar || '',
         goal: p.goal || '',
         country: p.country || 'IR',
         leagueOptIn: Boolean(a.league_opt_in),
@@ -125,7 +134,13 @@ function panelModule(app, { db, auth, finance, club, now = Date.now }) {
     const profileCompletion = buildProfileCompletion(uid);
 
     res.json({
-      user: { id: uid, name: req.user.name, role: req.user.role, subtitle: profileCompletion.fields.subtitle },
+      user: {
+        id: uid,
+        name: req.user.name,
+        role: req.user.role,
+        subtitle: profileCompletion.fields.subtitle,
+        avatar: profileCompletion.fields.avatar || '',
+      },
       wallet: finance.walletBalance(uid) / 10,
       club: {
         coins: a.coins,
@@ -162,8 +177,17 @@ function panelModule(app, { db, auth, finance, club, now = Date.now }) {
       const name = String(b.name ?? req.user.name ?? '').trim();
       const subtitle = String(b.subtitle ?? '').trim();
       const alias = String(b.alias ?? '').trim();
+      const nationalCode = String(b.nationalCode ?? '').replace(/[۰-۹]/g, (d) => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d))).trim();
+      const age = String(b.age ?? '').replace(/[۰-۹]/g, (d) => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d))).trim();
+      const birthDate = String(b.birthDate ?? '').trim();
+      const educationDegree = String(b.educationDegree ?? '').trim();
+      const schoolName = String(b.schoolName ?? '').trim();
+      const emergencyPhone = String(b.emergencyPhone ?? '').replace(/[۰-۹]/g, (d) => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d))).trim();
       const province = String(b.province ?? '').trim();
       const city = String(b.city ?? '').trim();
+      const postalCode = String(b.postalCode ?? '').replace(/[۰-۹]/g, (d) => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d))).trim();
+      const address = String(b.address ?? '').trim();
+      const avatar = String(b.avatar ?? '').trim();
       const goal = String(b.goal ?? '').trim();
       const country = String(b.country || 'IR').trim().toUpperCase();
       const leagueOptIn = Boolean(b.leagueOptIn);
@@ -171,6 +195,10 @@ function panelModule(app, { db, auth, finance, club, now = Date.now }) {
       if (name.length < 2 || name.length > 80) fail('نام و نام خانوادگی باید بین ۲ تا ۸۰ نویسه باشد.');
       if (subtitle.length > 120) fail('عنوان پایه و رشته حداکثر ۱۲۰ نویسه است.');
       if (alias && (alias.length < 2 || alias.length > 60)) fail('نام نمایشی باید بین ۲ تا ۶۰ نویسه باشد.');
+      if (nationalCode && !/^\d{10}$/.test(nationalCode)) fail('کد ملی باید ۱۰ رقم باشد.');
+      if (postalCode && !/^\d{10}$/.test(postalCode)) fail('کد پستی باید ۱۰ رقم باشد.');
+      if (address.length > 400) fail('آدرس حداکثر ۴۰۰ نویسه است.');
+      if (avatar.length > 180000) fail('حجم تصویر پروفایل بیش از حد مجاز است.');
       if (province && (province.length < 2 || province.length > 80)) fail('نام استان معتبر نیست.');
       if (city && (city.length < 2 || city.length > 80)) fail('نام شهر معتبر نیست.');
       if (goal && (goal.length < 10 || goal.length > 500)) fail('هدف یادگیری باید حداقل ۱۰ نویسه باشد.');
@@ -188,8 +216,17 @@ function panelModule(app, { db, auth, finance, club, now = Date.now }) {
         const nextProfile = {
           ...prev,
           alias: alias || prev.alias || name,
+          nationalCode: b.nationalCode !== undefined ? nationalCode : (prev.nationalCode || ''),
+          age: b.age !== undefined ? age : (prev.age || ''),
+          birthDate: b.birthDate !== undefined ? birthDate : (prev.birthDate || ''),
+          educationDegree: b.educationDegree !== undefined ? educationDegree : (prev.educationDegree || ''),
+          schoolName: b.schoolName !== undefined ? schoolName : (prev.schoolName || ''),
+          emergencyPhone: b.emergencyPhone !== undefined ? emergencyPhone : (prev.emergencyPhone || ''),
           province: province || prev.province || '',
           city: city || prev.city || '',
+          postalCode: b.postalCode !== undefined ? postalCode : (prev.postalCode || ''),
+          address: b.address !== undefined ? address : (prev.address || ''),
+          avatar: b.avatar !== undefined ? avatar : (prev.avatar || ''),
           goal: goal || prev.goal || '',
           country,
         };

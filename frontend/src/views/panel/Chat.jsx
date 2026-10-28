@@ -78,6 +78,14 @@ export default function Chat() {
   const [attachOpen, setAttachOpen] = useState(false);
   const [materials, setMaterials] = useState([]);
 
+  // Reply & Moderation state
+  const [replyTo, setReplyTo] = useState(null);
+  const [canModerate, setCanModerate] = useState(false);
+  const [bannedUsers, setBannedUsers] = useState([]);
+  const [modPolicy, setModPolicy] = useState(null);
+  const [modWordsText, setModWordsText] = useState('');
+  const [modOpen, setModOpen] = useState(false);
+
   const activeRef = useRef('');
   const searchRef = useRef('');
   const roomLoadSeq = useRef(0);
@@ -118,6 +126,12 @@ export default function Chat() {
       setMessages(d.messages || []);
       setHasMore(!!d.hasMore);
       setMembers(d.members || []);
+      setCanModerate(Boolean(d.canModerate || user?.role === 'admin'));
+      setBannedUsers(d.bannedUsers || []);
+      if (d.moderationPolicy) {
+        setModPolicy(d.moderationPolicy);
+        setModWordsText((d.moderationPolicy.words || []).join('\n'));
+      }
       if (d.settings) setChatSettings(d.settings);
       const last = d.messages?.at(-1);
       if (last) {
@@ -238,13 +252,73 @@ export default function Chat() {
         : crypto.randomUUID();
     retryKey.current = { room: active, text: clean, key };
     try {
-      await api(`/chats/${active}/messages`, { method: 'POST', body: { text: clean, clientId: key } });
+      await api(`/chats/${active}/messages`, {
+        method: 'POST',
+        body: { text: clean, clientId: key, ...(replyTo?.id ? { replyToId: replyTo.id } : {}) },
+      });
       retryKey.current = { room: '', text: '', key: '' };
       setText('');
+      setReplyTo(null);
       await selectRoom(active);
       await loadRooms();
     } catch (e) {
       setError(e.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function toggleBanUser(targetUserId, targetName, isCurrentlyBanned) {
+    if (!active || busy) return;
+    setBusy(true);
+    setError('');
+    setNotice('');
+    try {
+      const endpoint = isCurrentlyBanned ? `/chats/${active}/unban` : `/chats/${active}/ban`;
+      const res = await api(endpoint, {
+        method: 'POST',
+        body: { userId: targetUserId, reason: 'نقض مقررات گفتگو' },
+      });
+      if (res.bannedUsers) setBannedUsers(res.bannedUsers);
+      setNotice(
+        isCurrentlyBanned
+          ? `مسدودیت کاربر «${targetName}» برطرف شد ✓`
+          : `کاربر «${targetName}» در این گفتگو مسدود (بن) شد ✓`
+      );
+      await selectRoom(active);
+    } catch (err) {
+      setError(err.message || 'خطا در تغییر وضعیت مسدودیت کاربر');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function saveModerationWords(e) {
+    e.preventDefault();
+    if (!modPolicy || busy) return;
+    setBusy(true);
+    setError('');
+    setNotice('');
+    try {
+      const wordsArr = modWordsText
+        .split('\n')
+        .map((w) => w.trim())
+        .filter(Boolean);
+      const r = await api('/admin/chat/moderation', {
+        method: 'PUT',
+        body: {
+          version: modPolicy.version,
+          enabled: Boolean(modPolicy.enabled),
+          words: wordsArr,
+        },
+      });
+      if (r.policy) {
+        setModPolicy(r.policy);
+        setModWordsText((r.policy.words || []).join('\n'));
+      }
+      setNotice('فیلتر کلمات ممنوعه ذخیره شد ✓');
+    } catch (err) {
+      setError(err.message || 'خطا در ذخیره فیلتر کلمات ممنوعه');
     } finally {
       setBusy(false);
     }
@@ -667,7 +741,15 @@ export default function Chat() {
                       </div>
                     )}
 
-                    <div className="bubble-m">{cleanText}</div>
+                    <div className="bubble-m">
+                      {m.reply_to && (
+                        <div className="nk-chat-reply-quote">
+                          <span className="nk-chat-reply-quote__author">در پاسخ به {m.reply_to.name}:</span>
+                          <span className="nk-chat-reply-quote__text">{m.reply_to.text}</span>
+                        </div>
+                      )}
+                      <div>{cleanText}</div>
+                    </div>
 
                     {attachment && (
                       <div className="file-msg">
@@ -709,6 +791,15 @@ export default function Chat() {
 
                       {!m.deleted_at && (
                         <>
+                          <button
+                            type="button"
+                            className="t-caption"
+                            disabled={room.closed}
+                            onClick={() => setReplyTo({ id: m.id, name: m.name, text: cleanText })}
+                            style={{ cursor: 'pointer', color: 'var(--primary)', fontWeight: 700 }}
+                          >
+                            ↩ پاسخ
+                          </button>
                           {!isMe && (
                             <button
                               type="button"
@@ -771,14 +862,36 @@ export default function Chat() {
                               <IconFlag size={11} /> گزارش
                             </button>
                           )}
-                          {(user?.role === 'admin' || isMe) && (
+                          {(canModerate || user?.role === 'admin' || isMe) && (
                             <button
                               type="button"
                               className="t-caption"
                               onClick={() => remove(m.id)}
-                              style={{ color: 'var(--error)', cursor: 'pointer' }}
+                              style={{ color: 'var(--error)', cursor: 'pointer', fontWeight: 700 }}
                             >
-                              حذف
+                              حذف پیام
+                            </button>
+                          )}
+                          {(canModerate || user?.role === 'admin') && !isMe && m.role !== 'admin' && (
+                            <button
+                              type="button"
+                              className="t-caption"
+                              disabled={busy}
+                              onClick={() => {
+                                const isBanned = bannedUsers.some((b) => Number(b.user_id) === Number(m.sender_id));
+                                toggleBanUser(m.sender_id, m.name, isBanned);
+                              }}
+                              style={{
+                                color: bannedUsers.some((b) => Number(b.user_id) === Number(m.sender_id))
+                                  ? 'var(--primary)'
+                                  : 'var(--accent-800)',
+                                cursor: 'pointer',
+                                fontWeight: 700,
+                              }}
+                            >
+                              {bannedUsers.some((b) => Number(b.user_id) === Number(m.sender_id))
+                                ? 'رفع بن کاربر'
+                                : 'بن کاربر'}
                             </button>
                           )}
                         </>
@@ -815,6 +928,36 @@ export default function Chat() {
 
               {typing && <div className="t-caption t-muted">{typing}</div>}
             </div>
+
+            {replyTo && (
+              <div className="nk-chat-reply-bar" role="status">
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <b style={{ fontSize: 12.5, color: 'var(--primary)', display: 'block' }}>
+                    در حال پاسخ به {replyTo.name}
+                  </b>
+                  <span
+                    className="t-caption t-muted"
+                    style={{
+                      display: 'block',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    }}
+                  >
+                    {replyTo.text}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  className="btn-icon-round"
+                  aria-label="لغو پاسخ"
+                  onClick={() => setReplyTo(null)}
+                  style={{ width: 30, height: 30 }}
+                >
+                  <IconX size={14} />
+                </button>
+              </div>
+            )}
 
             <form className="chat-input" onSubmit={send}>
               <button
@@ -895,19 +1038,107 @@ export default function Chat() {
                     {m.name?.[0] || 'ک'}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <b style={{ display: 'block', fontSize: 13 }}>{m.name}</b>
+                    <b style={{ display: 'block', fontSize: 13 }}>
+                      {m.name}
+                      {m.banned && (
+                        <span className="chip soft-error" style={{ fontSize: 10, padding: '1px 6px', marginRight: 6 }}>
+                          بن‌شده
+                        </span>
+                      )}
+                    </b>
                     <span className="t-caption t-muted">
                       {m.role === 'teacher'
                         ? 'استاد · مدیر گروه'
                         : roleLabel(m.role, isMe)}
                     </span>
                   </div>
+                  {(canModerate || user?.role === 'admin') && !isMe && m.role !== 'admin' && (
+                    <button
+                      type="button"
+                      className="btn btn-outline btn-sm"
+                      disabled={busy}
+                      onClick={() => toggleBanUser(m.id, m.name, Boolean(m.banned))}
+                      style={{
+                        padding: '3px 8px',
+                        fontSize: 11,
+                        color: m.banned ? 'var(--primary)' : 'var(--error)',
+                        borderColor: m.banned ? 'var(--primary)' : 'rgba(180,42,72,0.35)',
+                      }}
+                    >
+                      {m.banned ? 'رفع بن' : 'بن'}
+                    </button>
+                  )}
                   <span className={m.online ? 'dot-online' : 'dot-offline'} />
                 </div>
               );
             })}
           </div>
         </div>
+
+        {(canModerate || user?.role === 'admin') && (
+          <div className="card-soft" style={{ padding: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <b style={{ fontSize: 13 }}>مدیریت چت و فیلتر کلمات</b>
+              <button
+                type="button"
+                className="btn btn-outline btn-sm"
+                style={{ padding: '4px 10px', fontSize: 11.5 }}
+                onClick={() => setModOpen((v) => !v)}
+              >
+                {modOpen ? 'بستن' : 'تنظیمات فیلتر'}
+              </button>
+            </div>
+            {modOpen && modPolicy && (
+              <form onSubmit={saveModerationWords} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <label className="t-caption" style={{ fontWeight: 700 }}>
+                  کلمات ممنوعه (هر خط یک کلمه):
+                  <textarea
+                    className="input"
+                    rows={4}
+                    value={modWordsText}
+                    onChange={(e) => setModWordsText(e.target.value)}
+                    placeholder="مثال: تبلیغات&#10;لینک تلگرام"
+                    style={{ marginTop: 6, fontSize: 12 }}
+                  />
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, fontWeight: 700 }}>
+                  <input
+                    type="checkbox"
+                    checked={Boolean(modPolicy.enabled)}
+                    onChange={(e) => setModPolicy((p) => ({ ...p, enabled: e.target.checked }))}
+                  />
+                  فعال‌سازی فیلتر خودکار کلمات ممنوعه
+                </label>
+                <button type="submit" className="btn btn-primary btn-sm" disabled={busy}>
+                  ذخیره فیلتر کلمات
+                </button>
+              </form>
+            )}
+            {bannedUsers.length > 0 && (
+              <div style={{ borderTop: '1px solid var(--border)', paddingTop: 8 }}>
+                <span className="t-caption t-muted" style={{ display: 'block', marginBottom: 6 }}>
+                  کاربران مسدودشده ({faNum(bannedUsers.length)}):
+                </span>
+                {bannedUsers.map((b) => (
+                  <div
+                    key={`${b.user_id}-${b.room_id}`}
+                    style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12, padding: '3px 0' }}
+                  >
+                    <span>{b.name || `کاربر #${faNum(b.user_id)}`}</span>
+                    <button
+                      type="button"
+                      className="t-caption"
+                      style={{ color: 'var(--primary)', fontWeight: 700, cursor: 'pointer' }}
+                      onClick={() => toggleBanUser(b.user_id, b.name || 'کاربر', true)}
+                    >
+                      رفع مسدودیت
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         <div>
           <b style={{ fontSize: 13.5, display: 'block', marginBottom: 10 }}>فایل‌های گروه</b>

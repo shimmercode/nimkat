@@ -3,15 +3,54 @@ const normalize=text=>text.normalize('NFKC').toLocaleLowerCase('fa').replace(/ي
 function moderationModule(app,{db,auth,requireRole,settings,events,members,now=Date.now}){
  db.exec(`CREATE TABLE IF NOT EXISTS chat_moderation_policy(id INTEGER PRIMARY KEY CHECK(id=1),version INTEGER NOT NULL,enabled INTEGER NOT NULL,words TEXT NOT NULL);
  INSERT OR IGNORE INTO chat_moderation_policy VALUES(1,0,0,'[]');
- CREATE TABLE IF NOT EXISTS chat_invitations(room_id TEXT NOT NULL,user_id INTEGER NOT NULL,actor_id INTEGER NOT NULL,status TEXT NOT NULL DEFAULT 'pending',created_at INTEGER NOT NULL,PRIMARY KEY(room_id,user_id));`);
+ CREATE TABLE IF NOT EXISTS chat_invitations(room_id TEXT NOT NULL,user_id INTEGER NOT NULL,actor_id INTEGER NOT NULL,status TEXT NOT NULL DEFAULT 'pending',created_at INTEGER NOT NULL,PRIMARY KEY(room_id,user_id));
+ CREATE TABLE IF NOT EXISTS chat_bans(user_id INTEGER NOT NULL,room_id TEXT NOT NULL DEFAULT '*',reason TEXT NOT NULL DEFAULT '',banned_by INTEGER NOT NULL,created_at INTEGER NOT NULL,PRIMARY KEY(user_id,room_id));`);
  for(const [name,type] of Object.entries({review_note:"TEXT NOT NULL DEFAULT ''",reviewed_at:'INTEGER',reviewer_id:'INTEGER'}))if(!db.prepare('PRAGMA table_info(chat_reports)').all().some(c=>c.name===name))db.exec(`ALTER TABLE chat_reports ADD COLUMN ${name} ${type}`);
  const safe=fn=>(req,res,next)=>{try{fn(req,res);}catch(e){next(e);}},admin=[auth,requireRole('admin')];
  function policy(){const p=db.prepare('SELECT * FROM chat_moderation_policy WHERE id=1').get();return {version:p.version,enabled:!!p.enabled,words:JSON.parse(p.words)};}
+ function isBanned(uid,roomId='*'){
+  return Boolean(db.prepare("SELECT 1 FROM chat_bans WHERE user_id=? AND (room_id='*' OR room_id=?)").get(uid,roomId));
+ }
+ function bannedUsersForRoom(roomId='*'){
+  return db.prepare("SELECT b.user_id,b.room_id,b.reason,b.created_at,u.name,u.mobile,u.role FROM chat_bans b LEFT JOIN users u ON u.id=b.user_id WHERE b.room_id='*' OR b.room_id=? ORDER BY b.created_at DESC").all(roomId);
+ }
  const invitations=uid=>db.prepare("SELECT i.room_id,i.created_at,r.title,u.name invited_by FROM chat_invitations i JOIN chat_rooms r ON r.id=i.room_id JOIN users u ON u.id=i.actor_id WHERE i.user_id=? AND i.status='pending' AND (r.closes_at IS NULL OR r.closes_at>?) ORDER BY i.created_at DESC LIMIT 100").all(uid,now());
- app.get('/api/admin/chat/moderation',...admin,(req,res)=>res.json({policy:policy()}));
+ app.get('/api/admin/chat/moderation',...admin,(req,res)=>res.json({policy:policy(),bans:bannedUsersForRoom('*')}));
  app.put('/api/admin/chat/moderation',...admin,safe((req,res)=>{
   const {version,enabled,words}=req.body||{};if(!Number.isSafeInteger(version)||typeof enabled!=='boolean'||!Array.isArray(words)||words.length>200||words.some(w=>typeof w!=='string'||normalize(w).length<2||w.length>80)||new Set(words.map(normalize)).size!==words.length||enabled&&!words.length)fail('فهرست حداکثر ۲۰۰ عبارت متمایز با طول ۲ تا ۸۰ نویسه لازم است.');
   db.transaction(()=>{if(policy().version!==version)fail('تنظیمات تعدیل محتوا تغییر کرده است.',409);db.prepare('UPDATE chat_moderation_policy SET version=version+1,enabled=?,words=? WHERE id=1').run(enabled?1:0,JSON.stringify(words.map(w=>w.trim())));settings.audit(req.user.id,'chat.policy','1',{enabled,wordCount:words.length,version:version+1});})();res.json({policy:policy()});
+ }));
+ app.get('/api/admin/chat/bans',...admin,safe((req,res)=>{
+  res.json({bans:db.prepare('SELECT b.user_id,b.room_id,b.reason,b.created_at,u.name,u.mobile,u.role FROM chat_bans b LEFT JOIN users u ON u.id=b.user_id ORDER BY b.created_at DESC').all()});
+ }));
+ app.post('/api/admin/chat/bans',...admin,safe((req,res)=>{
+  const userId=Number(req.body?.userId);
+  const roomId=String(req.body?.roomId||'*').trim()||'*';
+  const reason=String(req.body?.reason||'نقض قوانین گفتگو').trim().slice(0,300)||'نقض قوانین گفتگو';
+  if(!Number.isSafeInteger(userId)||userId<=0)fail('شناسه کاربر معتبر نیست.');
+  const target=db.prepare('SELECT id,role,name FROM users WHERE id=?').get(userId);
+  if(!target)fail('کاربر مورد نظر پیدا نشد.',404);
+  if(target.role==='admin')fail('امکان مسدود کردن مدیر کل وجود ندارد.',403);
+  db.prepare('INSERT INTO chat_bans(user_id,room_id,reason,banned_by,created_at) VALUES(?,?,?,?,?) ON CONFLICT(user_id,room_id) DO UPDATE SET reason=excluded.reason,banned_by=excluded.banned_by,created_at=excluded.created_at').run(userId,roomId,reason,req.user.id,now());
+  settings.audit(req.user.id,'chat.user-banned',String(userId),{roomId,reason});
+  if(roomId!=='*')events.emit(members(roomId),'chat.message',{roomId});
+  res.json({ok:true,bans:bannedUsersForRoom(roomId)});
+ }));
+ app.post('/api/admin/chat/bans/:uid/unban',...admin,safe((req,res)=>{
+  const userId=Number(req.params.uid);
+  const roomId=String(req.body?.roomId||'*').trim()||'*';
+  if(!Number.isSafeInteger(userId))fail('شناسه کاربر معتبر نیست.');
+  if(roomId==='*')db.prepare('DELETE FROM chat_bans WHERE user_id=?').run(userId);
+  else db.prepare("DELETE FROM chat_bans WHERE user_id=? AND (room_id=? OR room_id='*')").run(userId,roomId);
+  settings.audit(req.user.id,'chat.user-unbanned',String(userId),{roomId});
+  res.json({ok:true,bans:bannedUsersForRoom(roomId)});
+ }));
+ app.delete('/api/admin/chat/bans/:uid',...admin,safe((req,res)=>{
+  const userId=Number(req.params.uid);
+  if(!Number.isSafeInteger(userId))fail('شناسه کاربر معتبر نیست.');
+  db.prepare('DELETE FROM chat_bans WHERE user_id=?').run(userId);
+  settings.audit(req.user.id,'chat.user-unbanned',String(userId),{roomId:'*'});
+  res.json({ok:true});
  }));
  app.get('/api/admin/chat/reports',...admin,safe((req,res)=>{
   const status=req.query.status||'open',page=Number(req.query.page||1);if(!['all','open','dismissed','removed'].includes(status)||!Number.isSafeInteger(page)||page<1||page>100000)fail('فیلتر گزارش معتبر نیست.');
@@ -34,6 +73,22 @@ function moderationModule(app,{db,auth,requireRole,settings,events,members,now=D
  app.post('/api/chats/:id/invitation',auth,safe((req,res)=>{
   if(typeof req.body?.accept!=='boolean')fail('تصمیم دعوت معتبر نیست.');db.transaction(()=>{const i=db.prepare("SELECT i.*,r.closes_at FROM chat_invitations i JOIN chat_rooms r ON r.id=i.room_id WHERE i.room_id=? AND i.user_id=?").get(req.params.id,req.user.id);if(!i)fail('دعوتی برای شما وجود ندارد.',404);if(i.closes_at&&i.closes_at<=now())fail('گفتگو بسته شده است.',403);const status=req.body.accept?'accepted':'declined';if(i.status!=='pending'){if(i.status===status)return;fail('این دعوت قبلاً پاسخ داده شده است.',409);}if(req.body.accept){if(db.prepare('SELECT COUNT(*) n FROM chat_members WHERE room_id=?').get(i.room_id).n>=50)fail('ظرفیت گفتگو تکمیل است.',409);db.prepare("INSERT OR IGNORE INTO chat_members(room_id,user_id,role) VALUES(?,?,'member')").run(i.room_id,req.user.id);}db.prepare('UPDATE chat_invitations SET status=? WHERE room_id=? AND user_id=?').run(status,i.room_id,req.user.id);settings.audit(req.user.id,'chat.invitation-response',i.room_id,{accepted:req.body.accept});})();events.emit([req.user.id],'chat.rooms',{});res.json({ok:true});
  }));
- return {invitations,checkText(text,uid,room){const p=policy();if(p.enabled&&p.words.some(word=>normalize(text).includes(normalize(word)))){settings.audit(uid,'chat.blocked',room,{policyVersion:p.version});fail('پیام با قواعد واژگان گفتگو سازگار نیست؛ متن را اصلاح کنید.',422);}}};
+ return {
+  invitations,
+  policy,
+  isBanned,
+  bannedUsersForRoom,
+  checkText(text,uid,room){
+   if(isBanned(uid,room)){
+    settings.audit(uid,'chat.banned-attempt',room,{});
+    fail('حساب کاربری شما در این گفتگو توسط مدیریت مسدود (بن) شده است.',403);
+   }
+   const p=policy();
+   if(p.enabled&&p.words.some(word=>normalize(text).includes(normalize(word)))){
+    settings.audit(uid,'chat.blocked',room,{policyVersion:p.version});
+    fail('پیام با قواعد واژگان گفتگو سازگار نیست؛ متن را اصلاح کنید.',422);
+   }
+  }
+ };
 }
 module.exports={moderationModule,normalize};

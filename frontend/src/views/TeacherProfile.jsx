@@ -10,6 +10,7 @@ import { faNum, faPrice } from '../utils/fa.js';
 import { api } from '../api.js';
 import { useAuth } from '../auth.jsx';
 import { toast } from '../utils/toast.js';
+import { teacherAvatarUrl } from '../utils/avatars.js';
 import PublicTeacherSchedule from '../components/PublicTeacherSchedule.jsx';
 import PublicTeacherReviews from '../components/PublicTeacherReviews.jsx';
 import { useInitialEntity } from '../render/EntityContext.jsx';
@@ -528,10 +529,10 @@ export default function TeacherProfile({ content = {}, preview = false, entityId
           <div className="tp-card">
             <div style={{ position: 'relative' }}>
               <div
-                className="avatar sq-88"
-                style={{ width: 128, height: 128, fontSize: 46, borderRadius: 'var(--r-2xl)' }}
+                className="avatar sq-88 has-photo"
+                style={{ width: 128, height: 128, fontSize: 46, borderRadius: 'var(--r-2xl)', overflow: 'hidden' }}
               >
-                {tName[0] || 'س'}
+                <img src={teacherAvatarUrl(numericTeacherId, tName)} alt={tName} className="nk-avatar-img" />
               </div>
               <span className="avatar-verified" style={{ width: 36, height: 36, bottom: -6, left: -6 }}>
                 <IconShield size={19} />

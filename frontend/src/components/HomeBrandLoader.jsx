@@ -10,35 +10,36 @@ export default function HomeBrandLoader({ overlay = false, label = 'در حال 
       aria-busy="true"
       data-testid="home-brand-loader"
     >
-      <div className="nk-brand-loader__card">
-        <div className="nk-brand-loader__logo-wrap" aria-hidden="true">
-          <span className="nk-brand-loader__halo" />
-          <div className="nk-brand-loader__logo">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M4 19V6l8 10V6" />
-              <path d="M16 6v13" />
-              <path d="M19 6v13" />
-            </svg>
-          </div>
-        </div>
-        <div className="nk-brand-loader__title">نیمکت</div>
-        <div className="nk-brand-loader__sub">{label}</div>
-        <div className="nk-brand-loader__bar" aria-hidden="true">
-          <span className="nk-brand-loader__bar-fill" />
-        </div>
-      </div>
+      <div className="nk-preloader__stage">
+        <div className="nk-preloader__orb nk-preloader__orb--emerald" aria-hidden="true" />
+        <div className="nk-preloader__orb nk-preloader__orb--amber" aria-hidden="true" />
 
-      {!overlay && (
-        <div className="container nk-brand-loader__skeleton" aria-hidden="true">
-          <div className="nk-brand-loader__skel-hero" />
-          <div className="nk-brand-loader__skel-grid">
-            <div className="nk-brand-loader__skel-box" />
-            <div className="nk-brand-loader__skel-box" />
-            <div className="nk-brand-loader__skel-box" />
-            <div className="nk-brand-loader__skel-box" />
+        <div className="nk-preloader__emblem" aria-hidden="true">
+          <span className="nk-preloader__ring" />
+          <span className="nk-preloader__ring nk-preloader__ring--outer" />
+          <div className="nk-preloader__mark">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 11h18" />
+              <path d="M5 11v7" />
+              <path d="M19 11v7" />
+              <path d="M6 7h12a1 1 0 0 1 1 1v3H5V8a1 1 0 0 1 1-1Z" />
+              <path d="M3 15h18" />
+            </svg>
+            <i className="nk-preloader__dot" />
           </div>
         </div>
-      )}
+
+        <div className="nk-preloader__wordmark">
+          <span className="nk-preloader__brand-name">نیمکت</span>
+          <span className="nk-preloader__tagline">پلتفرم آموزش آنلاین و حضوری</span>
+        </div>
+
+        <div className="nk-preloader__progress" aria-hidden="true">
+          <span className="nk-preloader__progress-bar" />
+        </div>
+
+        <div className="nk-preloader__status">{label}</div>
+      </div>
     </div>
   );
 }

@@ -143,29 +143,41 @@ export default function PanelLayout({ role: propRole = '', variant = '', childre
   useEffect(() => {
     if (!user || isAdmin || isParent) return;
     let alive = true;
-    api('/panel/overview')
-      .then((d) => {
-        if (alive) setSummary(d);
-      })
-      .catch(() => {});
+    const loadSummary = () => {
+      api('/panel/overview')
+        .then((d) => {
+          if (alive) setSummary(d);
+        })
+        .catch(() => {});
+    };
+    loadSummary();
+    if (typeof window !== 'undefined') {
+      window.addEventListener('nk:profile-updated', loadSummary);
+      window.addEventListener('nk:wallet-updated', loadSummary);
+    }
     return () => {
       alive = false;
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('nk:profile-updated', loadSummary);
+        window.removeEventListener('nk:wallet-updated', loadSummary);
+      }
     };
   }, [user, isAdmin, isParent, pathname]);
 
   const defaultProfile = isAdmin
-    ? { name: 'مدیر نیمکت', sub: 'مدیریت کل سامانه', letter: 'م' }
+    ? { name: 'مدیر نیمکت', sub: 'مدیریت کل سامانه', letter: 'م', avatar: '/images/avatars/teacher-2.svg' }
     : isParent
-      ? { name: 'والد نیمکت', sub: 'همراه خانواده', letter: 'و' }
+      ? { name: 'والد نیمکت', sub: 'همراه خانواده', letter: 'و', avatar: '/images/avatars/teacher-3.svg' }
       : isTeacher
-        ? { name: 'سارا محمدی', sub: 'دبیر فیزیک · متخصص', letter: 'س' }
-        : { name: 'علی رضایی', sub: 'پایه یازدهم · ریاضی', letter: 'ع' };
+        ? { name: 'سارا محمدی', sub: 'دبیر فیزیک · متخصص', letter: 'س', avatar: '/images/avatars/teacher-1.svg' }
+        : { name: 'علی رضایی', sub: 'پایه یازدهم · ریاضی', letter: 'ع', avatar: '/images/avatars/student-1.svg' };
 
   const profile = user
     ? {
-        name: user.name || defaultProfile.name,
-        sub: summary?.user?.subtitle || user.subtitle || defaultProfile.sub,
+        name: summary?.profileCompletion?.fields?.name || user.name || defaultProfile.name,
+        sub: summary?.profileCompletion?.fields?.subtitle || summary?.user?.subtitle || user.subtitle || defaultProfile.sub,
         letter: user.letter || user.name?.[0] || defaultProfile.letter,
+        avatar: summary?.profileCompletion?.fields?.avatar || defaultProfile.avatar,
       }
     : defaultProfile;
 
@@ -277,53 +289,102 @@ export default function PanelLayout({ role: propRole = '', variant = '', childre
             فهرست پنل <IconChevronDown size={20} />
           </button>
           <div id="panel-navigation" className={`panel-navigation ${navOpen ? 'is-open' : ''}`}>
-            <div className="side-user">
-              <div
-                className={`avatar sq-40 ${isTeacher ? '' : 'tint-green'}`}
-                style={isTeacher ? {} : { background: 'var(--secondary-50)', color: 'var(--primary)' }}
-              >
-                {profile.letter}
+            <div className="side-user-card">
+              <div className="side-user">
+                <div className="avatar sq-44 has-photo">
+                  <img src={profile.avatar} alt={profile.name} className="nk-avatar-img" />
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                    <b style={{ fontSize: 14, color: 'var(--ink)' }}>{profile.name}</b>
+                    <span className="side-role-pill">{roleLabel}</span>
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 11.5,
+                      color: 'var(--muted)',
+                      marginTop: 2,
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    }}
+                  >
+                    {profile.sub}
+                  </div>
+                </div>
               </div>
-              <div style={{ flex: 1 }}>
-                <b style={{ fontSize: 14 }}>{profile.name}</b>
-                <div style={{ fontSize: 11, color: 'var(--muted)' }}>{profile.sub}</div>
-              </div>
-              <IconChevronDown size={16} style={{ color: 'var(--n500)' }} />
+
+              {!isAdmin && !isParent && summary?.profileCompletion && (
+                <Link to={isTeacher ? '/teacher/application' : '/panel/profile'} className="side-user-completion">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11.5, fontWeight: 700 }}>
+                    <span>تکمیل پروفایل</span>
+                    <span className="num" style={{ color: 'var(--primary)' }}>
+                      {faNum(summary.profileCompletion.percent || 0)}٪
+                    </span>
+                  </div>
+                  <div className="side-user-completion__bar">
+                    <i style={{ width: `${summary.profileCompletion.percent || 0}%` }} />
+                  </div>
+                </Link>
+              )}
+
+              {!isAdmin && !isParent && summary && (
+                <div className="side-user-metrics">
+                  <Link to={isTeacher ? '/teacher/finance' : '/panel/finance'} className="side-user-metric">
+                    <span className="t-caption t-muted">کیف پول</span>
+                    <b className="num">{faPrice(summary.wallet || 0)} ت</b>
+                  </Link>
+                  <Link to={isTeacher ? '/teacher/club' : '/panel/club'} className="side-user-metric">
+                    <span className="t-caption t-muted">سکه کلاب</span>
+                    <b className="num" style={{ color: 'var(--accent-800)' }}>
+                      {faNum(summary.club?.coins || 0)} سکه
+                    </b>
+                  </Link>
+                </div>
+              )}
             </div>
 
-            {nav.map((g, gi) => (
-              <div key={gi} style={{ marginTop: g.group ? 10 : 0 }}>
-                {g.group && <div className="side-group">{g.group}</div>}
-                {g.items.map((it) => (
-                  <NavLink
-                    onClick={() => setNavOpen(false)}
-                    key={it.label}
-                    to={it.to}
-                    end={it.end}
-                    className={({ isActive }) =>
-                      `side-link ${isActive && !it.to.includes('#') ? 'is-active' : ''}`
-                    }
-                  >
-                    <it.icon size={19} />
-                    <span>{it.label}</span>
-                    <span className="end">
-                      {it.badge && <span className={`side-badge ${it.soft ? 'soft' : ''}`}>{it.badge}</span>}
-                    </span>
-                  </NavLink>
-                ))}
-              </div>
-            ))}
+            <nav className="side-nav-shell" aria-label="منوی پنل کاربری">
+              {nav.map((g, gi) => (
+                <div key={gi} className="side-nav-group">
+                  {g.group && <div className="side-group">{g.group}</div>}
+                  {g.items.map((it) => (
+                    <NavLink
+                      onClick={() => setNavOpen(false)}
+                      key={it.label}
+                      to={it.to}
+                      end={it.end}
+                      className={({ isActive }) =>
+                        `side-link ${isActive && !it.to.includes('#') ? 'is-active' : ''}`
+                      }
+                    >
+                      <span className="side-link__icon">
+                        <it.icon size={18} />
+                      </span>
+                      <span className="side-link__label">{it.label}</span>
+                      <span className="end">
+                        {it.badge && <span className={`side-badge ${it.soft ? 'soft' : ''}`}>{it.badge}</span>}
+                      </span>
+                    </NavLink>
+                  ))}
+                </div>
+              ))}
 
-            <button
-              type="button"
-              className="side-link"
-              style={{ marginTop: 12, color: 'var(--error)' }}
-              onClick={async () => {
-                if (await logout()) navigate('/');
-              }}
-            >
-              <IconLogout size={19} /> خروج از حساب
-            </button>
+              <div className="side-nav-footer">
+                <button
+                  type="button"
+                  className="side-link side-link--logout"
+                  onClick={async () => {
+                    if (await logout()) navigate('/');
+                  }}
+                >
+                  <span className="side-link__icon">
+                    <IconLogout size={18} />
+                  </span>
+                  <span className="side-link__label">خروج از حساب کاربری</span>
+                </button>
+              </div>
+            </nav>
           </div>
         </aside>
 

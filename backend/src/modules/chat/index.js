@@ -18,6 +18,7 @@ function chatModule(app, { db, auth, requireRole, settings, events, now = Date.n
   CREATE TABLE IF NOT EXISTS chat_user_settings (
     user_id INTEGER NOT NULL,room_id TEXT NOT NULL,notify_all INTEGER NOT NULL DEFAULT 1,sound INTEGER NOT NULL DEFAULT 1,preview INTEGER NOT NULL DEFAULT 1,teacher_only INTEGER NOT NULL DEFAULT 0,updated_at INTEGER NOT NULL,PRIMARY KEY(user_id,room_id)
   );`);
+  try { db.exec('ALTER TABLE chat_posts ADD COLUMN reply_to_id INTEGER'); } catch {}
   db.prepare("INSERT OR IGNORE INTO chat_rooms (id,title,kind,source_key,created_at) VALUES ('community','گپ عمومی نیمکت','community','community',?)").run(now());
   require('./membership').membershipModule(app,{db,auth,requireRole,settings,events,now});
   const members = (room) => db.prepare('SELECT user_id FROM chat_members WHERE room_id=?').all(room).map((r) => r.user_id);
@@ -46,10 +47,51 @@ function chatModule(app, { db, auth, requireRole, settings, events, now = Date.n
     const before = Number(req.query.before) || Number.MAX_SAFE_INTEGER;
     const query = String(req.query.q || '').trim().slice(0, 100);
     const escaped = query.replace(/[\\%_]/g, (c) => `\\${c}`);
-    const posts = db.prepare(`SELECT p.id,p.sender_id,p.text,p.created_at,p.deleted_at,u.name,u.role,(SELECT COUNT(*) FROM chat_reactions cr WHERE cr.message_id=p.id) likes, EXISTS(SELECT 1 FROM chat_reactions cr WHERE cr.message_id=p.id AND cr.user_id=?) liked FROM chat_posts p JOIN users u ON u.id=p.sender_id WHERE p.room_id=? AND p.id<? AND (p.text LIKE ? ESCAPE '\\' OR ?='') ORDER BY p.id DESC LIMIT 50`).all(req.user.id, room.id, before, `%${escaped}%`, query).reverse().map((post) => ({ ...post, text: post.deleted_at ? 'این پیام حذف شده است.' : post.text }));
-    const people = db.prepare('SELECT u.id,u.name,u.role,m.last_read_id,m.role room_role FROM chat_members m JOIN users u ON u.id=m.user_id WHERE m.room_id=?').all(room.id).map((row) => ({ ...row, online: events.isOnline(row.id) }));
+    const posts = db.prepare(`SELECT p.id,p.sender_id,p.text,p.created_at,p.deleted_at,p.reply_to_id,u.name,u.role,
+      rp.sender_id AS reply_sender_id, rp.text AS reply_text, rp.deleted_at AS reply_deleted_at, ru.name AS reply_sender_name,
+      (SELECT COUNT(*) FROM chat_reactions cr WHERE cr.message_id=p.id) likes,
+      EXISTS(SELECT 1 FROM chat_reactions cr WHERE cr.message_id=p.id AND cr.user_id=?) liked
+      FROM chat_posts p
+      JOIN users u ON u.id=p.sender_id
+      LEFT JOIN chat_posts rp ON rp.id=p.reply_to_id AND rp.room_id=p.room_id
+      LEFT JOIN users ru ON ru.id=rp.sender_id
+      WHERE p.room_id=? AND p.id<? AND (p.text LIKE ? ESCAPE '\\' OR ?='')
+      ORDER BY p.id DESC LIMIT 50`).all(req.user.id, room.id, before, `%${escaped}%`, query).reverse().map((post) => ({
+      id: post.id,
+      sender_id: post.sender_id,
+      text: post.deleted_at ? 'این پیام حذف شده است.' : post.text,
+      created_at: post.created_at,
+      deleted_at: post.deleted_at,
+      name: post.name,
+      role: post.role,
+      likes: post.likes,
+      liked: post.liked,
+      reply_to_id: post.reply_to_id || null,
+      reply_to: post.reply_to_id
+        ? {
+            id: post.reply_to_id,
+            sender_id: post.reply_sender_id,
+            name: post.reply_sender_name || 'کاربر',
+            text: post.reply_deleted_at ? 'این پیام حذف شده است.' : (post.reply_text || ''),
+          }
+        : null,
+    }));
+    const roomBans = moderation.bannedUsersForRoom(room.id);
+    const bannedSet = new Set(roomBans.map((b) => Number(b.user_id)));
+    const people = db.prepare('SELECT u.id,u.name,u.role,m.last_read_id,m.role room_role FROM chat_members m JOIN users u ON u.id=m.user_id WHERE m.room_id=?').all(room.id).map((row) => ({ ...row, online: events.isOnline(row.id), banned: bannedSet.has(Number(row.id)) }));
     const prefs = db.prepare('SELECT notify_all,sound,preview,teacher_only FROM chat_user_settings WHERE user_id=? AND room_id=?').get(req.user.id, room.id) || { notify_all: 1, sound: 1, preview: 1, teacher_only: 0 };
-    res.json({ chat: room, messages: posts, members: people, settings: { notifyAll: !!prefs.notify_all, sound: !!prefs.sound, preview: !!prefs.preview, teacherOnly: !!prefs.teacher_only }, hasMore: posts.length === 50, closed: !!room.closes_at && room.closes_at <= now() });
+    const canModerate = req.user.role === 'admin' || room.member_role === 'moderator';
+    res.json({
+      chat: room,
+      messages: posts,
+      members: people,
+      canModerate,
+      bannedUsers: canModerate ? roomBans : [],
+      moderationPolicy: canModerate ? moderation.policy() : null,
+      settings: { notifyAll: !!prefs.notify_all, sound: !!prefs.sound, preview: !!prefs.preview, teacherOnly: !!prefs.teacher_only },
+      hasMore: posts.length === 50,
+      closed: !!room.closes_at && room.closes_at <= now(),
+    });
   }));
   app.put('/api/chats/:id/settings', auth, safe((req, res) => {
     const room = roomFor(req.params.id, req.user.id);
@@ -74,10 +116,24 @@ function chatModule(app, { db, auth, requireRole, settings, events, now = Date.n
     if (++limit.count > 60) throw error('سرعت ارسال پیام زیاد است؛ کمی صبر کنید.', 429);
     sendLimits.set(req.user.id, limit);
     moderation.checkText(text,req.user.id,room.id);
-    const id = db.prepare('INSERT INTO chat_posts (room_id,sender_id,text,client_id,created_at) VALUES (?,?,?,?,?)').run(room.id, req.user.id, text, clientId, now()).lastInsertRowid;
+    const incomingReplyId = req.body?.replyToId ?? req.body?.reply_to_id;
+    const rawReplyId = incomingReplyId !== undefined && incomingReplyId !== null ? Number(incomingReplyId) : null;
+    let replyMeta = null;
+    if (rawReplyId !== null) {
+      if (!Number.isSafeInteger(rawReplyId)) throw error('شناسه پیام مرجع معتبر نیست.');
+      const parentPost = db.prepare('SELECT p.id,p.sender_id,p.text,p.deleted_at,u.name FROM chat_posts p JOIN users u ON u.id=p.sender_id WHERE p.id=? AND p.room_id=?').get(rawReplyId, room.id);
+      if (!parentPost) throw error('پیام مرجع برای پاسخ پیدا نشد.', 404);
+      replyMeta = {
+        id: parentPost.id,
+        sender_id: parentPost.sender_id,
+        name: parentPost.name || 'کاربر',
+        text: parentPost.deleted_at ? 'این پیام حذف شده است.' : parentPost.text,
+      };
+    }
+    const id = db.prepare('INSERT INTO chat_posts (room_id,sender_id,text,client_id,reply_to_id,created_at) VALUES (?,?,?,?,?,?)').run(room.id, req.user.id, text, clientId, rawReplyId, now()).lastInsertRowid;
     db.prepare('UPDATE chat_members SET last_read_id=? WHERE room_id=? AND user_id=?').run(id, room.id, req.user.id);
     events.emit(members(room.id), 'chat.message', { roomId: room.id });
-    res.json({ ok: true, message: { id: Number(id), sender_id: req.user.id, name: req.user.name, text, created_at: now() } });
+    res.json({ ok: true, message: { id: Number(id), sender_id: req.user.id, name: req.user.name, text, reply_to_id: rawReplyId, reply_to: replyMeta, created_at: now() } });
   }));
   app.post('/api/chats/:id/read', auth, safe((req, res) => {
     const room = roomFor(req.params.id, req.user.id), id = req.body?.messageId;
@@ -102,12 +158,37 @@ function chatModule(app, { db, auth, requireRole, settings, events, now = Date.n
     settings.audit(req.user.id, 'chat.report', String(message.id)); res.json({ ok: true });
   }));
   app.delete('/api/chats/:id/messages/:messageId', auth, safe((req, res) => {
-    roomFor(req.params.id, req.user.id);
+    const room = roomFor(req.params.id, req.user.id);
     const message = db.prepare('SELECT * FROM chat_posts WHERE id=? AND room_id=?').get(req.params.messageId, req.params.id);
     if (!message) throw error('پیام پیدا نشد.', 404);
-    if (req.user.role !== 'admin' && (message.sender_id !== req.user.id || now() - message.created_at > 10 * 60000)) throw error('حذف این پیام مجاز نیست.', 403);
+    const canMod = req.user.role === 'admin' || room.member_role === 'moderator';
+    if (!canMod && (message.sender_id !== req.user.id || now() - message.created_at > 10 * 60000)) throw error('حذف این پیام مجاز نیست.', 403);
     db.prepare('UPDATE chat_posts SET deleted_at=? WHERE id=?').run(now(), message.id);
     settings.audit(req.user.id, 'chat.delete', String(message.id)); events.emit(members(req.params.id), 'chat.message', { roomId: req.params.id, deleted:true }); res.json({ ok: true });
+  }));
+  app.post('/api/chats/:id/ban', auth, safe((req, res) => {
+    const room = roomFor(req.params.id, req.user.id);
+    if (req.user.role !== 'admin' && room.member_role !== 'moderator') throw error('فقط مدیر یا ناظر گفتگو مجاز به مسدود کردن کاربر است.', 403);
+    const targetUserId = Number(req.body?.userId ?? req.body?.user_id);
+    const reason = String(req.body?.reason || 'نقض مقررات گفتگو').trim().slice(0, 300) || 'نقض مقررات گفتگو';
+    if (!Number.isSafeInteger(targetUserId) || targetUserId <= 0) throw error('شناسه کاربر معتبر نیست.');
+    const target = db.prepare('SELECT id, role, name FROM users WHERE id=?').get(targetUserId);
+    if (!target) throw error('کاربر پیدا نشد.', 404);
+    if (target.role === 'admin') throw error('امکان مسدود کردن مدیر سایت وجود ندارد.', 403);
+    db.prepare('INSERT INTO chat_bans (user_id, room_id, reason, banned_by, created_at) VALUES (?,?,?,?,?) ON CONFLICT(user_id, room_id) DO UPDATE SET reason=excluded.reason, banned_by=excluded.banned_by, created_at=excluded.created_at').run(targetUserId, room.id, reason, req.user.id, now());
+    settings.audit(req.user.id, 'chat.user-banned', String(targetUserId), { roomId: room.id, reason });
+    events.emit(members(room.id), 'chat.message', { roomId: room.id });
+    res.json({ ok: true, bannedUsers: moderation.bannedUsersForRoom(room.id) });
+  }));
+  app.post('/api/chats/:id/unban', auth, safe((req, res) => {
+    const room = roomFor(req.params.id, req.user.id);
+    if (req.user.role !== 'admin' && room.member_role !== 'moderator') throw error('فقط مدیر یا ناظر گفتگو مجاز به رفع مسدودیت است.', 403);
+    const targetUserId = Number(req.body?.userId ?? req.body?.user_id);
+    if (!Number.isSafeInteger(targetUserId) || targetUserId <= 0) throw error('شناسه کاربر معتبر نیست.');
+    db.prepare("DELETE FROM chat_bans WHERE user_id=? AND (room_id=? OR room_id='*')").run(targetUserId, room.id);
+    settings.audit(req.user.id, 'chat.user-unbanned', String(targetUserId), { roomId: room.id });
+    events.emit(members(room.id), 'chat.message', { roomId: room.id });
+    res.json({ ok: true, bannedUsers: moderation.bannedUsersForRoom(room.id) });
   }));
   app.post('/api/admin/chat/rooms', auth, requireRole('admin'), safe((req, res) => {
     const { title, userIds, kind = 'group', classEndsAt } = req.body || {};

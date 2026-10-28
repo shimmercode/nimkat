@@ -23,6 +23,7 @@ import {
 import { faNum, faPrice } from '../utils/fa.js';
 import { api } from '../api.js';
 import { toast } from '../utils/toast.js';
+import { teacherAvatarUrl, studentAvatarUrl } from '../utils/avatars.js';
 
 /* ---------------- data (per Home page.pdf) ---------------- */
 const QUICK_LINKS = [
@@ -59,11 +60,16 @@ const TOP_TEACHERS = [
 ];
 
 const TOP_STUDENTS = [
-  { name: 'آرمین رستمی', letter: 'آ', color: 'orange', grade: 'پایه نهم', score: '۴٫۹۵', classes: '۴۸', rank: 1 },
-  { name: 'یسنا کریمی', letter: 'ی', color: 'green', grade: 'پایه هشتم', score: '۴٫۹', classes: '۴۲', rank: 2 },
-  { name: 'پرهام نوری', letter: 'پ', color: 'green', grade: 'پایه هفتم', score: '۴٫۸۸', classes: '۳۷', rank: 3 },
-  { name: 'رعنا سلطانی', letter: 'ر', color: 'green', grade: 'پایه ششم', score: '۴٫۹۲', classes: '۳۵', rank: null },
-  { name: 'بردیا مهدوی', letter: 'ب', color: 'orange', grade: 'پایه نهم', score: '۴٫۸۵', classes: '۳۱', rank: null },
+  { name: 'آرمین رستمی', letter: 'آ', color: 'orange', grade: 'پایه نهم', score: '۴٫۹۵', classes: '۴۸', rank: 1, avatar: '/images/avatars/student-1.svg' },
+  { name: 'یسنا کریمی', letter: 'ی', color: 'green', grade: 'پایه هشتم', score: '۴٫۹', classes: '۴۲', rank: 2, avatar: '/images/avatars/student-2.svg' },
+  { name: 'پرهام نوری', letter: 'پ', color: 'green', grade: 'پایه هفتم', score: '۴٫۸۸', classes: '۳۷', rank: 3, avatar: '/images/avatars/student-3.svg' },
+  { name: 'رعنا سلطانی', letter: 'ر', color: 'green', grade: 'پایه ششم', score: '۴٫۹۲', classes: '۳۵', rank: null, avatar: '/images/avatars/student-4.svg' },
+  { name: 'بردیا مهدوی', letter: 'ب', color: 'orange', grade: 'پایه نهم', score: '۴٫۸۵', classes: '۳۱', rank: null, avatar: '/images/avatars/student-5.svg' },
+  { name: 'سارینا محمدی', letter: 'س', color: 'green', grade: 'پایه دهم', score: '۴٫۹۴', classes: '۳۶', rank: null, avatar: '/images/avatars/student-6.svg' },
+  { name: 'کیانوش فرهادی', letter: 'ک', color: 'orange', grade: 'پایه یازدهم', score: '۴٫۸۹', classes: '۳۴', rank: null, avatar: '/images/avatars/student-7.svg' },
+  { name: 'ملیکا حسینی', letter: 'م', color: 'green', grade: 'پایه دوازدهم', score: '۴٫۹۶', classes: '۴۴', rank: null, avatar: '/images/avatars/student-8.svg' },
+  { name: 'امیرعلی کاظمی', letter: 'ا', color: 'green', grade: 'پایه هشتم', score: '۴٫۸۷', classes: '۲۹', rank: null, avatar: '/images/avatars/student-9.svg' },
+  { name: 'درسا احمدی', letter: 'د', color: 'orange', grade: 'پایه هفتم', score: '۴٫۹۱', classes: '۳۳', rank: null, avatar: '/images/avatars/student-10.svg' },
 ];
 
 const TESTIMONIALS = [
@@ -131,6 +137,7 @@ function Stars({ n = 5 }) {
 }
 
 function TeacherCard({ t }) {
+  const avatarSrc = teacherAvatarUrl(t);
   return (
     <div className="t-card">
       <div className="head">
@@ -138,7 +145,9 @@ function TeacherCard({ t }) {
           <div className="name">{t.name}</div>
           <div className="subject">{t.subject}</div>
         </div>
-        <div className={`avatar sq-64 ${t.color}`}>{t.letter}</div>
+        <div className={`avatar sq-64 ${t.color} has-photo`}>
+          <img src={avatarSrc} alt={t.name} className="nk-avatar-img" loading="lazy" />
+        </div>
       </div>
       <div className="badges">
         {t.badges.map((b) => (
@@ -169,9 +178,10 @@ function TeacherCard({ t }) {
   );
 }
 
-function StudentCard({ s }) {
+function StudentCard({ s, index = 0 }) {
   const isRank1 = Number(s.rank) === 1;
   const isTop3 = Boolean(s.rank && Number(s.rank) <= 3);
+  const avatarSrc = studentAvatarUrl(s, index);
   return (
     <div
       className={`s-card ${isRank1 ? 's-card--rank1' : ''} ${isTop3 ? 's-card--top3' : ''}`.trim()}
@@ -183,14 +193,15 @@ function StudentCard({ s }) {
           aria-hidden="true"
         />
         <div
-          className={`s-avatar ${s.color === 'green' ? 's-avatar--green' : 's-avatar--orange'}`}
+          className={`s-avatar ${s.color === 'green' ? 's-avatar--green' : 's-avatar--orange'} has-photo`}
           style={{
             background: s.color === 'green' ? 'var(--secondary)' : 'var(--accent)',
             position: 'relative',
             zIndex: 1,
+            overflow: 'hidden',
           }}
         >
-          {s.letter}
+          <img src={avatarSrc} alt={s.name} className="nk-avatar-img" loading="lazy" />
         </div>
         {isTop3 && (
           <span className={`s-crown ${isRank1 ? 's-crown--gold' : ''}`.trim()} aria-hidden="true">
@@ -273,14 +284,21 @@ function SeatGrid({ selected, onSelect, taken = [1, 2, 4, 5, 6, 9, 10, 12], book
 export default function Home({ initialSchema = null, user = null, preview = false } = {}) {
   const [pubSchema, setPubSchema] = useState(initialSchema);
   const [homePromo, setHomePromo] = useState(null);
-  const [homeLoading, setHomeLoading] = useState(false);
+  const [homeLoading, setHomeLoading] = useState(() => !preview);
 
   useEffect(() => {
     let active = true;
+    const minTimer = new Promise((resolve) => setTimeout(resolve, 680));
     if (!preview) setHomeLoading(true);
+    const dismissEarly = () => {
+      if (active) setHomeLoading(false);
+    };
+    window.addEventListener('pointerdown', dismissEarly, { passive: true });
+    window.addEventListener('keydown', dismissEarly, { passive: true });
     Promise.all([
       api('/pages/home').catch(() => null),
       api('/promotions/home').catch(() => null),
+      minTimer,
     ])
       .then(([pageRes, promoRes]) => {
         if (!active) return;
@@ -297,6 +315,8 @@ export default function Home({ initialSchema = null, user = null, preview = fals
       });
     return () => {
       active = false;
+      window.removeEventListener('pointerdown', dismissEarly);
+      window.removeEventListener('keydown', dismissEarly);
     };
   }, [preview]);
   const [subject, setSubject] = useState('همه');
@@ -524,8 +544,8 @@ export default function Home({ initialSchema = null, user = null, preview = fals
             </div>
           </div>
           <div className="row-scroll">
-            {TOP_STUDENTS.map((s) => (
-              <StudentCard s={s} key={s.name} />
+            {TOP_STUDENTS.map((s, idx) => (
+              <StudentCard s={s} index={idx} key={s.name} />
             ))}
           </div>
         </div>

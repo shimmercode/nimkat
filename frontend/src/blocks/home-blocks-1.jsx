@@ -21,6 +21,7 @@ import {
 import { faNum, faPrice } from '../utils/fa.js';
 import { api } from '../api.js';
 import { toast } from '../utils/toast.js';
+import { teacherAvatarUrl, studentAvatarUrl } from '../utils/avatars.js';
 
 const Ic = ({ name, size = 20, ...rest }) => {
   const map = {
@@ -279,7 +280,9 @@ export function TopTeachersBlock({ node }) {
                   <div className="name">{t.name}</div>
                   <div className="subject">{t.subject}</div>
                 </div>
-                <div className={`avatar sq-64 ${t.color}`}>{t.letter}</div>
+                <div className={`avatar sq-64 ${t.color} has-photo`}>
+                  <img src={teacherAvatarUrl(t)} alt={t.name} className="nk-avatar-img" loading="lazy" />
+                </div>
               </div>
               <div className="badges">
                 {(t.badges || []).map((b) => <span className="chip" key={b}>{b}</span>)}
@@ -360,10 +363,11 @@ export function TopStudentsBlock({ node }) {
           </div>
         </div>
         <div className="row-scroll">
-          {(d.students || []).map((s) => {
+          {(d.students && d.students.length > 5 ? d.students : topStudentsSpec.defaults.students).map((s, idx) => {
             const numericRank = Number(String(s.rank || '').replace(/[۰-۹]/g, (x) => '۰۱۲۳۴۵۶۷۸۹'.indexOf(x)));
             const isRank1 = numericRank === 1;
             const isTop3 = Boolean(s.rank && numericRank <= 3);
+            const avatarSrc = studentAvatarUrl(s, idx);
             return (
               <div
                 className={`s-card ${isRank1 ? 's-card--rank1' : ''} ${isTop3 ? 's-card--top3' : ''}`.trim()}
@@ -376,14 +380,15 @@ export function TopStudentsBlock({ node }) {
                     aria-hidden="true"
                   />
                   <div
-                    className="s-avatar"
+                    className="s-avatar has-photo"
                     style={{
                       background: s.color === 'green' ? 'var(--secondary)' : 'var(--accent)',
                       position: 'relative',
                       zIndex: 1,
+                      overflow: 'hidden',
                     }}
                   >
-                    {s.letter}
+                    <img src={avatarSrc} alt={s.name} className="nk-avatar-img" loading="lazy" />
                   </div>
                   {isTop3 && (
                     <span className={`s-crown ${isRank1 ? 's-crown--gold' : ''}`.trim()} aria-hidden="true">
@@ -419,11 +424,16 @@ export const topStudentsSpec = {
   defaults: {
     eyebrow: 'نوابغ ماه', title: 'دانش‌آموزان <span class="hl-orange">برتر</span> این ماه',
     students: [
-      { name: 'آرمین رستمی', letter: 'آ', color: 'orange', grade: 'پایه نهم', score: '۲٬۹۵۰', classes: '۸۸', rank: '۱' },
-      { name: 'یسنا کریمی', letter: 'ی', color: 'green', grade: 'پایه هشتم', score: '۲٬۹۰۰', classes: '۸۲', rank: '۲' },
-      { name: 'پرهام نوری', letter: 'پ', color: 'green', grade: 'پایه هفتم', score: '۲٬۸۸۰', classes: '۷۸', rank: '۳' },
-      { name: 'رعنا سلطانی', letter: 'ر', color: 'green', grade: 'پایه ششم', score: '۲٬۹۶۰', classes: '۸۵', rank: '' },
-      { name: 'بردیا مهدوی', letter: 'ب', color: 'orange', grade: 'پایه نهم', score: '۲٬۸۵۰', classes: '۷۵', rank: '' },
+      { name: 'آرمین رستمی', letter: 'آ', color: 'orange', grade: 'پایه نهم', score: '۴٫۹۵', classes: '۴۸', rank: '۱', avatar: '/images/avatars/student-1.svg' },
+      { name: 'یسنا کریمی', letter: 'ی', color: 'green', grade: 'پایه هشتم', score: '۴٫۹', classes: '۴۲', rank: '۲', avatar: '/images/avatars/student-2.svg' },
+      { name: 'پرهام نوری', letter: 'پ', color: 'green', grade: 'پایه هفتم', score: '۴٫۸۸', classes: '۳۷', rank: '۳', avatar: '/images/avatars/student-3.svg' },
+      { name: 'رعنا سلطانی', letter: 'ر', color: 'green', grade: 'پایه ششم', score: '۴٫۹۲', classes: '۳۵', rank: '', avatar: '/images/avatars/student-4.svg' },
+      { name: 'بردیا مهدوی', letter: 'ب', color: 'orange', grade: 'پایه نهم', score: '۴٫۸۵', classes: '۳۱', rank: '', avatar: '/images/avatars/student-5.svg' },
+      { name: 'سارینا محمدی', letter: 'س', color: 'green', grade: 'پایه دهم', score: '۴٫۹۴', classes: '۳۶', rank: '', avatar: '/images/avatars/student-6.svg' },
+      { name: 'کیانوش فرهادی', letter: 'ک', color: 'orange', grade: 'پایه یازدهم', score: '۴٫۸۹', classes: '۳۴', rank: '', avatar: '/images/avatars/student-7.svg' },
+      { name: 'ملیکا حسینی', letter: 'م', color: 'green', grade: 'پایه دوازدهم', score: '۴٫۹۶', classes: '۴۴', rank: '', avatar: '/images/avatars/student-8.svg' },
+      { name: 'امیرعلی کاظمی', letter: 'ا', color: 'green', grade: 'پایه هشتم', score: '۴٫۸۷', classes: '۲۹', rank: '', avatar: '/images/avatars/student-9.svg' },
+      { name: 'درسا احمدی', letter: 'د', color: 'orange', grade: 'پایه هفتم', score: '۴٫۹۱', classes: '۳۳', rank: '', avatar: '/images/avatars/student-10.svg' },
     ],
   },
   fields: [

@@ -143,9 +143,11 @@ export default function Header() {
           </NavLink>
           <Link to="/classes?kind=گروهی">کلاس‌های گروهی</Link>
           <Link to={chatPath}>نیم‌چت</Link>
-          <NavLink to="/club" className={({ isActive }) => (isActive ? 'active' : '')}>
-            نیمکت کلاب
-          </NavLink>
+          {isAuthenticated && user?.role === 'student' && (
+            <NavLink to="/club" className={({ isActive }) => (isActive ? 'active' : '')}>
+              نیمکت کلاب
+            </NavLink>
+          )}
           <NavLink to="/parent-guide" className={({ isActive }) => (isActive ? 'active' : '')}>
             ویژه والدین
           </NavLink>
