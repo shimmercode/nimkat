@@ -7,7 +7,12 @@ export default defineConfig({
   expect: { timeout: 15000 },
   reporter: 'list',
   webServer: process.env.CI ? [
-    { command: 'npm start --prefix ../backend', url: 'http://127.0.0.1:8000/api/teachers', timeout: 30000 },
+    {
+      command: 'npm start --prefix ../backend',
+      url: 'http://127.0.0.1:8000/api/teachers',
+      timeout: 30000,
+      env: { ...process.env, NIMKAT_OTP_IP_LIMIT: process.env.NIMKAT_OTP_IP_LIMIT || '500' },
+    },
     { command: 'npm start', url: 'http://localhost:5173', timeout: 60000 },
   ] : undefined,
   use: {

@@ -5,14 +5,13 @@ import { api } from '../../api.js';
 import { useAuth } from '../../auth.jsx';
 import { faNum } from '../../utils/fa.js';
 import {
-  IconSearch, IconSend, IconFlag, IconClip, IconDots, IconX, IconCheck, IconFile, IconBell,
+  IconSearch, IconSend, IconFlag, IconClip, IconDots, IconX, IconCheck, IconFile, IconBell, IconLock,
 } from '../../components/icons.jsx';
 
 const TABS = [
   ['all', 'همه'],
-  ['class', 'کلاس‌ها'],
-  ['private', 'اساتید و خصوصی'],
-  ['community', 'گروه‌ها'],
+  ['private', 'استادها'],
+  ['community', 'گپ‌ها'],
   ['notifications', 'اعلان‌ها'],
 ];
 
@@ -33,6 +32,14 @@ function parseAttachmentFromText(text = '') {
   };
 }
 
+function roleLabel(role, isMe) {
+  if (isMe) return 'شما';
+  if (role === 'teacher') return 'استاد';
+  if (role === 'admin') return 'مدیر';
+  if (role === 'parent') return 'والد';
+  return 'شاگرد';
+}
+
 export default function Chat() {
   const { user } = useAuth();
   const [rooms, setRooms] = useState([]);
@@ -41,6 +48,7 @@ export default function Chat() {
   const [active, setActive] = useState('');
   const [room, setRoom] = useState(null);
   const [messages, setMessages] = useState([]);
+  const [hasMore, setHasMore] = useState(false);
   const [members, setMembers] = useState([]);
   const [text, setText] = useState('');
   const [q, setQ] = useState('');
@@ -75,19 +83,27 @@ export default function Chat() {
   const roomLoadSeq = useRef(0);
   const roomsLoadSeq = useRef(0);
   const typingTimer = useRef(null);
+  const lastTypingSentRef = useRef(0);
+  const mountedRef = useRef(true);
   const retryKey = useRef({ room: '', text: '', key: '' });
   activeRef.current = active;
   searchRef.current = q;
 
   async function loadRooms(pickFirst = false) {
     const seq = ++roomsLoadSeq.current;
-    const d = await api('/chats');
-    if (seq !== roomsLoadSeq.current) return;
-    setRooms(d.chats || []);
-    setInvitations(d.invitations || []);
-    setAvailable(d.available || []);
-    if ((pickFirst || !activeRef.current) && d.chats?.[0]) {
-      selectRoom(d.chats[0].id, '');
+    try {
+      const d = await api('/chats');
+      if (!mountedRef.current || seq !== roomsLoadSeq.current) return;
+      setRooms(d.chats || []);
+      setInvitations(d.invitations || []);
+      setAvailable(d.available || []);
+      if ((pickFirst || !activeRef.current) && d.chats?.[0]) {
+        selectRoom(d.chats[0].id, '');
+      }
+    } catch (e) {
+      if (mountedRef.current && seq === roomsLoadSeq.current) {
+        setError(e.message || 'خطا در دریافت فهرست گفتگوها');
+      }
     }
   }
 
@@ -95,25 +111,56 @@ export default function Chat() {
     if (!id) return;
     const seq = ++roomLoadSeq.current;
     setActive(id);
-    const d = await api(`/chats/${id}?q=${encodeURIComponent(search)}`);
-    if (seq !== roomLoadSeq.current) return;
-    setRoom({ ...d.chat, closed: d.closed });
-    setMessages(d.messages || []);
-    setMembers(d.members || []);
-    if (d.settings) setChatSettings(d.settings);
-    const last = d.messages?.at(-1);
-    if (last) {
-      await api(`/chats/${id}/read`, { method: 'POST', body: { messageId: last.id } }).catch(() => {});
-      setRooms((prev) => prev.map((r) => (r.id === id ? { ...r, unread: 0, last_read_id: Math.max(r.last_read_id || 0, last.id) } : r)));
+    try {
+      const d = await api(`/chats/${id}?q=${encodeURIComponent(search)}`);
+      if (!mountedRef.current || seq !== roomLoadSeq.current) return;
+      setRoom({ ...d.chat, closed: d.closed });
+      setMessages(d.messages || []);
+      setHasMore(!!d.hasMore);
+      setMembers(d.members || []);
+      if (d.settings) setChatSettings(d.settings);
+      const last = d.messages?.at(-1);
+      if (last) {
+        await api(`/chats/${id}/read`, { method: 'POST', body: { messageId: last.id } }).catch(() => {});
+        if (!mountedRef.current) return;
+        setRooms((prev) =>
+          prev.map((r) =>
+            r.id === id ? { ...r, unread: 0, last_read_id: Math.max(r.last_read_id || 0, last.id) } : r
+          )
+        );
+      }
+    } catch (e) {
+      if (mountedRef.current && seq === roomLoadSeq.current) {
+        setError(e.message || 'خطا در دریافت پیام‌های گفتگو');
+      }
+    }
+  }
+
+  async function loadOlderMessages() {
+    if (!active || !messages.length || busy) return;
+    const oldestId = messages[0]?.id;
+    if (!oldestId) return;
+    setBusy(true);
+    try {
+      const d = await api(`/chats/${active}?before=${oldestId}&q=${encodeURIComponent(q)}`);
+      setMessages((prev) => {
+        const existingIds = new Set(prev.map((m) => m.id));
+        const older = (d.messages || []).filter((m) => !existingIds.has(m.id));
+        return [...older, ...prev];
+      });
+      setHasMore(!!d.hasMore);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setBusy(false);
     }
   }
 
   useEffect(() => {
     let alive = true;
+    mountedRef.current = true;
     let stream;
-    loadRooms(true).catch((e) => {
-      if (alive) setError(e.message);
-    });
+    loadRooms(true);
     function connect() {
       setConnState('connecting');
       stream = new EventSource('/api/events');
@@ -159,6 +206,7 @@ export default function Chat() {
     connect();
     return () => {
       alive = false;
+      mountedRef.current = false;
       clearTimeout(typingTimer.current);
       stream?.close();
     };
@@ -325,9 +373,8 @@ export default function Chat() {
   const maxRead = Math.max(0, ...members.filter((m) => m.id !== user?.id).map((m) => m.last_read_id || 0));
 
   const filteredRooms = rooms.filter((r) => {
-    if (tab === 'class' && r.kind !== 'class') return false;
     if (tab === 'private' && r.kind !== 'private') return false;
-    if (tab === 'community' && !['community', 'group', 'invite'].includes(r.kind)) return false;
+    if (tab === 'community' && !['community', 'group', 'class', 'invite'].includes(r.kind)) return false;
     const rq = roomSearch.trim().toLowerCase();
     if (rq) {
       const hay = `${r.title || ''} ${r.last || ''}`.toLowerCase();
@@ -336,17 +383,24 @@ export default function Chat() {
     return true;
   });
 
+  const onlineMembersCount = members.filter((m) => m.online).length;
+  const attachmentCount = messages.filter((m) => parseAttachmentFromText(m.text).attachment).length;
+
   return (
     <div className="chat-wrap">
-      {/* ============ Sidebar: Conversations & Tabs ============ */}
+      {/* ============ Column 1 (Right in RTL): Conversations & Tabs ============ */}
       <aside className="chat-side-panel" style={{ padding: 18, display: 'flex', flexDirection: 'column', gap: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <h1 className="t-h3">نیم‌چت</h1>
+          <h1 className="t-h4" style={{ fontSize: 18 }}>نیم‌چت</h1>
           <span
             className={`chip ${connState === 'connected' ? 'soft-green' : 'soft-orange'}`}
-            style={{ fontSize: 11 }}
+            style={{ fontSize: 11, display: 'inline-flex', alignItems: 'center', gap: 6 }}
           >
-            {connState === 'connected' ? 'متصل (زنده)' : 'در حال اتصال…'}
+            <span
+              className={`nk-live-dot ${connState === 'connected' ? '' : 'nk-live-dot--warn'}`}
+              aria-hidden="true"
+            />
+            {connState === 'connected' ? 'متصل' : 'در حال اتصال…'}
           </span>
         </div>
 
@@ -360,7 +414,7 @@ export default function Chat() {
               aria-selected={tab === key}
               className={tab === key ? 'is-active' : ''}
               onClick={() => setTab(key)}
-              style={{ flex: '1 1 auto', justifyContent: 'center', fontSize: 12, padding: '6px 8px' }}
+              style={{ flex: '1 1 auto', justifyContent: 'center', fontSize: 12, padding: '7px 8px' }}
             >
               {label}
             </button>
@@ -368,14 +422,14 @@ export default function Chat() {
         </div>
 
         {/* Room Search */}
-        <div className="panel-search" style={{ maxWidth: 'none' }}>
-          <IconSearch size={16} style={{ color: 'var(--n500)' }} />
+        <div className="panel-search" style={{ maxWidth: 'none', padding: '8px 12px' }}>
+          <IconSearch size={15} style={{ color: 'var(--n500)' }} />
           <input
             type="search"
             value={roomSearch}
             onChange={(e) => setRoomSearch(e.target.value)}
             aria-label="جستجوی نام گروه یا گفتگو"
-            placeholder="جستجوی گروه یا گفتگو…"
+            placeholder="جستجوی گروه یا پیام…"
           />
         </div>
 
@@ -391,13 +445,25 @@ export default function Chat() {
                 </p>
               ) : (
                 invitations.map((i) => (
-                  <div key={i.room_id} style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--border)' }}>
+                  <div
+                    key={i.room_id}
+                    className="nimchat-invite"
+                    style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--border)' }}
+                  >
                     <b>{i.title}</b>
                     <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-                      <button disabled={busy} className="btn btn-primary btn-sm" onClick={() => respondInvite(i.room_id, true)}>
-                        پذیرش
+                      <button
+                        disabled={busy}
+                        className="btn btn-primary btn-sm"
+                        onClick={() => respondInvite(i.room_id, true)}
+                      >
+                        پذیرش دعوت
                       </button>
-                      <button disabled={busy} className="btn btn-outline btn-sm" onClick={() => respondInvite(i.room_id, false)}>
+                      <button
+                        disabled={busy}
+                        className="btn btn-outline btn-sm"
+                        onClick={() => respondInvite(i.room_id, false)}
+                      >
                         رد
                       </button>
                     </div>
@@ -416,32 +482,71 @@ export default function Chat() {
                 گفتگویی در این بخش پیدا نشد.
               </p>
             )}
-            {filteredRooms.map((r) => (
+            {filteredRooms.map((r, idx) => (
               <button
                 key={r.id}
                 type="button"
+                aria-label={r.unread ? `${r.title} (${r.unread})` : r.title}
                 className={`conv ${active === r.id ? 'is-active' : ''}`}
                 onClick={() => selectRoom(r.id)}
               >
-                <div className="avatar sq-44 green">{r.title?.[0] || 'گ'}</div>
+                <div
+                  className={`avatar sq-40 ${
+                    r.kind === 'community'
+                      ? 'gray'
+                      : idx % 2 === 0
+                        ? ''
+                        : 'green'
+                  }`}
+                >
+                  {r.title?.[0] || 'گ'}
+                </div>
                 <div style={{ flex: 1, minWidth: 0, textAlign: 'right' }}>
-                  <b style={{ display: 'block', fontSize: 13.5 }}>{r.title}</b>
-                  <span className="t-caption t-muted" style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
+                    <b
+                      style={{
+                        fontSize: 13.5,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {r.title}
+                    </b>
+                    {r.unread > 0 && <span className="side-badge">{faNum(r.unread)}</span>}
+                  </div>
+                  <span
+                    className="t-caption t-muted"
+                    style={{
+                      display: 'block',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      marginTop: 2,
+                    }}
+                  >
                     {r.last || 'بدون پیام'}
                   </span>
                 </div>
-                {r.unread > 0 && <span className="side-badge">{faNum(r.unread)}</span>}
               </button>
             ))}
 
             {invitations.map((i) => (
-              <div className="card-soft" key={i.room_id} style={{ padding: 12, marginTop: 8 }}>
-                <b>دعوت به {i.title}</b>
+              <div className="card-soft nimchat-invite" key={i.room_id} style={{ padding: 12, marginTop: 8 }}>
+                <b style={{ fontSize: 13 }}>دعوت به {i.title}</b>
                 <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-                  <button disabled={busy} className="btn btn-primary btn-sm" onClick={() => respondInvite(i.room_id, true)}>
-                    پذیرش
+                  <button
+                    disabled={busy}
+                    className="btn btn-primary btn-sm"
+                    onClick={() => respondInvite(i.room_id, true)}
+                  >
+                    پذیرش دعوت
                   </button>
-                  <button disabled={busy} className="btn btn-outline btn-sm" onClick={() => respondInvite(i.room_id, false)}>
+                  <button
+                    disabled={busy}
+                    className="btn btn-outline btn-sm"
+                    onClick={() => respondInvite(i.room_id, false)}
+                  >
                     رد
                   </button>
                 </div>
@@ -453,7 +558,7 @@ export default function Chat() {
                 key={a.id}
                 type="button"
                 disabled={busy}
-                className="btn btn-outline btn-block"
+                className="btn btn-outline btn-sm btn-block"
                 style={{ marginTop: 8 }}
                 onClick={() => join(a.id)}
               >
@@ -464,21 +569,31 @@ export default function Chat() {
         )}
       </aside>
 
-      {/* ============ Main Chat Area ============ */}
+      {/* ============ Column 2 (Center): Main Chat Area ============ */}
       <section className="chat-main">
         {room ? (
           <>
             <header className="chat-head" style={{ flexWrap: 'wrap', gap: 10 }}>
-              <div style={{ flex: 1, minWidth: 180 }}>
-                <b>{room.title}</b>
-                <div className="t-caption t-muted">
-                  {faNum(members.filter((m) => m.online).length)} آنلاین از {faNum(members.length)} عضو
-                  {room.closed ? ' · مهلت فعالیت این گفتگو پایان یافته' : ''}
+              <div className="avatar sq-40">{room.title?.[0] || 'گ'}</div>
+              <div style={{ flex: 1, minWidth: 160 }}>
+                <h2 className="t-h4" style={{ fontSize: 15.5 }}>
+                  {room.title}
+                </h2>
+                <div className="t-caption t-muted" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span className="dot-online" />
+                  <span>
+                    {faNum(onlineMembersCount)} نفر آنلاین از {faNum(members.length)} عضو
+                    {room.closed ? ' · مهلت فعالیت این گفتگو پایان یافته' : ''}
+                  </span>
                 </div>
               </div>
 
-              <div className="panel-search" style={{ maxWidth: 220 }}>
-                <IconSearch size={15} />
+              <span className="chip outline" style={{ fontSize: 11.5 }}>
+                <IconLock size={12} /> {room.kind === 'community' ? 'عمومی' : 'حضور-محور'}
+              </span>
+
+              <div className="panel-search" style={{ maxWidth: 190, padding: '6px 12px' }}>
+                <IconSearch size={14} />
                 <input
                   value={q}
                   onChange={(e) => {
@@ -487,37 +602,53 @@ export default function Chat() {
                   }}
                   aria-label="جستجو در پیام‌های این گفتگو"
                   placeholder="جستجو در پیام‌ها…"
+                  style={{ fontSize: 12.5 }}
                 />
               </div>
 
               <button
                 type="button"
-                className="btn btn-outline btn-sm"
+                className="btn-icon-round"
                 aria-label="تنظیمات گپ و اعلان‌ها"
+                title="تنظیمات گپ و اعلان‌ها"
                 onClick={() => setSettingsOpen(true)}
+                style={{ width: 38, height: 38 }}
               >
-                <IconDots size={16} /> تنظیمات گپ
+                <IconDots size={16} />
               </button>
-
-              {room.member_role !== 'moderator' && (
-                <button disabled={busy} className="btn btn-outline btn-sm" type="button" onClick={leaveRoom}>
-                  خروج از گفتگو
-                </button>
-              )}
             </header>
 
             {error && (
-              <p role="alert" style={{ padding: '8px 18px', color: 'var(--error)', fontWeight: 700 }}>
+              <p role="alert" style={{ padding: '8px 18px', color: 'var(--error)', fontWeight: 700, fontSize: 13 }}>
                 {error}
               </p>
             )}
             {notice && (
-              <p role="status" style={{ padding: '8px 18px', color: 'var(--primary)', fontWeight: 700 }}>
+              <p role="status" style={{ padding: '8px 18px', color: 'var(--primary)', fontWeight: 700, fontSize: 13 }}>
                 {notice}
               </p>
             )}
 
-            <div className="chat-body">
+            <div className="chat-body nimchat-messages">
+              {hasMore && (
+                <div style={{ textAlign: 'center', marginBottom: 8 }}>
+                  <button
+                    type="button"
+                    className="btn btn-outline btn-sm"
+                    disabled={busy}
+                    onClick={loadOlderMessages}
+                  >
+                    نمایش ۵۰ پیام قدیمی‌تر
+                  </button>
+                </div>
+              )}
+
+              <div style={{ textAlign: 'center' }}>
+                <span className="chip outline" style={{ fontSize: 11.5 }}>
+                  امروز · گفتگوهای رسمی نیم‌چت
+                </span>
+              </div>
+
               {messages.length === 0 && (
                 <p className="t-small t-muted" style={{ textAlign: 'center', padding: 24 }}>
                   هنوز پیامی در این گفتگو ثبت نشده است.
@@ -525,46 +656,60 @@ export default function Chat() {
               )}
 
               {messages.map((m) => {
+                const isMe = m.sender_id === user?.id;
                 const { cleanText, attachment } = parseAttachmentFromText(m.text);
                 return (
-                  <article key={m.id} className={`msg ${m.sender_id === user?.id ? 'me' : ''}`}>
-                    <div className="bubble-msg">
-                      {m.sender_id !== user?.id && (
-                        <div className="who">
-                          {m.name} · <span className="role">{m.role}</span>
-                        </div>
-                      )}
-                      <div>{cleanText}</div>
-
-                      {attachment && (
-                        <div
-                          className="card-soft"
-                          style={{
-                            marginTop: 8,
-                            padding: '8px 12px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            gap: 10,
-                          }}
-                        >
-                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 700 }}>
-                            <IconFile size={15} /> {attachment.name}
-                          </span>
-                          <a href={attachment.url} className="btn btn-outline btn-sm" target="_blank" rel="noreferrer">
-                            دریافت فایل
-                          </a>
-                        </div>
-                      )}
-
-                      <div className="time">
-                        {new Date(m.created_at).toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' })}
-                        {m.sender_id === user?.id && (m.id <= maxRead ? ' · خوانده شد' : ' · ارسال شد')}
+                  <article key={m.id} className={`msg ${isMe ? 'me' : 'other'}`}>
+                    {!isMe && (
+                      <div className="who">
+                        {m.name}
+                        {m.role && <span className="role">{roleLabel(m.role, false)}</span>}
                       </div>
+                    )}
+
+                    <div className="bubble-m">{cleanText}</div>
+
+                    {attachment && (
+                      <div className="file-msg">
+                        <span
+                          className="chip soft-error"
+                          style={{ borderRadius: 'var(--r-sm)', padding: '6px 10px', fontSize: 11.5 }}
+                        >
+                          PDF
+                        </span>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <b style={{ display: 'block', fontSize: 13 }}>{attachment.name}</b>
+                          <span className="t-caption t-muted">فایل بررسی‌شدهٔ جلسه</span>
+                        </div>
+                        <a
+                          href={attachment.url}
+                          className="btn-icon-round"
+                          target="_blank"
+                          rel="noreferrer"
+                          title="دریافت فایل"
+                          style={{ width: 36, height: 36 }}
+                        >
+                          <IconFile size={16} />
+                        </a>
+                      </div>
+                    )}
+
+                    <div className="meta">
+                      <span className="num">
+                        {new Date(m.created_at).toLocaleTimeString('fa-IR', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </span>
+                      {isMe && (
+                        <span style={{ color: 'var(--primary)' }}>
+                          {m.id <= maxRead ? '✓✓ خوانده شد' : '✓ ارسال شد'}
+                        </span>
+                      )}
 
                       {!m.deleted_at && (
-                        <div style={{ display: 'flex', gap: 10, marginTop: 6, alignItems: 'center' }}>
-                          {m.sender_id !== user?.id && (
+                        <>
+                          {!isMe && (
                             <button
                               type="button"
                               className="t-caption"
@@ -583,26 +728,50 @@ export default function Chat() {
                                   setBusy(false);
                                 }
                               }}
-                              style={{ cursor: 'pointer' }}
+                              style={{ cursor: 'pointer', color: 'var(--muted)' }}
                             >
                               {m.liked ? 'پسندیده' : 'پسندیدن'} ({faNum(m.likes || 0)})
                             </button>
                           )}
-                          {m.sender_id !== user?.id && (
+                          {!isMe && (
                             <button
                               type="button"
                               className="t-caption"
-                              onClick={() => {
-                                setReportTarget(m);
-                                setReportCategory(REPORT_REASONS[0]);
-                                setReportNote('');
+                              onClick={async () => {
+                                if (typeof window !== 'undefined' && typeof window.prompt === 'function') {
+                                  const reason = window.prompt(
+                                    'دلیل گزارش این پیام را بنویسید:',
+                                    REPORT_REASONS[0]
+                                  );
+                                  if (reason === null) return;
+                                  if (reason.trim().length < 3) {
+                                    setError('لطفاً دلیل گزارش را (حداقل ۳ نویسه) وارد کنید.');
+                                    return;
+                                  }
+                                  setBusy(true);
+                                  try {
+                                    await api(`/chats/${active}/messages/${m.id}/report`, {
+                                      method: 'POST',
+                                      body: { reason: reason.trim() },
+                                    });
+                                    setNotice('گزارش پیام برای بررسی مدیر ثبت شد ✓');
+                                  } catch (err) {
+                                    setError(err.message || 'خطا در ثبت گزارش');
+                                  } finally {
+                                    setBusy(false);
+                                  }
+                                } else {
+                                  setReportTarget(m);
+                                  setReportCategory(REPORT_REASONS[0]);
+                                  setReportNote('');
+                                }
                               }}
                               style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}
                             >
-                              <IconFlag size={12} /> گزارش تخلف
+                              <IconFlag size={11} /> گزارش
                             </button>
                           )}
-                          {(user?.role === 'admin' || m.sender_id === user?.id) && (
+                          {(user?.role === 'admin' || isMe) && (
                             <button
                               type="button"
                               className="t-caption"
@@ -612,12 +781,38 @@ export default function Chat() {
                               حذف
                             </button>
                           )}
-                        </div>
+                        </>
                       )}
                     </div>
                   </article>
                 );
               })}
+
+              {invitations.length > 0 && (
+                <div className="sys-msg">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                    <b style={{ color: 'var(--accent)', fontSize: 13.5 }}>دعوت‌نامه‌ی اختصاصی</b>
+                    <span className="chip soft-orange" style={{ fontSize: 11 }}>پیام سیستمی</span>
+                  </div>
+                  <p>
+                    شما به گفتگوی «{invitations[0].title}» دعوت شده‌اید. در صورت تمایل می‌توانید به این گپ بپیوندید.
+                  </p>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }}>
+                    <button
+                      type="button"
+                      disabled={busy}
+                      className="btn btn-orange btn-sm"
+                      onClick={() => respondInvite(invitations[0].room_id, true)}
+                    >
+                      پیوستن به گپ
+                    </button>
+                    <span className="t-caption" style={{ opacity: 0.75 }}>
+                      دعوت‌نامهٔ رسمی نیم‌چت
+                    </span>
+                  </div>
+                </div>
+              )}
+
               {typing && <div className="t-caption t-muted">{typing}</div>}
             </div>
 
@@ -629,19 +824,30 @@ export default function Chat() {
                 title="پیوست فایل یا جزوه جلسه"
                 disabled={room.closed || busy}
                 onClick={openAttachmentPicker}
+                style={{ width: 42, height: 42 }}
               >
                 <IconClip size={18} />
               </button>
               <input
+                aria-label="متن پیام"
                 value={text}
                 disabled={room.closed}
                 onChange={(e) => {
                   setText(e.target.value);
-                  api(`/chats/${active}/typing`, { method: 'POST', body: {} }).catch(() => {});
+                  const nowTs = Date.now();
+                  if (nowTs - lastTypingSentRef.current >= 1500) {
+                    lastTypingSentRef.current = nowTs;
+                    api(`/chats/${active}/typing`, { method: 'POST', body: {} }).catch(() => {});
+                  }
                 }}
                 placeholder={room.closed ? 'این گفتگو بسته شده است' : 'پیام خود را بنویسید…'}
               />
-              <button className="btn btn-primary" disabled={busy || room.closed || !text.trim()}>
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={busy || room.closed || !text.trim()}
+                style={{ padding: '11px 18px' }}
+              >
                 <IconSend size={17} /> ارسال
               </button>
             </form>
@@ -650,6 +856,118 @@ export default function Chat() {
           <div style={{ padding: 24 }}>یک گفتگو را انتخاب کنید یا به گفتگوی عمومی بپیوندید.</div>
         )}
       </section>
+
+      {/* ============ Column 3 (Left in RTL): Room Info & Members Panel ============ */}
+      <aside className="chat-side-panel" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 8 }}>
+          <div className="avatar sq-64">{room?.title?.[0] || 'ن'}</div>
+          <b style={{ fontSize: 15.5 }}>{room?.title || 'نیم‌چت'}</b>
+          <span className="t-caption t-muted">
+            {room?.kind === 'community'
+              ? 'گفتگوی عمومی اعضای نیمکت'
+              : 'ساخته‌شده خودکار برای شرکت‌کنندگان کلاس'}
+          </span>
+        </div>
+
+        <div className="card-soft" style={{ padding: 14 }}>
+          <b style={{ fontSize: 13, display: 'block', marginBottom: 6 }}>قوانین ارسال پیام</b>
+          <p className="t-caption t-muted" style={{ lineHeight: 1.9, fontWeight: 500 }}>
+            فقط شرکت‌کننده‌های کلاس پیام می‌فرستند. تا ۷۲ ساعت بعد از جلسه‌ی آخر فعال است.
+          </p>
+        </div>
+
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+            <b style={{ fontSize: 13.5 }}>اعضا · {faNum(members.length)} نفر</b>
+            <span className="t-caption" style={{ color: 'var(--primary)' }}>همه</span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', maxHeight: 240, overflowY: 'auto' }}>
+            {members.map((m, idx) => {
+              const isMe = m.id === user?.id;
+              return (
+                <div key={m.id} className="member-row">
+                  <div
+                    className={`avatar sq-40 ${
+                      m.role === 'teacher' ? '' : idx % 2 === 0 ? 'green' : 'tint-orange'
+                    }`}
+                    style={{ width: 36, height: 36, fontSize: 14 }}
+                  >
+                    {m.name?.[0] || 'ک'}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <b style={{ display: 'block', fontSize: 13 }}>{m.name}</b>
+                    <span className="t-caption t-muted">
+                      {m.role === 'teacher'
+                        ? 'استاد · مدیر گروه'
+                        : roleLabel(m.role, isMe)}
+                    </span>
+                  </div>
+                  <span className={m.online ? 'dot-online' : 'dot-offline'} />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div>
+          <b style={{ fontSize: 13.5, display: 'block', marginBottom: 10 }}>فایل‌های گروه</b>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              className="chip outline num"
+              style={{ fontSize: 11.5, cursor: 'pointer' }}
+              onClick={openAttachmentPicker}
+            >
+              <IconFile size={13} /> {faNum(Math.max(attachmentCount, materials.length))} جزوه
+            </button>
+            <Link
+              to={user?.role === 'teacher' ? '/teacher/files' : '/panel/files'}
+              className="chip outline"
+              style={{ fontSize: 11.5 }}
+            >
+              منابع جلسه
+            </Link>
+          </div>
+        </div>
+
+        <div style={{ marginTop: 'auto', paddingTop: 12, borderTop: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {room && messages.some((m) => m.sender_id !== user?.id) && (
+            <button
+              type="button"
+              style={{
+                color: 'var(--error)',
+                fontSize: 12.5,
+                fontWeight: 700,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                justifyContent: 'center',
+                padding: '6px 0',
+              }}
+              onClick={() => {
+                const target = messages.find((m) => m.sender_id !== user?.id) || messages[0];
+                if (target) {
+                  setReportTarget(target);
+                  setReportCategory(REPORT_REASONS[0]);
+                  setReportNote('');
+                }
+              }}
+            >
+              <IconFlag size={14} /> گزارش تخلف در گروه
+            </button>
+          )}
+          {room && room.member_role !== 'moderator' && (
+            <button
+              disabled={busy}
+              className="btn btn-outline btn-sm btn-block"
+              type="button"
+              onClick={leaveRoom}
+            >
+              خروج از گفتگو
+            </button>
+          )}
+        </div>
+      </aside>
 
       {/* ============ Modal: تنظیمات گپ و اعلان‌ها ============ */}
       {settingsOpen && room && (

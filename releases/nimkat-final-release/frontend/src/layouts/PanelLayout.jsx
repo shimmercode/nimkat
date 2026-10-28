@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from '../routing/navigation';
 import { useAuth } from '../auth.jsx';
 import { api } from '../api.js';
-import { faNum } from '../utils/fa.js';
+import { faNum, faPrice } from '../utils/fa.js';
 import {
   IconBench, IconSearch, IconBell, IconHome, IconBook, IconChat, IconChart,
   IconWallet, IconFile, IconCap, IconCrown, IconHeadset, IconUser, IconLogout,
@@ -32,7 +32,7 @@ const STUDENT_NAV = [
     group: 'باشگاه و پشتیبانی',
     items: [
       { to: '/panel/club', label: 'نیمکت کلاب', icon: IconCrown },
-      { to: '/panel/support', label: 'پشتیبانی', icon: IconHeadset },
+      { to: '/contact', label: 'پشتیبانی', icon: IconHeadset },
       { to: '/panel/profile', label: 'پروفایل', icon: IconUser },
     ],
   },
@@ -43,7 +43,7 @@ const TEACHER_NAV = [
     group: '',
     items: [
       { to: '/teacher', end: true, label: 'خانه', icon: IconHome },
-      { to: '/teacher/classes', label: 'کلاس‌های من', icon: IconBook, badge: '۳' },
+      { to: '/teacher/calendar', label: 'کلاس‌های من', icon: IconBook, badge: '۳' },
       { to: '/teacher/calendar', label: 'تقویم کاری', icon: IconCalendar },
       { to: '/teacher/chat', label: 'نیم‌چت', icon: IconChat, badge: '۱۲' },
     ],
@@ -53,7 +53,7 @@ const TEACHER_NAV = [
     items: [
       { to: '/teacher/finance', label: 'امور مالی', icon: IconWallet },
       { to: '/teacher/files', label: 'فایل‌ها و منابع', icon: IconFile },
-      { to: '/teacher/reviews', label: 'امتیاز و نظرات', icon: IconStar },
+      { to: '/teacher#reviews', label: 'امتیاز و نظرات', icon: IconStar },
       { to: '/teacher#tip', label: 'نیم‌پند', icon: IconBulb },
     ],
   },
@@ -61,8 +61,8 @@ const TEACHER_NAV = [
     group: 'باشگاه و پشتیبانی',
     items: [
       { to: '/teacher/club', label: 'نیمکت کلاب', icon: IconCrown },
-      { to: '/teacher/support', label: 'پشتیبانی', icon: IconHeadset },
-      { to: '/teacher/teaching', label: 'پروفایل و رزومه', icon: IconUser },
+      { to: '/contact', label: 'پشتیبانی', icon: IconHeadset },
+      { to: '/teacher/application', label: 'پروفایل و رزومه', icon: IconUser },
     ],
   },
 ];
@@ -73,10 +73,8 @@ const PARENT_NAV = [
     items: [
       { to: '/parent', end: true, label: 'خانه و دسترسی‌ها', icon: IconHome },
       { to: '/parent/files', label: 'فایل‌های مجاز', icon: IconFile },
-      { to: '/parent/finance', label: 'امور مالی', icon: IconWallet },
-      { to: '/parent/friendly', label: 'رزرو دوستانه', icon: IconUsers },
-      { to: '/parent/shop', label: 'فروشگاه', icon: IconGift },
-      { to: '/parent/support', label: 'پشتیبانی', icon: IconHeadset },
+      { to: '/parent-guide', label: 'راهنمای والدین', icon: IconBook },
+      { to: '/contact', label: 'پشتیبانی', icon: IconHeadset },
     ],
   },
 ];
@@ -92,7 +90,7 @@ const ADMIN_NAV = [
       { to: '/admin/chat', label: 'نظارت نیم‌چت', icon: IconChat },
       { to: '/admin/teaching', label: 'اساتید و برنامه', icon: IconCalendar },
       { to: '/admin/reviews', label: 'رضایت‌های استاد', icon: IconStar },
-      { to: '/admin/refunds', label: 'بازپرداخت‌ها', icon: IconWallet },
+      { to: '/admin/finance', label: 'بازپرداخت‌ها', icon: IconWallet },
       { to: '/admin/earnings', label: 'تسویه و برداشت اساتید', icon: IconWallet },
       { to: '/admin/shop', label: 'فروشگاه و مرجوعی', icon: IconGift },
       { to: '/admin/club', label: 'نیمکت کلاب', icon: IconCoins },
@@ -143,7 +141,7 @@ export default function PanelLayout({ role: propRole = '', variant = '', childre
   const roleLabel = isAdmin ? 'مدیریت کل' : isParent ? 'پنل والد' : isTeacher ? 'پنل استاد' : 'پنل شاگرد';
 
   useEffect(() => {
-    if (!user || isAdmin) return;
+    if (!user || isAdmin || isParent) return;
     let alive = true;
     api('/panel/overview')
       .then((d) => {
@@ -153,7 +151,7 @@ export default function PanelLayout({ role: propRole = '', variant = '', childre
     return () => {
       alive = false;
     };
-  }, [user, isAdmin, pathname]);
+  }, [user, isAdmin, isParent, pathname]);
 
   const defaultProfile = isAdmin
     ? { name: 'مدیر نیمکت', sub: 'مدیریت کل سامانه', letter: 'م' }
@@ -220,6 +218,21 @@ export default function PanelLayout({ role: propRole = '', variant = '', childre
               placeholder="جستجو در کلاس‌ها، فایل‌ها و پیام‌ها"
             />
           </form>
+
+          {Boolean(user && (user.id || user.mobile)) && !isAdmin && !isParent && (
+            <Link
+              to={isTeacher ? '/teacher/finance' : '/panel/finance'}
+              className="nk-header-wallet-btn"
+              aria-label="کیف پول و امور مالی"
+              title="مشاهده کیف پول، افزایش موجودی و تراکنش‌ها"
+            >
+              <IconWallet size={17} />
+              <span className="nk-header-wallet-label">کیف پول:</span>
+              <strong className="nk-header-wallet-val num">
+                {typeof summary?.wallet === 'number' ? `${faPrice(summary.wallet)} تومان` : 'مشاهده'}
+              </strong>
+            </Link>
+          )}
 
           <Link className="btn-icon-round" to={notifLink} aria-label="اعلان‌ها" style={{ position: 'relative' }}>
             <IconBell size={19} />
@@ -315,7 +328,7 @@ export default function PanelLayout({ role: propRole = '', variant = '', childre
         </aside>
 
         {/* content (left) */}
-        <div>{children}</div>
+        <main style={{ minWidth: 0 }}>{children}</main>
       </div>
     </div>
   );

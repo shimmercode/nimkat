@@ -275,8 +275,7 @@ export function TopTeachersBlock({ node }) {
           {(d.teachers || []).filter((t) => subject === 'همه' || t.subjectKey === subject).map((t) => (
             <div className="t-card" key={t.name}>
               <div className="head">
-                {t.rank ? <span className={`rank-pin ${Number(String(t.rank).replace(/[۰-۹]/g, (x) => '۰۱۲۳۴۵۶۷۸۹'.indexOf(x))) > 1 ? 'green' : ''}`}>{t.rank}</span> : null}
-                <div style={{ flex: 1 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
                   <div className="name">{t.name}</div>
                   <div className="subject">{t.subject}</div>
                 </div>
@@ -361,22 +360,54 @@ export function TopStudentsBlock({ node }) {
           </div>
         </div>
         <div className="row-scroll">
-          {(d.students || []).map((s) => (
-            <div className="s-card" key={s.name}>
-              <div className="s-avatar-wrap">
-                {s.rank && Number(String(s.rank).replace(/[۰-۹]/g, (x) => '۰۱۲۳۴۵۶۷۸۹'.indexOf(x))) <= 3 && (
-                  <span className="s-crown"><IconCrown size={16} /></span>
-                )}
-                <div className="s-avatar" style={{ background: s.color === 'green' ? 'var(--secondary)' : 'var(--accent)' }}>{s.letter}</div>
+          {(d.students || []).map((s) => {
+            const numericRank = Number(String(s.rank || '').replace(/[۰-۹]/g, (x) => '۰۱۲۳۴۵۶۷۸۹'.indexOf(x)));
+            const isRank1 = numericRank === 1;
+            const isTop3 = Boolean(s.rank && numericRank <= 3);
+            return (
+              <div
+                className={`s-card ${isRank1 ? 's-card--rank1' : ''} ${isTop3 ? 's-card--top3' : ''}`.trim()}
+                key={s.name}
+                data-testid={`top-student-card-${numericRank || s.name}`}
+              >
+                <div className="s-avatar-wrap student-avatar-ring-wrap">
+                  <span
+                    className={`student-avatar-ring ${isRank1 ? 'student-avatar-ring--rank1' : ''}`}
+                    aria-hidden="true"
+                  />
+                  <div
+                    className="s-avatar"
+                    style={{
+                      background: s.color === 'green' ? 'var(--secondary)' : 'var(--accent)',
+                      position: 'relative',
+                      zIndex: 1,
+                    }}
+                  >
+                    {s.letter}
+                  </div>
+                  {isTop3 && (
+                    <span className={`s-crown ${isRank1 ? 's-crown--gold' : ''}`.trim()} aria-hidden="true">
+                      <IconCrown size={16} />
+                    </span>
+                  )}
+                </div>
+                <div className="s-card__identity">
+                  <b className="s-card__name">{s.name}</b>
+                  <span className="s-card__grade">{s.grade}</span>
+                </div>
+                <div className="stats">
+                  <div>
+                    <div className="v num" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                      <IconStar size={13} style={{ color: 'var(--accent)' }} />
+                      {s.score}
+                    </div>
+                    <div className="l">امتیاز</div>
+                  </div>
+                  <div><div className="v num">{s.classes}</div><div className="l">کلاس</div></div>
+                </div>
               </div>
-              <b style={{ fontSize: 15.5 }}>{s.name}</b>
-              <span style={{ fontSize: 12.5, color: 'var(--muted)' }}>{s.grade}</span>
-              <div className="stats">
-                <div><div className="v">{s.score}</div><div className="l">امتیاز</div></div>
-                <div><div className="v">{s.classes}</div><div className="l">کلاس</div></div>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>

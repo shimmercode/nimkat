@@ -18,7 +18,35 @@ function refundsModule(app,{db,auth,settings,finance,now=Date.now}){
  }));
  app.get('/api/finance/mine',auth,safe((req,res)=>{
   const bookings=db.prepare("SELECT b.id,b.status,b.total,c.title FROM bookings b JOIN classes c ON c.id=b.class_id WHERE b.user_id=? AND b.schema_version=2 AND b.booking_origin!='friendly_hold' ORDER BY b.id DESC LIMIT 100").all(req.user.id).map(b=>({...b,refundedToman:paidBack(b.id),canRequestRefund:b.status==='confirmed'&&!db.prepare("SELECT 1 FROM booking_occurrences bo JOIN class_occurrences o ON o.id=bo.occurrence_id WHERE bo.booking_id=? AND o.starts_at<=?").get(b.id,now())&&!db.prepare("SELECT 1 FROM booking_refunds WHERE booking_id=? AND status='pending'").get(b.id)}));
-  res.json({bookings,wallet:{balance:finance.walletBalance(req.user.id)/10,transactions:db.prepare('SELECT e.amount_rial,j.kind,j.created_at FROM ledger_entries e JOIN ledger_journals j ON j.id=e.journal_id WHERE e.account=? ORDER BY e.id DESC LIMIT 100').all(`user:${req.user.id}`)},refunds:db.prepare('SELECT * FROM booking_refunds WHERE user_id=? ORDER BY created_at DESC LIMIT 100').all(req.user.id)});
+  const pCfg=settings?settings.get('payment'):{config:{},secrets:{},version:0};
+  const gatewayConfigured=Boolean(pCfg?.config?.enabled&&pCfg?.secrets?.merchantId);
+  const gatewayStatus={
+   configured:gatewayConfigured,
+   sandbox:Boolean(pCfg?.config?.sandbox),
+   mode:gatewayConfigured?(pCfg.config.sandbox?'sandbox':'live'):(process.env.NODE_ENV!=='production'&&(pCfg?.version||0)===0?'local_dev':'unconfigured')
+  };
+  const payments=db.prepare('SELECT id,purpose,booking_id,amount_rial,status,redirect_url,reference,authority,created_at,verified_at FROM payment_intents WHERE user_id=? ORDER BY created_at DESC LIMIT 50').all(req.user.id).map(p=>({
+   id:p.id,
+   purpose:p.purpose,
+   bookingId:p.booking_id,
+   amount:Math.floor(p.amount_rial/10),
+   status:p.status,
+   redirectUrl:p.redirect_url,
+   reference:p.reference,
+   createdAt:p.created_at,
+   verifiedAt:p.verified_at,
+   isLocalDev:Boolean(p.authority&&String(p.authority).startsWith('LOCALDEV_'))
+  }));
+  res.json({
+   bookings,
+   wallet:{
+    balance:finance.walletBalance(req.user.id)/10,
+    transactions:db.prepare('SELECT e.amount_rial,j.kind,j.created_at,j.reference FROM ledger_entries e JOIN ledger_journals j ON j.id=e.journal_id WHERE e.account=? ORDER BY e.id DESC LIMIT 100').all(`user:${req.user.id}`)
+   },
+   refunds:db.prepare('SELECT * FROM booking_refunds WHERE user_id=? ORDER BY created_at DESC LIMIT 100').all(req.user.id),
+   payments,
+   gatewayStatus
+  });
  }));
  app.get('/api/refunds/mine',auth,safe((req,res)=>res.json({refunds:db.prepare('SELECT * FROM booking_refunds WHERE user_id=? ORDER BY created_at DESC LIMIT 100').all(req.user.id)})));
  app.get('/api/admin/refunds',auth,admin,safe((req,res)=>{const offset=Number(req.query.offset||0);if(!Number.isSafeInteger(offset)||offset<0||offset>100000)fail('صفحه نامعتبر است.');const rows=db.prepare('SELECT * FROM booking_refunds ORDER BY created_at DESC,id LIMIT 101 OFFSET ?').all(offset);res.json({refunds:rows.slice(0,100),hasMore:rows.length>100});}));

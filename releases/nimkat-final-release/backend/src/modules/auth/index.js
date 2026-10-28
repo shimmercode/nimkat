@@ -53,10 +53,13 @@ module.exports = function registerAuth(app, { db, config = S.config(), sendOtp, 
     db.prepare('DELETE FROM otp WHERE expires_at<=?').run(now());
     // Forwarded IPs are used only when trust proxy is explicitly configured.
     const ipKey = S.hash(req.ip || req.socket.remoteAddress || 'unknown');
-    const retry = limit(`otp-ip:${ipKey}`, 30, 15 * 60000) || limit(`otp-mobile:${mobile}`, 5, 15 * 60000);
+    const e2eOverride = !cfg.production && Number(process.env.NIMKAT_OTP_IP_LIMIT) > 30;
+    const ipOtpMax = e2eOverride ? Number(process.env.NIMKAT_OTP_IP_LIMIT) : 30;
+    const mobileOtpMax = e2eOverride ? Number(process.env.NIMKAT_OTP_IP_LIMIT) : 5;
+    const retry = limit(`otp-ip:${ipKey}`, ipOtpMax, 15 * 60000) || limit(`otp-mobile:${mobile}`, mobileOtpMax, 15 * 60000);
     if (retry) return rateError(res, retry);
     const existing = db.prepare('SELECT requested_at FROM otp WHERE mobile=?').get(mobile);
-    if (existing && now() - existing.requested_at < cfg.cooldownMs) return rateError(res, Math.ceil((cfg.cooldownMs - (now() - existing.requested_at)) / 1000));
+    if (existing && !e2eOverride && now() - existing.requested_at < cfg.cooldownMs) return rateError(res, Math.ceil((cfg.cooldownMs - (now() - existing.requested_at)) / 1000));
     if (cfg.production && !sendOtp) return fail(res, 503, 'سرویس ارسال پیامک هنوز پیکربندی نشده است.', 'SMS_UNAVAILABLE');
     const code = String(crypto.randomInt(10000, 100000));
     const digest = S.otpHash(cfg.secret, mobile, code);
@@ -73,7 +76,8 @@ module.exports = function registerAuth(app, { db, config = S.config(), sendOtp, 
   app.post('/api/auth/otp/verify', (req, res) => {
     const { mobile, code, role } = req.body || {};
     if (!/^09\d{9}$/.test(String(mobile)) || !/^\d{5}$/.test(String(code))) return fail(res, 400, 'شماره یا کد نامعتبر است.', 'INVALID_OTP');
-    const retry = limit(`verify-ip:${S.hash(req.ip || 'unknown')}`, 60, 15 * 60000);
+    const ipVerifyMax = cfg.production ? 60 : Math.max(60, (Number(process.env.NIMKAT_OTP_IP_LIMIT) || 30) * 2);
+    const retry = limit(`verify-ip:${S.hash(req.ip || 'unknown')}`, ipVerifyMax, 15 * 60000);
     if (retry) return rateError(res, retry);
     const result = db.transaction(() => {
       const row = db.prepare('SELECT * FROM otp WHERE mobile=?').get(mobile);
@@ -98,7 +102,7 @@ module.exports = function registerAuth(app, { db, config = S.config(), sendOtp, 
       return { user, values };
     })();
     if (result.error) return fail(res, 400, result.error, 'INVALID_OTP');
-    S.setCookies(res, cfg, result.values);
+    S.setCookies(res, cfg, result.values, req);
     res.json({ ok: true, user: result.user });
   });
 
@@ -128,7 +132,7 @@ module.exports = function registerAuth(app, { db, config = S.config(), sendOtp, 
       if (result.status === 401) S.clearCookies(res, cfg);
       return fail(res, result.status, 'تمدید نشست موفق نبود؛ دوباره وارد شوید.', result.status === 403 ? 'CSRF_REJECTED' : 'UNAUTHENTICATED');
     }
-    S.setCookies(res, cfg, result.values);
+    S.setCookies(res, cfg, result.values, req);
     res.json({ ok: true });
   });
 

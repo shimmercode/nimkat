@@ -55,3 +55,18 @@ by the app; see manifest.json for original SHA-256 checksums.
 
 The entire community catalog was NOT downloaded or installed: discovery focused
 on the requested sections, and only these selected sources were vendored.
+
+## Shared Design System Primitives (`src/components/ui/design-system.jsx`)
+
+Updated on 2026-10-27 for the Nimkat 1.7.0 UI/UX & Motion Upgrade:
+- `DsButton`: Accessible action button supporting `primary`, `secondary`, `orange`, `outline`, `ghost`, and `danger` variants, inline loading spinner (`loading`, `loadingText`), `aria-busy`, and `min-height: 44px` touch target.
+- `DsBadge`: Semantic RTL status/count pill (`green`, `orange`, `error`, `neutral`, `primary`) with optional live indicator dot (`dot`, `pulse`).
+- `DsAlert`: Semantic feedback callout (`info`, `success`, `warning`, `error`) with automatic `role="alert"` / `role="status"` and optional action slot.
+- `DsEmptyState`: Structured empty-state card with brand icon badge, heading, explanatory copy, and optional primary action.
+- `DsLoadingState`: Accessible skeleton placeholder (`aria-busy="true"`, `role="status"`) with configurable rows and KPI grid mode.
+- `DsKpiCard`: Financial & operational KPI metric card with semantic top accent bar (`primary`, `green`, `orange`, `error`), Persian numeral value (`num`), and optional footer action.
+- `DsDialog`: Accessible modal dialog built on `@radix-ui/react-dialog` with focus trap, Escape/overlay dismissal, and RTL layout.
+- `DsTabs`: Accessible RTL segmented tab bar (`role="tablist"`, `role="tab"`, `aria-selected`) with count badges.
+- `DsTooltip`: Lightweight accessible tooltip wrapper (`role="tooltip"`).
+- `DsTable`: Responsive RTL data table (`operations-table-wrap` + `operations-table`) with caption and empty-state fallback.
+

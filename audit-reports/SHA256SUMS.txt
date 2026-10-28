@@ -1,0 +1,3 @@
+2606a6042b7a1c50049b524de16017b7b5a975429be4ff8be0d9033ac8e4d11b  /home/user/nimkat/nimkat-complete-final-v1.7.0.zip
+b0c259b29b98ce7d16a435b150d6a5f8df1097684f999ae09d7e1ea5f31c8d2f  /home/user/nimkat/nimkat-booking-wallet-final.zip
+7a9706934298ad4baca59a448ea3e21c806be74fc2b5be9c6bbf2e140b2d97c5  /home/user/nimkat/nimkat-1.7.0-audited.zip

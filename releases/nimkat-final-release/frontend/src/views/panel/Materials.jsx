@@ -10,6 +10,7 @@ export default function Materials() {
   const [sessions, setSessions] = useState([]);
   const [selected, setSelected] = useState('all');
   const [items, setItems] = useState(null);
+  const [reloading, setReloading] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [busy, setBusy] = useState(false);
@@ -30,19 +31,26 @@ export default function Materials() {
 
   const loadMaterials = useCallback(() => {
     let active = true;
-    setItems(null);
+    setReloading(true);
     setError('');
     if (!selected) {
       setItems([]);
+      setReloading(false);
       return () => {};
     }
     const endpoint = selected === 'all' ? '/materials/mine' : `/materials?occurrenceId=${selected}`;
     api(endpoint)
       .then((d) => {
-        if (active) setItems(d.materials || []);
+        if (active) {
+          setItems(d.materials || []);
+          setReloading(false);
+        }
       })
       .catch((e) => {
-        if (active) setError(e.message);
+        if (active) {
+          setError(e.message);
+          setReloading(false);
+        }
       });
     return () => {
       active = false;
@@ -168,9 +176,14 @@ export default function Materials() {
       </select>
 
       {!sessions.length && (
-        <p className="t-small t-muted" style={{ marginBottom: 12 }}>
-          هنوز جلسهٔ مجازی برای فایل آموزشی ثبت نشده است. پس از رزرو قطعی کلاس، منابع جلسات شما در اینجا فعال می‌شود.
-        </p>
+        <>
+          <p className="t-small t-muted" style={{ marginBottom: 4 }}>
+            جلسهٔ مجاز برای فایل آموزشی وجود ندارد.
+          </p>
+          <p className="t-small t-muted" style={{ marginBottom: 12 }}>
+            پس از رزرو قطعی کلاس یا اعطای دسترسی، منابع جلسات شما در اینجا فعال می‌شود.
+          </p>
+        </>
       )}
 
       {teacher && selected && selected !== 'all' && (
@@ -199,7 +212,7 @@ export default function Materials() {
       {items === null && !error && <p role="status">دریافت فایل‌ها…</p>}
       {items?.length === 0 && (
         <div className="card-soft" style={{ padding: 20, marginTop: 12 }}>
-          <p className="t-small t-muted">هنوز فایل بررسی‌شده‌ای برای این بخش منتشر نشده است.</p>
+          <p className="t-small t-muted">هنوز فایل بررسی‌شده‌ای برای این جلسه منتشر نشده است.</p>
         </div>
       )}
 

@@ -34,3 +34,17 @@ coverage/
 
 # --- Runtime database (auto-seeded on first run) ---
 backend/data/
+releases/nimkat-final-release/backend/data/
+
+# Python tooling
+__pycache__/
+*.pyc
+.coverage
+
+# Next.js / TypeScript
+.next/
+*.tsbuildinfo
+
+# Browser test artifacts
+frontend/test-results/
+frontend/playwright-report/

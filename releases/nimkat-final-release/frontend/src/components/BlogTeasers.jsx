@@ -1,117 +1,115 @@
 'use client';
-import { useEffect, useState, useCallback } from 'react';
-import Image from 'next/image';
-import { Link } from '../routing/navigation';
+import { useEffect, useState } from 'react';
 import { api } from '../api.js';
 import { faNum } from '../utils/fa.js';
+import { IconArrowLeft } from './icons.jsx';
 
-const calcMinutes = (p) =>
-  p.readingMinutes ||
-  Math.max(1, Math.ceil((p.sections || []).map((s) => s.text).join(' ').split(/\s+/).length / 180));
+function formatDateFa(ts) {
+  if (!ts) return 'مجله نیمکت';
+  if (typeof ts === 'string' && !/^\d+$/.test(ts)) return ts;
+  try {
+    return new Intl.DateTimeFormat('fa-IR', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    }).format(new Date(Number(ts)));
+  } catch {
+    return 'مجله نیمکت';
+  }
+}
 
-const formatDateFa = (n) =>
-  n ? new Date(n).toLocaleDateString('fa-IR', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Asia/Tehran' }) : '';
-
-export default function BlogTeasers({ data = {} }) {
-  const [posts, setPosts] = useState([]);
+export default function BlogTeasers() {
+  const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
 
-  const loadPosts = useCallback(() => {
-    let alive = true;
+  useEffect(() => {
+    let active = true;
     setLoading(true);
-    setError(false);
-    api('/blog')
-      .then((r) => {
-        if (alive) {
-          setPosts((r?.posts || []).slice(0, 3));
-          setLoading(false);
-        }
+    api('/blog?limit=3')
+      .then((res) => {
+        if (!active) return;
+        const posts = Array.isArray(res?.posts) ? res.posts.slice(0, 3) : [];
+        setItems(posts);
       })
       .catch(() => {
-        if (alive) {
-          setError(true);
-          setLoading(false);
-        }
+        if (active) setItems([]);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
       });
     return () => {
-      alive = false;
+      active = false;
     };
   }, []);
 
-  useEffect(() => {
-    const cleanup = loadPosts();
-    return cleanup;
-  }, [loadPosts]);
-
-  const moreTo = data.moreHref && data.moreHref !== '#magazine' ? data.moreHref : '/blog';
+  if (!loading && !items.length) return null;
 
   return (
-    <section className="section journal" id="magazine">
+    <section className="section" id="blog-teasers" aria-label="تازه‌های مجله نیمکت">
       <div className="container">
-        <div className="journal-section-head">
-          <div>
-            <span className="journal-kicker">{data.eyebrow || 'مجله نیمکت'}</span>
-            <h2>{data.title || 'برای یادگیری، یک قدم جلوتر'}</h2>
-            <p className="t-small t-muted">
-              {data.sub || 'یادداشت‌هایی برای شاگردها، خانواده‌ها و مسیر یادگیری.'}
-            </p>
+        <div className="section-head">
+          <div className="titles">
+            <span className="eyebrow">مجله و راهنمای یادگیری</span>
+            <h2 className="section-title">تازه‌های مجلهٔ نیمکت</h2>
           </div>
-          <Link className="link-more" to={moreTo}>
-            {data.moreLabel || 'همه یادداشت‌ها'} ←
-          </Link>
+          <a className="link-more" href="/blog">
+            مشاهده همه مقالات <IconArrowLeft size={16} />
+          </a>
         </div>
 
-        {loading && (
-          <p className="t-small t-muted" role="status" style={{ padding: '18px 0' }}>
-            در حال دریافت یادداشت‌های مجله نیمکت…
-          </p>
-        )}
-
-        {!loading && error && (
-          <div className="card-soft" role="alert" style={{ padding: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
-            <span>دریافت یادداشت‌های مجله با خطا روبه‌رو شد.</span>
-            <div style={{ display: 'flex', gap: 10 }}>
-              <button type="button" className="btn btn-outline btn-sm" onClick={loadPosts}>
-                تلاش مجدد
-              </button>
-              <Link className="btn btn-primary btn-sm" to="/blog">
-                مشاهده مجله
-              </Link>
-            </div>
-          </div>
-        )}
-
-        {!loading && !error && posts.length === 0 && (
-          <div className="card-soft" style={{ padding: 20 }}>
-            <p className="t-small t-muted">هنوز یادداشتی در این بخش منتشر نشده است.</p>
-          </div>
-        )}
-
-        {posts.length > 0 && (
-          <div className="journal-grid">
-            {posts.map((p) => (
-              <article className="journal-card" key={p.id || p.slug}>
-                <Link to={`/blog/${p.slug}`}>
-                  <Image
-                    src={`/images/blog/${p.cover || 'learning'}.png`}
-                    alt={p.coverAlt || p.title}
-                    width={1200}
-                    height={630}
-                  />
-                  <div className="journal-card-copy">
-                    <span className="journal-kicker">{p.category}</span>
-                    <h3>{p.title}</h3>
-                    <p>{p.excerpt}</p>
-                    <div className="journal-meta">
-                      {p.publishedAt ? <span>{formatDateFa(p.publishedAt)}</span> : null}
-                      <span>{faNum(calcMinutes(p))} دقیقه مطالعه</span>
-                    </div>
-                    <span className="journal-read">خواندن یادداشت ←</span>
+        {loading ? (
+          <div className="journal-grid" role="status" aria-busy="true" aria-label="در حال بارگذاری مطالب...">
+            {[0, 1, 2].map((idx) => (
+              <article className="journal-card mag-card-skeleton" key={idx} aria-hidden="true">
+                <div className="mag-thumb nk-skeleton" style={{ aspectRatio: '1200 / 630', width: '100%' }} />
+                <div className="journal-card-copy">
+                  <span className="nk-skeleton nk-skeleton--pill" style={{ width: 96, height: 22 }} />
+                  <div className="nk-skeleton nk-skeleton--line" style={{ width: '88%', height: 22 }} />
+                  <div className="nk-skeleton nk-skeleton--line" style={{ width: '100%', height: 15 }} />
+                  <div className="nk-skeleton nk-skeleton--line" style={{ width: '72%', height: 15 }} />
+                  <div className="journal-meta" style={{ borderTop: '1px solid var(--n200)', paddingTop: 12 }}>
+                    <span className="nk-skeleton nk-skeleton--line" style={{ width: 110, height: 14 }} />
                   </div>
-                </Link>
+                </div>
               </article>
             ))}
+          </div>
+        ) : (
+          <div className="journal-grid" aria-label="یادداشت‌های مجله">
+            {items.map((post) => {
+              const coverSrc =
+                post.coverImage || `/images/blog/${post.cover || 'learning'}.png`;
+              const minutes = post.readingMinutes || post.readTime || 5;
+              return (
+                <article className="journal-card" key={post.id || post.slug}>
+                  <a href={`/blog/${post.slug}`} className="journal-card-link">
+                    <div className="journal-card-cover-wrap">
+                      <img
+                        src={coverSrc}
+                        alt={post.coverAlt || post.title}
+                        width={1200}
+                        height={630}
+                        loading="lazy"
+                      />
+                      <span className="journal-card-badge">{post.category || 'مجله نیمکت'}</span>
+                    </div>
+                    <div className="journal-card-copy">
+                      <span className="journal-kicker">{post.category || 'مجله نیمکت'}</span>
+                      <h3>{post.title}</h3>
+                      <p>{post.excerpt}</p>
+                      <div className="journal-meta">
+                        <span>{post.author || 'تحریریه نیمکت'}</span>
+                        <span>{formatDateFa(post.publishedAt)}</span>
+                        <span className="num">{faNum(minutes)} دقیقه مطالعه</span>
+                      </div>
+                      <span className="journal-read">
+                        ادامه یادداشت <b aria-hidden="true">←</b>
+                      </span>
+                    </div>
+                  </a>
+                </article>
+              );
+            })}
           </div>
         )}
       </div>
