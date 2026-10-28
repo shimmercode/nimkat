@@ -7,7 +7,7 @@ import {
   IconChart,
   IconArrowLeft,
   IconCheck,
-  IconTrophy,
+  IconMedal,
   IconStar,
   IconSparkle,
   IconCalendar,
@@ -210,7 +210,7 @@ export default function AcademicReport() {
           value={`+${faNum(50)} سکه`}
           sub="و ۳۰۰ امتیاز برای حداقل ۱۰٪ رشد ماهانه"
           tone="primary"
-          icon={<IconTrophy size={22} />}
+          icon={<IconMedal size={22} />}
         />
       </div>
 
@@ -437,7 +437,7 @@ export default function AcademicReport() {
         <div className="nk-reports-section__head" style={{ borderBottom: 'none', marginBottom: 8, paddingBottom: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div className="nk-profile-section__icon nk-profile-section__icon--orange">
-              <IconTrophy size={22} />
+              <IconMedal size={22} />
             </div>
             <div>
               <h2 className="t-h3">شرایط پاداش پیشرفت تحصیلی در نیمکت کلاب</h2>
