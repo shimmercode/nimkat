@@ -15,7 +15,15 @@ export default function SupportWidget() {
   useEffect(()=>{
     if(!open || hidden)return;
     let alive=true;
-    Promise.all([api('/support/info'),api('/support/articles'),user?api('/support/threads'):Promise.resolve({threads:[]})]).then(([i,a,t])=>{if(!alive)return;setInfo(i);setArticles(a.articles);setThreads(t.threads);}).catch(e=>{if(alive)setError(e.message);});
+    setError('');
+    const loadSupport = () => Promise.all([api('/support/info'),api('/support/articles'),user?api('/support/threads'):Promise.resolve({threads:[]})]);
+    loadSupport().catch(async (err) => {
+      if (err?.status >= 500) {
+        await new Promise((r) => setTimeout(r, 1200));
+        return loadSupport();
+      }
+      throw err;
+    }).then(([i,a,t])=>{if(!alive)return;setError('');setInfo(i);setArticles(a.articles);setThreads(t.threads);}).catch(e=>{if(alive)setError(e.message);});
     return()=>{alive=false;};
   },[open,user?.id,hidden]);
   useEffect(()=>{

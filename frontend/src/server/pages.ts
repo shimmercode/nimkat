@@ -1,7 +1,16 @@
 import 'server-only';
 import type { PublishedPageRecord } from '../types/page-builder';
 
-const origin = (process.env.API_INTERNAL_URL || (process.env.RENDER ? 'https://nimkat-backend.onrender.com' : 'http://127.0.0.1:8000')).replace(/\/+$/, '');
+const rawOrigin = (
+  process.env.API_INTERNAL_URL ||
+  (process.env.RENDER || process.env.RENDER_EXTERNAL_URL || process.env.RENDER_SERVICE_ID
+    ? 'https://nimkat-backend.onrender.com'
+    : 'http://127.0.0.1:8000')
+)
+  .trim()
+  .replace(/\/+$/, '')
+  .replace(/\/api$/, '');
+const origin = rawOrigin.startsWith('http://') || rawOrigin.startsWith('https://') ? rawOrigin : `https://${rawOrigin}`;
 /** Never fetch draft endpoints or forward administrator credentials for public SSR. */
 export async function publicPage(slug: string): Promise<PublishedPageRecord | null> {
   try {
