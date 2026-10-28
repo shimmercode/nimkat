@@ -1,7 +1,7 @@
 import 'server-only';
 import type { PublishedPageRecord } from '../types/page-builder';
 
-const origin = process.env.API_INTERNAL_URL || 'http://127.0.0.1:8000';
+const origin = (process.env.API_INTERNAL_URL || 'http://127.0.0.1:8000').replace(/\/+$/, '');
 /** Never fetch draft endpoints or forward administrator credentials for public SSR. */
 export async function publicPage(slug: string): Promise<PublishedPageRecord | null> {
   try {
