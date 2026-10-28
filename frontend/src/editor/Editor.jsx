@@ -108,8 +108,9 @@ function Modal({ title, onClose, children }) {
 export default function Editor() {
   const { slug = 'home' } = useParams();
   const navigate = useNavigate();
-  const { user, loading } = useAuth();
+  const { user, loading, requestOtp, verifyOtp, logout } = useAuth();
   const [loadError, setLoadError] = useState('');
+  const [adminSwitching, setAdminSwitching] = useState(false);
   const [pageReady,setPageReady]=useState(false);
   const store = useEditorStore(slugDefaults[slug] ? slugDefaults[slug]() : defaultApplicationSchema(slug));
   const { schema, loadSchema, undo, redo, canUndo, canRedo, dirty, setDirty, selectedId, setSelectedId, addBlock } = store;
@@ -128,13 +129,32 @@ export default function Editor() {
 
   const vpWidth = breakpoint === 'desktop' ? 1280 : breakpoint === 'tablet' ? 768 : 375;
 
+  const handleQuickAdminLogin = async () => {
+    setAdminSwitching(true);
+    try {
+      const otp = await requestOtp('09120000000');
+      if (otp?.devCode) {
+        await verifyOtp('09120000000', otp.devCode, 'admin');
+        setLoadError('');
+        toast('با حساب مدیر وارد شدید ✓');
+        return;
+      }
+      await logout?.();
+      navigate(`/login?next=${encodeURIComponent(`/editor/${slug}`)}&admin=1`);
+    } catch (e) {
+      toast(e.message || 'خطا در ورود به حساب مدیر', 'err');
+      navigate(`/login?next=${encodeURIComponent(`/editor/${slug}`)}&admin=1`);
+    } finally {
+      setAdminSwitching(false);
+    }
+  };
+
   useEffect(() => {
     if (loading) return;
-    if (!user) {
-      navigate(`/login?next=${encodeURIComponent(`/editor/${slug}`)}`);
+    if (!user || user.role !== 'admin') {
+      setLoadError('دسترسی به ویرایشگر فقط برای مدیر سایت است.');
       return;
     }
-    if (user.role !== 'admin') { setLoadError('دسترسی به ویرایشگر فقط برای مدیر سایت است.'); return; }
     let active = true;
     setLoadError('');setPageReady(false);
     setSelectedId(null);
@@ -197,7 +217,30 @@ export default function Editor() {
   };
 
   if (loading) return <div className="container section">در حال بررسی دسترسی…</div>;
-  if (loadError) return <div className="container section" role="alert">{loadError} <Link to="/">بازگشت به سایت</Link></div>;
+  if (loadError) {
+    return (
+      <div className="container section" role="alert" style={{ maxWidth: 640, margin: '48px auto', background: '#fff', border: '1px solid var(--n-200)', borderRadius: 20, padding: '28px 32px', boxShadow: '0 10px 30px rgba(23,33,30,0.06)' }}>
+        <div style={{ fontWeight: 900, fontSize: 18, color: 'var(--n-900)', marginBottom: 8 }}>{loadError}</div>
+        <p style={{ margin: '0 0 18px', fontSize: 14, color: 'var(--n-700)', lineHeight: 1.8 }}>
+          برای باز شدن ویرایشگر صفحات، باید با شماره موبایل مدیر سایت (<b>۰۹۱۲۰۰۰۰۰۰۰</b>) وارد شوید. با کلیک روی دکمهٔ زیر، در محیط توسعه به‌صورت خودکار وارد حساب مدیر می‌شوید و ویرایشگر باز می‌شود:
+        </p>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+          <button
+            type="button"
+            className="btn btn-primary"
+            disabled={adminSwitching}
+            onClick={handleQuickAdminLogin}
+          >
+            {adminSwitching ? 'در حال ورود به حساب مدیر…' : 'ورود فوری با حساب مدیر (۰۹۱۲۰۰۰۰۰۰۰) و باز کردن ویرایشگر'}
+          </button>
+          <Link to={`/login?next=${encodeURIComponent(`/editor/${slug}`)}&admin=1`} className="btn btn-outline">
+            صفحهٔ ورود مدیر
+          </Link>
+          <Link to="/" className="btn btn-ghost">بازگشت به سایت</Link>
+        </div>
+      </div>
+    );
+  }
   if (!user || user.role !== 'admin') return null;
   if(!pageReady)return <div className="container section" role="status">دریافت نسخهٔ معتبر صفحه…</div>;
 
@@ -217,7 +260,7 @@ export default function Editor() {
           <span className={`ed-status ${status}`}>{status === 'published' ? 'منتشرشده' : 'پیش‌نویس'}{dirty ? ' •' : ''}</span>
         </div>
         <div className="ed-devices">
-          {[['desktop', '🖥'], ['tablet', '📱'], ['mobile', '📲']].map(([k, ic]) => (
+          {[['desktop', 'دسکتاپ'], ['tablet', 'تبلت'], ['mobile', 'موبایل']].map(([k, ic]) => (
             <button key={k} type="button" className={breakpoint === k ? 'is-on' : ''} onClick={() => setBreakpoint(k)} title={k}>{ic}</button>
           ))}
         </div>

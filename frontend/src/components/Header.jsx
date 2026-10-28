@@ -247,6 +247,11 @@ export default function Header() {
                   </div>
                 )}
               </div>
+              {user?.role === 'admin' && (
+                <Link to="/editor/home" className="btn btn-primary btn-sm">
+                  ویرایشگر صفحات
+                </Link>
+              )}
               <Link to={panelPath} className="btn btn-outline">
                 <IconUser size={18} />
                 {user.name || 'پنل من'}

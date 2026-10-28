@@ -13,8 +13,9 @@ export default function Login() {
   const referralCode = /^[A-Fa-f0-9]{16}$/.test(params?.get('ref') || '') ? params.get('ref').toUpperCase() : null;
   const requestedNext = params?.get('next') || '';
   const safeNext = requestedNext.startsWith('/') && !requestedNext.startsWith('//') && !requestedNext.includes('\\') && requestedNext.split('?')[0] !== '/login' ? requestedNext : null;
+  const wantsAdmin = params?.get('admin') === '1' || Boolean(safeNext && (safeNext.startsWith('/editor') || safeNext.startsWith('/admin')));
   const [step, setStep] = useState(1);
-  const [mobile, setMobile] = useState('');
+  const [mobile, setMobile] = useState(wantsAdmin ? '09120000000' : '');
   const [code, setCode] = useState(['', '', '', '', '']);
   const [err, setErr] = useState('');
   const [busy, setBusy] = useState(false);
@@ -28,8 +29,10 @@ export default function Login() {
   useLayoutEffect(()=>{if(step===2&&focusOtp.current){focusOtp.current=false;boxes.current[0]?.focus({preventScroll:true});}});
 
   useEffect(() => {
-    if (user) navigate(safeNext || (referralCode ? `${user.role === 'teacher' ? '/teacher/club' : '/panel/club'}?ref=${referralCode}` : null) || (user.role === 'teacher' ? '/teacher' : user.role === 'admin' ? '/admin/integrations' : user.role === 'parent' ? '/parent' : '/panel'), { replace: true });
-  }, [user, navigate, safeNext, referralCode]);
+    if (!user) return;
+    if (wantsAdmin && user.role !== 'admin') return;
+    navigate(safeNext || (referralCode ? `${user.role === 'teacher' ? '/teacher/club' : '/panel/club'}?ref=${referralCode}` : null) || (user.role === 'teacher' ? '/teacher' : user.role === 'admin' ? '/admin/integrations' : user.role === 'parent' ? '/parent' : '/panel'), { replace: true });
+  }, [user, navigate, safeNext, referralCode, wantsAdmin]);
 
   useEffect(() => {
     if (timer <= 0) return undefined;
