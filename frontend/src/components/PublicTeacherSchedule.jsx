@@ -4,6 +4,14 @@ import { Link } from '../routing/navigation';
 import { api } from '../api.js';
 import { faNum } from '../utils/fa.js';
 import { formatJalaliDateTime, formatTehranTime } from '../utils/persian-calendar.js';
+import {
+  IconCalendar,
+  IconClock,
+  IconRefresh,
+  IconCheck,
+  IconArrowLeft,
+  IconSparkle,
+} from './icons.jsx';
 
 export default function PublicTeacherSchedule({
   teacherId,
@@ -113,23 +121,22 @@ export default function PublicTeacherSchedule({
       : '';
 
   return (
-    <section className="card" id="slots" style={{ padding: 24, borderRadius: 'var(--r-2xl)' }}>
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          gap: 12,
-          flexWrap: 'wrap',
-        }}
-      >
-        <div>
-          <h2 className="t-h3">{title}</h2>
-          <p className="t-small t-muted num" style={{ marginTop: 4 }}>
-            به وقت تهران (تقویم شمسی){rangeLabel ? ` · بازه: ${rangeLabel}` : ''} · هر جلسه {faNum(sessionMinutes)} دقیقه
-          </p>
+    <section className="card nk-tp-section-card" id="slots">
+      {/* Header */}
+      <div className="nk-tp-sec-head">
+        <div className="nk-tp-sec-head__title-wrap">
+          <span className="nk-tp-sec-icon">
+            <IconCalendar size={22} />
+          </span>
+          <div>
+            <h2 className="t-h3">{title}</h2>
+            <p className="t-small t-muted num" style={{ marginTop: 4 }}>
+              به وقت تهران (تقویم شمسی){rangeLabel ? ` · بازه: ${rangeLabel}` : ''} · هر جلسه {faNum(sessionMinutes)} دقیقه
+            </p>
+          </div>
         </div>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+
+        <div className="nk-tp-week-nav">
           <button
             className="btn btn-outline btn-sm"
             type="button"
@@ -147,22 +154,23 @@ export default function PublicTeacherSchedule({
             هفتهٔ بعد
           </button>
           <button className="btn btn-ghost btn-sm" type="button" onClick={() => load(week)}>
-            بروزرسانی
+            <IconRefresh size={14} /> بروزرسانی
           </button>
         </div>
       </div>
 
-      {/* Contradiction-free state rendering: only show weekly slot shortcuts when real occurrences exist in this week */}
+      {/* Weekly Slot Shortcuts */}
       {!error && !hasNoActiveClasses && occurrences.length > 0 && Array.isArray(slots) && slots.length > 0 && (
-        <div style={{ marginTop: 16 }}>
-          <div className="t-small t-muted" style={{ marginBottom: 8 }}>
-            برنامهٔ هفتگی استاد (برای انتخاب سریع زمان کلیک کنید):
+        <div className="nk-tp-weekly-box">
+          <div className="nk-tp-weekly-box__label">
+            <IconClock size={15} style={{ color: 'var(--primary)' }} />
+            <span>برنامهٔ هفتگی استاد (برای انتخاب سریع زمان کلیک کنید):</span>
           </div>
-          <div className="slot-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 10 }}>
+          <div className="nk-tp-day-grid">
             {slots.map((s, idx) => (
-              <div key={s.day || idx} className="card-soft" style={{ padding: 10, borderRadius: 12 }}>
-                <strong style={{ display: 'block', fontSize: 13, marginBottom: 6 }}>{s.day}</strong>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div key={s.day || idx} className="nk-tp-day-card">
+                <strong className="nk-tp-day-card__day">{s.day}</strong>
+                <div className="nk-tp-day-card__times">
                   {(Array.isArray(s.times) ? s.times : []).map((rawT, ti) => {
                     const isObj = rawT && typeof rawT === 'object';
                     const timeLabel = isObj ? rawT.t : String(rawT);
@@ -175,11 +183,13 @@ export default function PublicTeacherSchedule({
                         type="button"
                         disabled={isFull}
                         aria-pressed={isSelected}
-                        className={`btn btn-sm ${isSelected ? 'btn-primary' : 'btn-outline'}`}
-                        style={{ justifyContent: 'center', opacity: isFull ? 0.5 : 1 }}
+                        className={`nk-tp-time-chip num ${isSelected ? 'is-selected' : ''}`}
                         onClick={() => !isFull && handleSlotButtonClick(slotKey)}
                       >
-                        {timeLabel} {isFull ? '(تکمیل)' : ''}
+                        <IconClock size={13} />
+                        <span>
+                          {timeLabel} {isFull ? '(تکمیل)' : ''}
+                        </span>
                       </button>
                     );
                   })}
@@ -190,9 +200,10 @@ export default function PublicTeacherSchedule({
         </div>
       )}
 
+      {/* Occurrences List */}
       <div style={{ marginTop: 18 }}>
         {error ? (
-          <div role="alert" className="card-soft" style={{ padding: 16, borderColor: 'var(--error)' }}>
+          <div role="alert" className="nk-tp-state-box nk-tp-state-box--error">
             <p style={{ color: 'var(--error)', margin: 0, fontWeight: 700 }}>{error}</p>
             <button
               type="button"
@@ -204,26 +215,32 @@ export default function PublicTeacherSchedule({
             </button>
           </div>
         ) : hasNoActiveClasses ? (
-          <div className="card-soft" role="status" style={{ padding: 16 }}>
+          <div className="nk-tp-state-box" role="status">
             <p className="t-muted" style={{ margin: 0 }}>
               برای این استاد در حال حاضر کلاس فعالی جهت رزرو ثبت نشده است.
             </p>
           </div>
         ) : loading && !data ? (
-          <p role="status" className="t-muted">
-            در حال دریافت زمان‌های واقعی…
-          </p>
+          <div className="nk-tp-state-box" role="status">
+            <p className="t-muted" style={{ margin: 0 }}>
+              در حال دریافت زمان‌های واقعی…
+            </p>
+          </div>
         ) : !occurrences.length ? (
-          <div className="card-soft" role="status" style={{ padding: 16 }}>
+          <div className="nk-tp-state-box" role="status">
             <p className="t-muted" style={{ margin: 0 }}>
               در این بازهٔ هفتگی، جلسهٔ آزادی برای رزرو منتشر نشده است. می‌توانید با دکمهٔ «هفتهٔ بعد» بازه‌های بعدی را بررسی کنید.
             </p>
           </div>
         ) : (
-          <div className="public-slot-list" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <div className="t-small t-muted" style={{ marginBottom: 4 }}>
-              جلسات زمان‌بندی‌شدهٔ قابل رزرو در این بازه ({faNum(bookableOccurrences.length)} جلسهٔ دارای ظرفیت از {faNum(occurrences.length)} جلسه):
+          <div className="public-slot-list">
+            <div className="nk-tp-occurrences-head">
+              <span className="t-small" style={{ fontWeight: 700, color: 'var(--n700)' }}>
+                جلسات زمان‌بندی‌شدهٔ قابل رزرو در این بازه ({faNum(bookableOccurrences.length)} جلسهٔ دارای ظرفیت از {faNum(occurrences.length)} جلسه):
+              </span>
+              <span className="pill green num">{faNum(bookableOccurrences.length)} جلسه باز</span>
             </div>
+
             {occurrences.map((occ) => {
               const isSelected =
                 Array.isArray(selectedOccurrenceIds) && selectedOccurrenceIds.includes(occ.id);
@@ -232,33 +249,36 @@ export default function PublicTeacherSchedule({
               const bookable = !isFull && !isRescheduling;
               return (
                 <article
-                  className="public-slot-card"
+                  className={`public-slot-card ${isSelected ? 'is-selected' : ''} ${!bookable ? 'is-disabled' : ''}`}
                   key={occ.id}
-                  style={{
-                    border: isSelected ? '1.5px solid var(--primary)' : undefined,
-                    background: isSelected ? 'var(--secondary-50)' : undefined,
-                    opacity: bookable ? 1 : 0.68,
-                  }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div className="public-slot-card__info">
                     {onToggleOccurrence && (
                       <input
                         type="checkbox"
+                        className="public-slot-card__check"
                         aria-label={`انتخاب جلسه ${occ.title} در ${formatJalaliDateTime(occ.starts_at)}`}
                         checked={isSelected}
                         disabled={!bookable}
                         onChange={() => bookable && onToggleOccurrence(occ)}
                       />
                     )}
-                    <div>
-                      <strong>{occ.title}</strong>
-                      <p className="t-small t-muted num" style={{ marginTop: 4 }}>
-                        {formatJalaliDateTime(occ.starts_at)} تا {formatTehranTime(occ.ends_at)}
+                    <span className="public-slot-card__icon" aria-hidden="true">
+                      {isSelected ? <IconCheck size={18} /> : <IconCalendar size={18} />}
+                    </span>
+                    <div className="public-slot-card__texts">
+                      <strong className="public-slot-card__title">{occ.title}</strong>
+                      <p className="public-slot-card__time num">
+                        <IconClock size={13} />
+                        <span>
+                          {formatJalaliDateTime(occ.starts_at)} تا {formatTehranTime(occ.ends_at)}
+                        </span>
                       </p>
                     </div>
                   </div>
-                  <div className="public-slot-actions" style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-                    <span className="num t-small">
+
+                  <div className="public-slot-actions">
+                    <span className={`nk-tp-seat-badge num ${bookable ? 'is-open' : 'is-closed'}`}>
                       {isRescheduling
                         ? 'در حال جابه‌جایی زمان'
                         : isFull
@@ -273,7 +293,7 @@ export default function PublicTeacherSchedule({
                           if (onSelectClassId) onSelectClassId(occ.class_id);
                         }}
                       >
-                        انتخاب جلسه و رزرو
+                        انتخاب جلسه و رزرو <IconArrowLeft size={14} />
                       </Link>
                     ) : (
                       <button className="btn btn-outline btn-sm" type="button" disabled>

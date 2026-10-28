@@ -915,45 +915,41 @@ export default function TeacherProfile({ content = {}, preview = false, entityId
             {/* 4. سوابق و مدارک (#credentials) */}
             <section
               id="credentials"
-              className="card"
+              className="card nk-tp-section-card"
               style={{
-                borderRadius: 'var(--r-2xl)',
-                padding: 30,
                 scrollMarginTop: 112,
                 borderColor: tab === 'سوابق و مدارک' ? 'var(--primary)' : undefined,
               }}
             >
-              <div
-                className="tp-section-head"
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}
-              >
-                <h2 className="t-h3">{content.credentialsTitle ?? 'سوابق تحصیلی و حرفه‌ای'}</h2>
+              <div className="nk-tp-sec-head">
+                <div className="nk-tp-sec-head__title-wrap">
+                  <span className="nk-tp-sec-icon">
+                    <IconCap size={22} />
+                  </span>
+                  <div>
+                    <h2 className="t-h3">{content.credentialsTitle ?? 'سوابق تحصیلی و حرفه‌ای'}</h2>
+                    <p className="t-small t-muted" style={{ marginTop: 4 }}>
+                      مدارک دانشگاهی، سوابق تدریس و گواهی‌های تخصصی ثبت‌شده در پروندهٔ استاد
+                    </p>
+                  </div>
+                </div>
                 <span className="chip soft-green">
                   <IconShield size={14} /> مدارک توسط کارشناس نیمکت بررسی شده
                 </span>
               </div>
 
-              <div style={{ marginTop: 22 }}>
+              <div className="nk-tp-cred-list">
                 {credentialsList.map((h, i) => (
-                  <div
-                    key={`${h.title}-${i}`}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 16,
-                      padding: '16px 0',
-                      borderBottom: i < credentialsList.length - 1 ? '1px solid var(--border)' : 'none',
-                    }}
-                  >
-                    <span className="ic avatar sq-52 tint-green" style={{ borderRadius: 'var(--r-md)' }}>
+                  <div key={`${h.title}-${i}`} className="nk-tp-cred-card">
+                    <span className="nk-tp-cred-card__icon">
                       <h.icon size={22} />
                     </span>
-                    <div style={{ flex: 1 }}>
-                      <b style={{ fontSize: 14.5 }}>{h.title}</b>
-                      <div className="t-small t-muted">{h.org}</div>
+                    <div className="nk-tp-cred-card__body">
+                      <b className="nk-tp-cred-card__title">{h.title}</b>
+                      <div className="nk-tp-cred-card__org">{h.org}</div>
                     </div>
                     {h.tag && (
-                      <span className="chip soft-green">
+                      <span className="chip soft-green nk-tp-cred-card__badge">
                         <IconCheck size={13} /> {h.tag.startsWith('تأیید') ? h.tag : `تأیید ${h.tag}`}
                       </span>
                     )}
@@ -977,33 +973,29 @@ export default function TeacherProfile({ content = {}, preview = false, entityId
             {/* 6. پرسش و پاسخ (#qa) */}
             <section
               id="qa"
-              className="card"
+              className="card nk-tp-section-card"
               style={{
-                borderRadius: 'var(--r-2xl)',
-                padding: 30,
                 scrollMarginTop: 112,
                 borderColor: tab === 'پرسش و پاسخ' ? 'var(--primary)' : undefined,
               }}
             >
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: 12,
-                  flexWrap: 'wrap',
-                }}
-              >
-                <div>
-                  <h2 className="t-h3">پرسش و پاسخ با استاد ({faNum(questions.length)})</h2>
-                  <p className="t-small t-muted" style={{ marginTop: 4 }}>
-                    سوال‌های آموزشی یا هماهنگی پیش از رزرو را مستقیماً از {tName} بپرسید.
-                  </p>
+              <div className="nk-tp-sec-head">
+                <div className="nk-tp-sec-head__title-wrap">
+                  <span className="nk-tp-sec-icon">
+                    <IconChat size={22} />
+                  </span>
+                  <div>
+                    <h2 className="t-h3">پرسش و پاسخ با استاد ({faNum(questions.length)})</h2>
+                    <p className="t-small t-muted" style={{ marginTop: 4 }}>
+                      سوال‌های آموزشی یا هماهنگی پیش از رزرو را مستقیماً از {tName} بپرسید.
+                    </p>
+                  </div>
                 </div>
+                <span className="pill green num">{faNum(questions.length)} پرسش ثبت‌شده</span>
               </div>
 
-              <form onSubmit={sendQuestion} className="card-soft" style={{ padding: 18, marginTop: 16 }}>
-                <label className="field-label" style={{ display: 'block', marginBottom: 8 }}>
+              <form onSubmit={sendQuestion} className="nk-tp-qa-form">
+                <label className="field-label" style={{ display: 'block', marginBottom: 10 }}>
                   سوال جدید از استاد
                   <textarea
                     className="input"
@@ -1011,12 +1003,15 @@ export default function TeacherProfile({ content = {}, preview = false, entityId
                     placeholder="سوال خود را دربارهٔ سطح کلاس، منابع یا زمان جلسات بنویسید…"
                     value={askText}
                     onChange={(e) => setAskText(e.target.value)}
-                    style={{ marginTop: 8, width: '100%', resize: 'vertical' }}
+                    style={{ marginTop: 8, width: '100%', resize: 'vertical', background: '#fff' }}
                   />
                 </label>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-                  <span className="t-caption t-muted">
-                    {user ? `ارسال با نام ${user.name}` : 'برای ثبت سوال نیاز به ورود به حساب کاربری دارید.'}
+                <div className="nk-tp-qa-form__foot">
+                  <span className="nk-tp-qa-form__user">
+                    <IconShield size={14} />
+                    <span>
+                      {user ? `ارسال با نام ${user.name}` : 'برای ثبت سوال نیاز به ورود به حساب کاربری دارید.'}
+                    </span>
                   </span>
                   <button type="submit" className="btn btn-primary btn-sm" disabled={askBusy}>
                     {askBusy ? 'در حال ارسال…' : 'ثبت و ارسال سوال'}
@@ -1025,28 +1020,25 @@ export default function TeacherProfile({ content = {}, preview = false, entityId
               </form>
 
               {questions.length === 0 ? (
-                <p className="t-small t-muted" style={{ marginTop: 16 }}>
-                  هنوز پرسشی برای این استاد ثبت نشده است؛ اولین سوال را شما بپرسید.
-                </p>
+                <div className="nk-tp-empty-card" style={{ marginTop: 16 }}>
+                  <span className="nk-tp-empty-card__icon" aria-hidden="true">
+                    <IconChat size={24} />
+                  </span>
+                  <p className="nk-tp-empty-card__title">
+                    هنوز پرسشی برای این استاد ثبت نشده است؛ اولین سوال را شما بپرسید.
+                  </p>
+                </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 16 }}>
                   {questions.map((q) => (
-                    <div key={q.id || q.text} className="card-soft" style={{ padding: 16 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                    <div key={q.id || q.text} className="nk-tp-qa-thread">
+                      <div className="nk-tp-qa-thread__head">
                         <b>{q.author || 'شاگرد'}</b>
-                        <span className="t-muted">{q.date_label || ''}</span>
+                        <span className="t-muted t-caption num">{q.date_label || ''}</span>
                       </div>
-                      <p style={{ marginTop: 6, fontSize: 14 }}>{q.text}</p>
+                      <p style={{ marginTop: 8, fontSize: 14, lineHeight: 1.9 }}>{q.text}</p>
                       {q.answer && (
-                        <div
-                          style={{
-                            marginTop: 10,
-                            paddingTop: 10,
-                            borderTop: '1px solid var(--border)',
-                            fontSize: 13.5,
-                            color: 'var(--primary)',
-                          }}
-                        >
+                        <div className="nk-tp-qa-thread__answer">
                           <b>پاسخ استاد:</b> {q.answer}
                         </div>
                       )}
@@ -1059,28 +1051,23 @@ export default function TeacherProfile({ content = {}, preview = false, entityId
             {/* 7. گزارش آموزشی (#academic-report) */}
             <section
               id="academic-report"
-              className="card"
+              className="card nk-tp-section-card"
               style={{
-                borderRadius: 'var(--r-2xl)',
-                padding: 30,
                 scrollMarginTop: 112,
                 borderColor: tab === 'گزارش آموزشی' ? 'var(--primary)' : undefined,
               }}
             >
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: 12,
-                  flexWrap: 'wrap',
-                }}
-              >
-                <div>
-                  <h2 className="t-h3">گزارش آموزشی هشت‌شاخصی</h2>
-                  <p className="t-small t-muted" style={{ marginTop: 4 }}>
-                    پس از هر جلسهٔ تأییدشده، استاد روند پیشرفت شاگرد را در ۸ شاخص استاندارد نیمکت ثبت می‌کند.
-                  </p>
+              <div className="nk-tp-sec-head">
+                <div className="nk-tp-sec-head__title-wrap">
+                  <span className="nk-tp-sec-icon">
+                    <IconChart size={22} />
+                  </span>
+                  <div>
+                    <h2 className="t-h3">گزارش آموزشی هشت‌شاخصی</h2>
+                    <p className="t-small t-muted" style={{ marginTop: 4 }}>
+                      پس از هر جلسهٔ تأییدشده، استاد روند پیشرفت شاگرد را در ۸ شاخص استاندارد نیمکت ثبت می‌کند.
+                    </p>
+                  </div>
                 </div>
                 <span className="chip soft-green">
                   <IconChart size={14} /> ارسال به پنل شاگرد و والد
@@ -1088,73 +1075,41 @@ export default function TeacherProfile({ content = {}, preview = false, entityId
               </div>
 
               {Array.isArray(teacher?.subratings) && teacher.subratings.length > 0 && (
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-                    gap: 12,
-                    marginTop: 18,
-                  }}
-                >
+                <div className="nk-tp-subratings-grid">
                   {teacher.subratings.map((sr) => (
-                    <div key={sr.label} className="card-soft" style={{ padding: '14px 16px' }}>
-                      <div className="t-caption t-muted">{sr.label}</div>
-                      <div className="num" style={{ fontSize: 20, fontWeight: 900, color: 'var(--primary)', marginTop: 4 }}>
-                        {faNum(sr.value)} <small style={{ fontSize: 12, color: 'var(--muted)' }}>از ۵</small>
+                    <div key={sr.label} className="nk-tp-subrating-card">
+                      <div className="nk-tp-subrating-card__head">
+                        <span className="nk-tp-subrating-card__label">{sr.label}</span>
+                        <div className="stars" aria-hidden="true">
+                          <IconStar size={14} />
+                          <IconStar size={14} />
+                          <IconStar size={14} />
+                          <IconStar size={14} />
+                          <IconStar size={14} />
+                        </div>
+                      </div>
+                      <div className="nk-tp-subrating-card__val num">
+                        {faNum(sr.value)} <small>از ۵</small>
+                      </div>
+                      <div className="nk-tp-subrating-card__bar" aria-hidden="true">
+                        <span style={{ width: `${Math.min(100, (Number(sr.value) || 5) * 20)}%` }} />
                       </div>
                     </div>
                   ))}
                 </div>
               )}
 
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(2, 1fr)',
-                  gap: 10,
-                  marginTop: 18,
-                }}
-              >
+              <div className="nk-tp-indicators-grid">
                 {ACADEMIC_INDICATORS.map((ind, idx) => (
-                  <div
-                    key={ind}
-                    className="card-soft"
-                    style={{ padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 10, fontSize: 13.5 }}
-                  >
-                    <span
-                      className="num"
-                      style={{
-                        width: 24,
-                        height: 24,
-                        borderRadius: '50%',
-                        background: 'var(--secondary-50)',
-                        color: 'var(--primary)',
-                        display: 'grid',
-                        placeItems: 'center',
-                        fontWeight: 800,
-                        fontSize: 12,
-                        flex: 'none',
-                      }}
-                    >
-                      {faNum(idx + 1)}
-                    </span>
-                    <span>{ind}</span>
+                  <div key={ind} className="nk-tp-indicator-item">
+                    <span className="nk-tp-indicator-item__num num">{faNum(idx + 1)}</span>
+                    <span className="nk-tp-indicator-item__label">{ind}</span>
+                    <IconCheck size={15} style={{ color: 'var(--secondary)', marginInlineStart: 'auto' }} />
                   </div>
                 ))}
               </div>
 
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: 12,
-                  flexWrap: 'wrap',
-                  marginTop: 18,
-                  paddingTop: 16,
-                  borderTop: '1px solid var(--border)',
-                }}
-              >
+              <div className="nk-tp-report-cta">
                 <span className="t-caption t-muted">
                   گزارش‌های واقعی شاگردان فقط برای خود شاگرد و والد دارای مجوز قابل مشاهده است.
                 </span>
@@ -1167,24 +1122,24 @@ export default function TeacherProfile({ content = {}, preview = false, entityId
 
           {/* left sidebar: booking */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-            <div className="book-box" id="book" style={{ scrollMarginTop: 112 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className="book-box nk-tp-book-box" id="book" style={{ scrollMarginTop: 112 }}>
+              <div className="nk-tp-book-price-box">
                 <div>
                   <div className="t-caption t-muted">
                     هر جلسه‌ی {faNum(sessionMinutes)} دقیقه
                   </div>
-                  <div style={{ fontSize: 24, fontWeight: 900 }} className="num">
-                    {faPrice(selectedClassObj?.price || basePrice)}
+                  <div className="nk-tp-book-price-box__amount num">
+                    {faPrice(selectedClassObj?.price || basePrice)}{' '}
+                    <small>تومان</small>
                   </div>
-                  <div className="t-caption t-muted">تومان</div>
                 </div>
-                <span className="chip soft-green">جلسه‌ی اول با ضمانت</span>
+                <span className="chip soft-green">
+                  <IconShield size={13} /> جلسه‌ی اول با ضمانت
+                </span>
               </div>
 
-              <hr className="divider" />
-
               {allActiveClasses.length > 0 && (
-                <div style={{ marginBottom: 12 }}>
+                <div style={{ marginTop: 14, marginBottom: 12 }}>
                   <label className="field-label" style={{ display: 'block', marginBottom: 6 }}>
                     انتخاب کلاس استاد
                     <select
@@ -1268,25 +1223,17 @@ export default function TeacherProfile({ content = {}, preview = false, entityId
                       setBookingError('');
                     }}
                   >
-                    <span>{t.label}</span>
-                    <span>{t.d > 0 ? `${faNum(t.d)}٪ تخفیف` : 'قیمت پایه'}</span>
+                    <span className="tier-row__label">{t.label}</span>
+                    <span className={`tier-row__badge ${t.d > 0 ? 'has-discount' : ''}`}>
+                      {t.d > 0 ? `${faNum(t.d)}٪ تخفیف` : 'قیمت پایه'}
+                    </span>
                   </button>
                 ))}
               </div>
 
               {/* Selected slot / occurrence summary */}
-              <div
-                className="card-soft"
-                style={{
-                  marginTop: 14,
-                  padding: '10px 14px',
-                  fontSize: 12.5,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 6,
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div className="nk-tp-book-summary">
+                <div className="nk-tp-book-summary__row">
                   <span className="t-muted">زمان انتخابی:</span>
                   {selectedOccurrenceIds.length > 0 ? (
                     <b className="num" style={{ color: 'var(--primary)' }}>
@@ -1294,7 +1241,9 @@ export default function TeacherProfile({ content = {}, preview = false, entityId
                     </b>
                   ) : selectedSlot ? (
                     <b className="num" style={{ color: 'var(--primary)' }}>
-                      {selectedSlot.day} · ساعت {selectedSlot.time}
+                      {typeof selectedSlot === 'string'
+                        ? selectedSlot.replace(' - ', ' · ساعت ')
+                        : `${selectedSlot.day} · ساعت ${selectedSlot.time}`}
                     </b>
                   ) : (
                     <button
@@ -1307,19 +1256,13 @@ export default function TeacherProfile({ content = {}, preview = false, entityId
                   )}
                 </div>
                 {quote && (
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      borderTop: '1px dashed var(--border)',
-                      paddingTop: 6,
-                    }}
-                  >
+                  <div className="nk-tp-book-summary__row nk-tp-book-summary__row--total">
                     <span className="t-muted">
                       مبلغ {faNum(effectiveSessions)} جلسه پس از تخفیف:
                     </span>
-                    <b className="num">{faPrice(quote.total)} تومان</b>
+                    <b className="num" style={{ fontSize: 15, color: 'var(--primary-900)' }}>
+                      {faPrice(quote.total)} تومان
+                    </b>
                   </div>
                 )}
                 {quoteLoading && (
@@ -1419,7 +1362,7 @@ export default function TeacherProfile({ content = {}, preview = false, entityId
                 </Link>
               )}
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 16 }}>
+              <div className="nk-tp-book-trust">
                 <span className="field-hint">
                   <IconRefresh size={15} /> لغو رایگان تا ۲۴ ساعت قبل از جلسه
                 </span>
