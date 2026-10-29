@@ -1557,7 +1557,7 @@ optgroup {
 /* ---------- KPI Metric Cards ---------- */
 .nk-ds-kpi-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr));
   gap: 14px;
   margin-block: 16px;
 }
@@ -2379,7 +2379,7 @@ optgroup {
   align-items: center;
   gap: 18px;
   flex: 1;
-  min-width: 260px;
+  min-width: min(100%, 260px);
 }
 
 .nk-profile-hero__avatar-box {
@@ -3356,7 +3356,7 @@ optgroup {
 
 .nk-tp-day-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(185px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 185px), 1fr));
   gap: 12px;
 }
 
@@ -3493,7 +3493,7 @@ optgroup {
   align-items: center;
   gap: 14px;
   flex: 1;
-  min-width: 240px;
+  min-width: min(100%, 240px);
 }
 
 .public-slot-card__check {
@@ -3572,7 +3572,7 @@ optgroup {
 /* Credentials Section (#credentials) */
 .nk-tp-cred-list {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
   gap: 14px;
   margin-top: 20px;
 }
@@ -3852,7 +3852,7 @@ optgroup {
 /* Academic Report Section (#academic-report) */
 .nk-tp-subratings-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr));
   gap: 12px;
   margin-top: 18px;
 }

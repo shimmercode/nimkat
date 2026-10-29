@@ -77,7 +77,7 @@ export default function BlogListClient({
           ))}
         </nav>
 
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center', minWidth: 260, flex: '0 1 360px' }}>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center', minWidth: 0, flex: '1 1 220px', maxWidth: 360 }}>
           <input
             type="search"
             className="input"

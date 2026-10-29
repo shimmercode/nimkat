@@ -332,7 +332,7 @@ export default function ClassDetail({ content = {}, preview = false, entityId } 
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
+            <div className="cd-tier-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
               {[
                 { r: '۱–۳', d: 0 }, { r: '۴–۷', d: 5 }, { r: '۸–۱۵', d: 10 }, { r: '۱۶+', d: 15 },
               ].map((t) => {
@@ -521,7 +521,7 @@ export default function ClassDetail({ content = {}, preview = false, entityId } 
           </div>
 
           {/* info strip */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }}>
+          <div className="cd-info-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }}>
             {[
               { icon: IconCap, l: 'مقطع و پایه', v: 'متوسطه دوم · یازدهم' },
               { icon: IconBook, l: 'رشته', v: 'ریاضی فیزیک' },

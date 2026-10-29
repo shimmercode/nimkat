@@ -794,7 +794,7 @@ export default function ClassesSearch({ content = {}, preview = false } = {}) {
               <div className="ft">
                 <span>ساعت</span>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
+              <div className="cs-hour-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
                 {['صبح', 'ظهر', 'عصر', 'شب'].map((h) => (
                   <button
                     key={h}

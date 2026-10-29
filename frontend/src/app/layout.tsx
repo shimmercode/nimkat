@@ -6,12 +6,12 @@ import '../styles/tailwind.css';
 import '../styles/fonts.css';
 import '../styles/global.css';
 import '../styles/interactions.css';
-import '../styles/responsive.css';
 import '../styles/support.css';
 import '../styles/journal.css';
 import '../styles/community.css';
 import '../styles/loyalty.css';
 import '../styles/onboarding.css';
+import '../styles/responsive.css';
 
 export const viewport: Viewport = { width: 'device-width', initialScale: 1, viewportFit: 'cover', interactiveWidget: 'resizes-content' };
 
