@@ -6,6 +6,14 @@ import { faNum } from '../utils/fa.js';
 import { toast } from '../utils/toast.js';
 
 export const PROMO_DISMISS_STORAGE_KEY = 'nk_first_reg_promo_dismissed_v1';
+/**
+ * While the discount popup is open, every floating launcher on the page
+ * (the discount "reopen" pill and the support launcher) is hidden so that
+ * only the popup itself is visible. The flag lives on <html> so any component
+ * can react to it without a second, parallel promo system.
+ */
+export const PROMO_OPEN_ATTRIBUTE = 'data-nk-promo-open';
+
 
 export default function FirstRegistrationPromoModal({
   promo = null,
@@ -94,6 +102,20 @@ export default function FirstRegistrationPromoModal({
     !user &&
     open !== false;
 
+  // The popup is actually visible only when it is eligible, ready and not dismissed.
+  const popupVisible =
+    isHomeRoute && isEligible && readyToShow && !dismissed && !suppressed && !preview;
+
+  // Hide every floating launcher while the discount popup is on screen.
+  useEffect(() => {
+    if (!popupVisible) return undefined;
+    const root = document.documentElement;
+    root.setAttribute(PROMO_OPEN_ATTRIBUTE, 'true');
+    return () => {
+      root.removeAttribute(PROMO_OPEN_ATTRIBUTE);
+    };
+  }, [popupVisible]);
+
   useEffect(() => {
     if (!isHomeRoute || !isEligible || !readyToShow || dismissed || suppressed || preview) return undefined;
     const onKeyDown = (e) => {
@@ -137,6 +159,7 @@ export default function FirstRegistrationPromoModal({
     }
   };
 
+  // The floating "reopen" pill is only rendered while the popup is NOT open.
   if (dismissed) {
     return (
       <div className="nk-promo-reopen-wrap" data-testid="first-reg-promo-reopen">

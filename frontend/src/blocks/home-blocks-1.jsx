@@ -3,6 +3,7 @@ import {safeMarkup} from './safe-markup.js';
 /* Home page blocks — ported 1:1 from Home.jsx so visuals stay identical */
 import { HeroFrame, HeroEyebrow } from '../components/ui/twenty-first/hero-frame.jsx';
 import HeroSearch from '../components/HeroSearch.jsx';
+import HorizontalCarousel from '../components/HorizontalCarousel.jsx';
 import { useState } from 'react';
 import { Link } from '../routing/navigation';
 import heroStudent from '../assets/hero-student.png';
@@ -358,10 +359,11 @@ export function TopStudentsBlock({ node }) {
             <h2 className="section-title" dangerouslySetInnerHTML={{ __html: safeMarkup(d.title) }} />
           </div>
           <div style={{ display: 'flex', gap: 10 }}>
-            <button className="btn-icon-round" type="button" onClick={(e) => e.currentTarget.closest('.container')?.querySelector('.row-scroll')?.scrollBy({ left: 320, behavior: 'smooth' })}><IconArrowRight size={18} /></button>
-            <button className="btn-icon-round" type="button" onClick={(e) => e.currentTarget.closest('.container')?.querySelector('.row-scroll')?.scrollBy({ left: -320, behavior: 'smooth' })}><IconArrowLeft size={18} /></button>
+            <button className="btn-icon-round" type="button" aria-label="نوابغ قبلی" onClick={(e) => e.currentTarget.closest('.container')?.querySelector('.nk-carousel__track')?.scrollBy({ left: 320, behavior: 'smooth' })}><IconArrowRight size={18} /></button>
+            <button className="btn-icon-round" type="button" aria-label="نوابغ بعدی" onClick={(e) => e.currentTarget.closest('.container')?.querySelector('.nk-carousel__track')?.scrollBy({ left: -320, behavior: 'smooth' })}><IconArrowLeft size={18} /></button>
           </div>
         </div>
+        <HorizontalCarousel className="nk-carousel--students">
         <div className="row-scroll">
           {(d.students && d.students.length > 5 ? d.students : topStudentsSpec.defaults.students).map((s, idx) => {
             const numericRank = Number(String(s.rank || '').replace(/[۰-۹]/g, (x) => '۰۱۲۳۴۵۶۷۸۹'.indexOf(x)));
@@ -414,6 +416,7 @@ export function TopStudentsBlock({ node }) {
             );
           })}
         </div>
+        </HorizontalCarousel>
       </div>
     </section>
   );

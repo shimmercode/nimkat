@@ -1,0 +1,607 @@
+{
+  "generatedAt": "2026-10-30T12:53:15.736Z",
+  "baseUrl": "http://127.0.0.1:3000",
+  "viewports": [
+    "320px",
+    "360px",
+    "375px",
+    "390px",
+    "430px",
+    "600px",
+    "768px",
+    "1024px",
+    "1366px",
+    "1440px",
+    "1920px",
+    "3840px"
+  ],
+  "pages": [
+    "/",
+    "/blog",
+    "/blog/weekly-study-plan",
+    "/classes",
+    "/teachers/1",
+    "/club"
+  ],
+  "total": 115,
+  "passed": 115,
+  "failed": [],
+  "consoleErrors": [],
+  "checks": [
+    {
+      "name": "mobile-320 home: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=320"
+    },
+    {
+      "name": "mobile-320 blog: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=320"
+    },
+    {
+      "name": "mobile-320 article: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=320"
+    },
+    {
+      "name": "mobile-320 classes: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=320"
+    },
+    {
+      "name": "mobile-320 teacher: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=320"
+    },
+    {
+      "name": "mobile-320 club: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=320"
+    },
+    {
+      "name": "mobile-360 home: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=360"
+    },
+    {
+      "name": "mobile-360 blog: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=360"
+    },
+    {
+      "name": "mobile-360 article: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=360"
+    },
+    {
+      "name": "mobile-360 classes: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=360"
+    },
+    {
+      "name": "mobile-360 teacher: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=360"
+    },
+    {
+      "name": "mobile-360 club: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=360"
+    },
+    {
+      "name": "mobile-375 home: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=375"
+    },
+    {
+      "name": "mobile-375 blog: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=375"
+    },
+    {
+      "name": "mobile-375 article: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=375"
+    },
+    {
+      "name": "mobile-375 classes: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=375"
+    },
+    {
+      "name": "mobile-375 teacher: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=375"
+    },
+    {
+      "name": "mobile-375 club: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=375"
+    },
+    {
+      "name": "mobile-390 home: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=390"
+    },
+    {
+      "name": "mobile-390 blog: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=390"
+    },
+    {
+      "name": "mobile-390 article: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=390"
+    },
+    {
+      "name": "mobile-390 classes: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=390"
+    },
+    {
+      "name": "mobile-390 teacher: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=390"
+    },
+    {
+      "name": "mobile-390 club: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=390"
+    },
+    {
+      "name": "mobile-430 home: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=430"
+    },
+    {
+      "name": "mobile-430 blog: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=430"
+    },
+    {
+      "name": "mobile-430 article: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=430"
+    },
+    {
+      "name": "mobile-430 classes: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=430"
+    },
+    {
+      "name": "mobile-430 teacher: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=430"
+    },
+    {
+      "name": "mobile-430 club: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=430"
+    },
+    {
+      "name": "tablet-600 home: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=600"
+    },
+    {
+      "name": "tablet-600 blog: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=600"
+    },
+    {
+      "name": "tablet-600 article: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=600"
+    },
+    {
+      "name": "tablet-600 classes: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=600"
+    },
+    {
+      "name": "tablet-600 teacher: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=600"
+    },
+    {
+      "name": "tablet-600 club: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=600"
+    },
+    {
+      "name": "tablet-768 home: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=768"
+    },
+    {
+      "name": "tablet-768 blog: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=768"
+    },
+    {
+      "name": "tablet-768 article: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=768"
+    },
+    {
+      "name": "tablet-768 classes: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=768"
+    },
+    {
+      "name": "tablet-768 teacher: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=768"
+    },
+    {
+      "name": "tablet-768 club: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=768"
+    },
+    {
+      "name": "tablet-landscape-1024 home: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=1024"
+    },
+    {
+      "name": "tablet-landscape-1024 blog: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=1024"
+    },
+    {
+      "name": "tablet-landscape-1024 article: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=1024"
+    },
+    {
+      "name": "tablet-landscape-1024 classes: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=1024"
+    },
+    {
+      "name": "tablet-landscape-1024 teacher: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=1024"
+    },
+    {
+      "name": "tablet-landscape-1024 club: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=1024"
+    },
+    {
+      "name": "laptop-1366 home: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=1366"
+    },
+    {
+      "name": "laptop-1366 blog: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=1366"
+    },
+    {
+      "name": "laptop-1366 article: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=1366"
+    },
+    {
+      "name": "laptop-1366 classes: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=1366"
+    },
+    {
+      "name": "laptop-1366 teacher: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=1366"
+    },
+    {
+      "name": "laptop-1366 club: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=1366"
+    },
+    {
+      "name": "desktop-1440 home: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=1440"
+    },
+    {
+      "name": "desktop-1440 blog: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=1440"
+    },
+    {
+      "name": "desktop-1440 article: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=1440"
+    },
+    {
+      "name": "desktop-1440 classes: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=1440"
+    },
+    {
+      "name": "desktop-1440 teacher: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=1440"
+    },
+    {
+      "name": "desktop-1440 club: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=1440"
+    },
+    {
+      "name": "desktop-1920 home: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=1920"
+    },
+    {
+      "name": "desktop-1920 blog: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=1920"
+    },
+    {
+      "name": "desktop-1920 article: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=1920"
+    },
+    {
+      "name": "desktop-1920 classes: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=1920"
+    },
+    {
+      "name": "desktop-1920 teacher: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=1920"
+    },
+    {
+      "name": "desktop-1920 club: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=1920"
+    },
+    {
+      "name": "tv-3840 home: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=3840"
+    },
+    {
+      "name": "tv-3840 blog: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=3840"
+    },
+    {
+      "name": "tv-3840 article: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=3840"
+    },
+    {
+      "name": "tv-3840 classes: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=3840"
+    },
+    {
+      "name": "tv-3840 teacher: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=3840"
+    },
+    {
+      "name": "tv-3840 club: no horizontal page overflow",
+      "ok": true,
+      "detail": "scrollWidth=3840"
+    },
+    {
+      "name": "375px footer is a real 2-column CSS Grid",
+      "ok": true,
+      "detail": "display=grid"
+    },
+    {
+      "name": "375px footer keeps related columns side by side (not one tall stack)",
+      "ok": true,
+      "detail": "distinct left offsets=2, first-row children=1, height=792px"
+    },
+    {
+      "name": "375px footer keeps every column + link + copyright",
+      "ok": true,
+      "detail": "cols=5, headings=مقاطع تحصیلی/دسترسی سریع/پشتیبانی/مجوزها, links=20, copyright=true"
+    },
+    {
+      "name": "320px نوابغ: single horizontal row (no wrapping)",
+      "ok": true,
+      "detail": "card tops=1, row={flex/nowrap}, track overflow-x=auto"
+    },
+    {
+      "name": "320px نوابغ: all 10 students present in the DOM",
+      "ok": true,
+      "detail": "cards=10"
+    },
+    {
+      "name": "320px نوابغ: carousel scrolls horizontally without breaking the page",
+      "ok": true,
+      "detail": "track scrollWidth=1952 clientWidth=296, page overflow=0px, card width=184px"
+    },
+    {
+      "name": "375px نوابغ: single horizontal row (no wrapping)",
+      "ok": true,
+      "detail": "card tops=1, row={flex/nowrap}, track overflow-x=auto"
+    },
+    {
+      "name": "375px نوابغ: all 10 students present in the DOM",
+      "ok": true,
+      "detail": "cards=10"
+    },
+    {
+      "name": "375px نوابغ: carousel scrolls horizontally without breaking the page",
+      "ok": true,
+      "detail": "track scrollWidth=2130 clientWidth=347, page overflow=0px, card width=200px"
+    },
+    {
+      "name": "768px نوابغ: single horizontal row (no wrapping)",
+      "ok": true,
+      "detail": "card tops=1, row={flex/nowrap}, track overflow-x=auto"
+    },
+    {
+      "name": "768px نوابغ: all 10 students present in the DOM",
+      "ok": true,
+      "detail": "cards=10"
+    },
+    {
+      "name": "768px نوابغ: carousel scrolls horizontally without breaking the page",
+      "ok": true,
+      "detail": "track scrollWidth=2452 clientWidth=720, page overflow=0px, card width=230px"
+    },
+    {
+      "name": "1024px نوابغ: single horizontal row (no wrapping)",
+      "ok": true,
+      "detail": "card tops=1, row={flex/nowrap}, track overflow-x=auto"
+    },
+    {
+      "name": "1024px نوابغ: all 10 students present in the DOM",
+      "ok": true,
+      "detail": "cards=10"
+    },
+    {
+      "name": "1024px نوابغ: carousel scrolls horizontally without breaking the page",
+      "ok": true,
+      "detail": "track scrollWidth=2338 clientWidth=976, page overflow=0px, card width=215px"
+    },
+    {
+      "name": "1440px نوابغ: single horizontal row (no wrapping)",
+      "ok": true,
+      "detail": "card tops=1, row={flex/nowrap}, track overflow-x=auto"
+    },
+    {
+      "name": "1440px نوابغ: all 10 students present in the DOM",
+      "ok": true,
+      "detail": "cards=10"
+    },
+    {
+      "name": "1440px نوابغ: carousel scrolls horizontally without breaking the page",
+      "ok": true,
+      "detail": "track scrollWidth=2688 clientWidth=1168, page overflow=0px, card width=250px"
+    },
+    {
+      "name": "1920px نوابغ: single horizontal row (no wrapping)",
+      "ok": true,
+      "detail": "card tops=1, row={flex/nowrap}, track overflow-x=auto"
+    },
+    {
+      "name": "1920px نوابغ: all 10 students present in the DOM",
+      "ok": true,
+      "detail": "cards=10"
+    },
+    {
+      "name": "1920px نوابغ: carousel scrolls horizontally without breaking the page",
+      "ok": true,
+      "detail": "track scrollWidth=2688 clientWidth=1360, page overflow=0px, card width=250px"
+    },
+    {
+      "name": "375px article order = meta → cover → TOC → text → related → side widgets",
+      "ok": true,
+      "detail": "offsets=71 < 754 < 1052 < 1558 < 5252 < 6294"
+    },
+    {
+      "name": "375px article TOC links resolve to real headings",
+      "ok": true,
+      "detail": "toc links=5 (4 sections + 1 FAQ), all anchors resolve=true"
+    },
+    {
+      "name": "375px article text is the single main column (no sidebar track beside it)",
+      "ok": true,
+      "detail": "grid columns=347px (1 track), prose=347px / viewport=375px, sidebar overlaps prose=false"
+    },
+    {
+      "name": "375px article column is visually centred",
+      "ok": true,
+      "detail": "left gap=14px, right gap=14px"
+    },
+    {
+      "name": "1440px article order = meta → cover → TOC → text → related → side widgets",
+      "ok": true,
+      "detail": "offsets=85 < 607 < 1201 < 1714 < 4118 < 4788"
+    },
+    {
+      "name": "1440px article TOC links resolve to real headings",
+      "ok": true,
+      "detail": "toc links=5 (4 sections + 1 FAQ), all anchors resolve=true"
+    },
+    {
+      "name": "1440px article text is the single main column (no sidebar track beside it)",
+      "ok": true,
+      "detail": "grid columns=852px (1 track), prose=852px / viewport=1440px, sidebar overlaps prose=false"
+    },
+    {
+      "name": "1440px article column is visually centred",
+      "ok": true,
+      "detail": "left gap=294px, right gap=294px"
+    },
+    {
+      "name": "320px related card: image sits beside the title",
+      "ok": true,
+      "detail": "img=104×209px, title box=154×79px"
+    },
+    {
+      "name": "320px related card: image is not stretched and the card stays clickable",
+      "ok": true,
+      "detail": "object-fit=cover, clickable=true, excerpt kept=true"
+    },
+    {
+      "name": "375px related card: image sits beside the title",
+      "ok": true,
+      "detail": "img=104×183px, title box=205×53px"
+    },
+    {
+      "name": "375px related card: image is not stretched and the card stays clickable",
+      "ok": true,
+      "detail": "object-fit=cover, clickable=true, excerpt kept=true"
+    },
+    {
+      "name": "768px related card: image sits beside the title",
+      "ok": true,
+      "detail": "img=152×283px, title box=146×119px"
+    },
+    {
+      "name": "768px related card: image is not stretched and the card stays clickable",
+      "ok": true,
+      "detail": "object-fit=cover, clickable=true, excerpt kept=true"
+    },
+    {
+      "name": "1440px related card: image sits beside the title",
+      "ok": true,
+      "detail": "img=152×223px, title box=171×89px"
+    },
+    {
+      "name": "1440px related card: image is not stretched and the card stays clickable",
+      "ok": true,
+      "detail": "object-fit=cover, clickable=true, excerpt kept=true"
+    },
+    {
+      "name": "375px discount popup opens on the home page",
+      "ok": true,
+      "detail": "modal visible=true, flag=true"
+    },
+    {
+      "name": "375px discount popup: NO floating reopen button and NO support launcher beside it",
+      "ok": true,
+      "detail": "reopen pill visible=false, support launcher visible=false"
+    },
+    {
+      "name": "375px after dismissing: popup is closed and the reopen pill returns (design preserved)",
+      "ok": true,
+      "detail": "modal=false, reopen pill=true, flag=null"
+    },
+    {
+      "name": "375px mobile menu opens",
+      "ok": true,
+      "detail": "sheet present=true"
+    },
+    {
+      "name": "375px mobile menu items use a slightly smaller font than desktop",
+      "ok": true,
+      "detail": "mobile item=15px (weight 700, lh 26.25px, icon gap 10px), desktop nav=14px"
+    },
+    {
+      "name": "375px mobile menu keeps RTL direction",
+      "ok": true,
+      "detail": "direction=rtl"
+    }
+  ]
+}

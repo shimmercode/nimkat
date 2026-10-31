@@ -50,3 +50,6 @@ frontend/.backend-runtime/
 # Browser test artifacts
 frontend/test-results/
 frontend/playwright-report/
+
+# Audit screenshot evidence (kept out of git; binaries live in the workspace)
+audit-reports/**/screenshots/

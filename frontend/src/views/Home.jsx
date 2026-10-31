@@ -2,7 +2,7 @@
 import ClubTeaser from '../components/ClubTeaser.jsx';
 import BlogTeasers from '../components/BlogTeasers.jsx';
 import HeroSearch from '../components/HeroSearch.jsx';
-import HomeBrandLoader from '../components/HomeBrandLoader.jsx';
+import HorizontalCarousel from '../components/HorizontalCarousel.jsx';
 import FirstRegistrationPromoModal from '../components/FirstRegistrationPromoModal.jsx';
 import { useState, useEffect } from 'react';
 import PageRenderer from '../render/PageRenderer.jsx';
@@ -284,28 +284,12 @@ function SeatGrid({ selected, onSelect, taken = [1, 2, 4, 5, 6, 9, 10, 12], book
 export default function Home({ initialSchema = null, user = null, preview = false } = {}) {
   const [pubSchema, setPubSchema] = useState(initialSchema);
   const [homePromo, setHomePromo] = useState(null);
-  const [homeLoading, setHomeLoading] = useState(() => !preview);
-  const [homeExiting, setHomeExiting] = useState(false);
 
   useEffect(() => {
     let active = true;
-    let exitTimeout = null;
-    const minTimer = new Promise((resolve) => setTimeout(resolve, 1800));
-    if (!preview) {
-      setHomeLoading(true);
-      setHomeExiting(false);
-    }
-    const startSmoothExit = () => {
-      if (!active) return;
-      setHomeExiting(true);
-      exitTimeout = setTimeout(() => {
-        if (active) setHomeLoading(false);
-      }, 650);
-    };
     Promise.all([
       api('/pages/home').catch(() => null),
       api('/promotions/home').catch(() => null),
-      minTimer,
     ])
       .then(([pageRes, promoRes]) => {
         if (!active) return;
@@ -317,12 +301,9 @@ export default function Home({ initialSchema = null, user = null, preview = fals
           setHomePromo(promoRes.firstRegistrationDiscount);
         }
       })
-      .finally(() => {
-        startSmoothExit();
-      });
+      .catch(() => {});
     return () => {
       active = false;
-      if (exitTimeout) clearTimeout(exitTimeout);
     };
   }, [preview]);
   const [subject, setSubject] = useState('همه');
@@ -354,7 +335,6 @@ export default function Home({ initialSchema = null, user = null, preview = fals
   if (pubSchema) {
     return (
       <>
-        {homeLoading && !preview && <HomeBrandLoader overlay exiting={homeExiting} />}
         <PageRenderer schema={pubSchema} />
         <FirstRegistrationPromoModal promo={homePromo} user={user} preview={preview} />
       </>
@@ -363,7 +343,6 @@ export default function Home({ initialSchema = null, user = null, preview = fals
 
   return (
     <>
-      {homeLoading && !preview && <HomeBrandLoader overlay exiting={homeExiting} />}
       {/* ============ HERO ============ */}
       <section className="hero">
         <div className="container hero-grid hero-wide">
@@ -534,7 +513,7 @@ export default function Home({ initialSchema = null, user = null, preview = fals
         </div>
       </section>
 
-      {/* ============ TOP STUDENTS ============ */}
+      {/* ============ TOP STUDENTS (horizontal carousel on every device) ============ */}
       <section className="section-tight" id="top-students">
         <div className="container">
           <div className="section-head">
@@ -545,15 +524,17 @@ export default function Home({ initialSchema = null, user = null, preview = fals
               </h2>
             </div>
             <div style={{ display: 'flex', gap: 10 }}>
-              <button className="btn-icon-round" type="button" onClick={(e) => e.currentTarget.closest('.container')?.querySelector('.row-scroll')?.scrollBy({ left: 320, behavior: 'smooth' })}><IconArrowRight size={18} /></button>
-              <button className="btn-icon-round" type="button" onClick={(e) => e.currentTarget.closest('.container')?.querySelector('.row-scroll')?.scrollBy({ left: -320, behavior: 'smooth' })}><IconArrowLeft size={18} /></button>
+              <button className="btn-icon-round" type="button" aria-label="نوابغ قبلی" onClick={(e) => e.currentTarget.closest('.container')?.querySelector('.nk-carousel__track')?.scrollBy({ left: 320, behavior: 'smooth' })}><IconArrowRight size={18} /></button>
+              <button className="btn-icon-round" type="button" aria-label="نوابغ بعدی" onClick={(e) => e.currentTarget.closest('.container')?.querySelector('.nk-carousel__track')?.scrollBy({ left: -320, behavior: 'smooth' })}><IconArrowLeft size={18} /></button>
             </div>
           </div>
-          <div className="row-scroll">
-            {TOP_STUDENTS.map((s, idx) => (
-              <StudentCard s={s} index={idx} key={s.name} />
-            ))}
-          </div>
+          <HorizontalCarousel className="nk-carousel--students">
+            <div className="row-scroll">
+              {TOP_STUDENTS.map((s, idx) => (
+                <StudentCard s={s} index={idx} key={s.name} />
+              ))}
+            </div>
+          </HorizontalCarousel>
         </div>
       </section>
 

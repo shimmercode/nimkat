@@ -36,7 +36,7 @@ export default function Footer() {
             </div>
           </div>
 
-          <div>
+          <div className="footer-col footer-col--grades">
             <h4>مقاطع تحصیلی</h4>
             <Link to="/classes?grade=ابتدایی">ابتدایی</Link>
             <Link to="/classes?grade=متوسطه اول">متوسطه اول</Link>
@@ -45,7 +45,7 @@ export default function Footer() {
             <Link to="/classes?q=مهارتی">مهارتی</Link>
           </div>
 
-          <div>
+          <div className="footer-col footer-col--quick">
             <h4>دسترسی سریع</h4>
             <Link to="/classes">جستجوی کلاس</Link>
             <Link to="/panel/chat">نیم‌چت</Link>
@@ -54,7 +54,7 @@ export default function Footer() {
             <Link to="/login?mode=teacher">استاد شوید</Link>
           </div>
 
-          <div>
+          <div className="footer-col footer-col--support">
             <h4>پشتیبانی</h4>
             <Link to="/faq">سوالات متداول</Link>
             <Link to="/terms">قوانین و مقررات</Link>
@@ -63,7 +63,7 @@ export default function Footer() {
             <Link to="/contact">تماس با ما</Link>
           </div>
 
-          <div>
+          <div className="footer-col footer-col--licenses">
             <h4>مجوزها</h4>
             <div className="footer-badges">
               <div className="footer-badge">

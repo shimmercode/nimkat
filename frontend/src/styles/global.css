@@ -329,13 +329,21 @@ button.chip {
 
 /* ---------- footer ---------- */
 .site-footer { background: var(--n900); color: #cfd8d4; margin-top: 40px; }
-.site-footer .cols { display: grid; grid-template-columns: 1.6fr 1fr 1fr 1fr 1.15fr; gap: 32px; padding: 64px 0 40px; }
+/* Real CSS Grid: 5 balanced tracks on desktop (brand gets a wider track). */
+.site-footer .cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) repeat(3, minmax(0, 1fr)) minmax(0, 1.15fr);
+  gap: 32px;
+  padding: 64px 0 40px;
+  align-items: start;
+}
+.site-footer .cols > * { min-width: 0; }
 .site-footer h4 { color: #fff; font-size: 15px; margin-bottom: 18px; }
 .site-footer a { display: block; font-size: 14px; padding: 5px 0; color: #b9c4bf; }
 .site-footer a:hover { color: var(--accent); }
 .footer-brand .brand-name { color: #fff; }
 .footer-brand .brand-tag { color: #9fb0a9; }
-.footer-desc { font-size: 13.5px; line-height: 2; margin: 18px 0; color: #b9c4bf; }
+.footer-desc { font-size: 13.5px; line-height: 2; margin: 18px 0; color: #b9c4bf; overflow-wrap: anywhere; }
 .footer-socials { display: flex; gap: 10px; margin: 18px 0; }
 .footer-socials a {
   width: 44px; height: 44px; border-radius: var(--r-md); background: rgba(255, 255, 255, 0.08);
@@ -343,7 +351,7 @@ button.chip {
 }
 .footer-socials a:hover { background: var(--accent); color: var(--n900); }
 .footer-tel { display: flex; align-items: center; gap: 10px; font-size: 14px; color: #dfe7e3; }
-.footer-badges { display: flex; gap: 12px; margin-top: 8px; }
+.footer-badges { display: flex; gap: 12px; margin-top: 8px; flex-wrap: wrap; }
 .footer-badge {
   width: 104px; border-radius: var(--r-md); background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.1); padding: 12px 10px; text-align: center;
@@ -354,7 +362,7 @@ button.chip {
   border-top: 1px solid rgba(255, 255, 255, 0.1); padding: 20px 0 28px;
   display: flex; align-items: center; justify-content: space-between; gap: 16px; font-size: 13px; color: #97a5a0;
 }
-.footer-bottom .links { display: flex; gap: 22px; }
+.footer-bottom .links { display: flex; gap: 22px; flex-wrap: wrap; }
 .footer-bottom a { padding: 0; font-size: 13px; }
 
 /* ---------- breadcrumbs ---------- */
@@ -1158,7 +1166,8 @@ input[type='range'] { width: 100%; accent-color: var(--primary); }
 @media (max-width: 1100px) {
   .hero-grid, .sc-layout, .filter-layout, .club-hero, .p-grid-2 { grid-template-columns: 1fr; }
   .tp-card { grid-template-columns: 1fr; }
-  .site-footer .cols { grid-template-columns: 1fr 1fr 1fr; }
+  .site-footer .cols { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px; }
+  .site-footer .footer-brand { grid-column: 1 / -1; }
   .quick-links { grid-template-columns: repeat(3, 1fr); }
   .stats-band, .steps, .p-grid-4 { grid-template-columns: 1fr 1fr; }
   .chat-wrap { grid-template-columns: 1fr; }
@@ -1171,7 +1180,7 @@ input[type='range'] { width: 100%; accent-color: var(--primary); }
   .section-title { font-size: 26px; }
   .t-h2, .t-display { font-size: 32px; }
   .search-fields, .kind-switch, .quick-links, .stats-band, .steps, .p-grid-4, .p-grid-22 { grid-template-columns: 1fr; }
-  .site-footer .cols { grid-template-columns: 1fr 1fr; }
+  .site-footer .cols { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
   .main-nav { display: none; }
   .result-card { grid-template-columns: 1fr; }
   .callback-form, .cta-band { flex-direction: column; align-items: stretch; }

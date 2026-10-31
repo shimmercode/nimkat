@@ -4,7 +4,6 @@ import path from 'node:path';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { normalizePersianQuery } from '../../src/components/LiveSearch.jsx';
-import HomeBrandLoader from '../../src/components/HomeBrandLoader.jsx';
 
 const ROOT = path.resolve(__dirname, '../..');
 
@@ -76,13 +75,16 @@ describe('Booking, Wallet, Live Search & Home UX Frontend Root-Cause Verificatio
     expect(classesSearch).toContain('مناسب سطح شما');
   });
 
-  it('11, 12 & 13. Top Students ring animation, Branded Home Loader, and Home-only First-Registration Promo Modal are properly wired and respect reduced-motion', () => {
+  it('11, 12 & 13. Top Students ring animation, no initial Preload, and Home-only First-Registration Promo Modal are properly wired and respect reduced-motion', () => {
     const home = fs.readFileSync(path.join(ROOT, 'src/views/Home.jsx'), 'utf8');
     expect(home).toContain('student-avatar-ring-wrap');
     expect(home).toContain('student-avatar-ring');
-    expect(home).toContain('HomeBrandLoader');
     expect(home).toContain('FirstRegistrationPromoModal');
     expect(home).toContain("api('/promotions/home')");
+    // TASK 01: the initial full-screen brand preloader must be fully removed.
+    expect(home).not.toContain('HomeBrandLoader');
+    expect(home).not.toContain('homeLoading');
+    expect(home).not.toContain('homeExiting');
 
     const homeBlocks = fs.readFileSync(path.join(ROOT, 'src/blocks/home-blocks-1.jsx'), 'utf8');
     expect(homeBlocks).toContain('student-avatar-ring-wrap');
@@ -96,13 +98,11 @@ describe('Booking, Wallet, Live Search & Home UX Frontend Root-Cause Verificatio
     const css = fs.readFileSync(path.join(ROOT, 'src/styles/interactions.css'), 'utf8');
     expect(css).toContain('@keyframes nk-student-ring-spin');
     expect(css).toContain('.student-avatar-ring');
-    expect(css).toContain('.nk-brand-loader');
+    expect(css).not.toContain('.nk-brand-loader');
+    expect(css).not.toContain('.nk-preloader__');
     expect(css).toContain('.nk-promo-modal-card');
     expect(css).toContain('@media (prefers-reduced-motion: reduce)');
 
-    const loaderHtml = renderToStaticMarkup(React.createElement(HomeBrandLoader, { label: 'در حال بارگذاری نیمکت…' }));
-    expect(loaderHtml).toContain('نیمکت');
-    expect(loaderHtml).toContain('در حال بارگذاری نیمکت…');
-    expect(loaderHtml).toContain('data-testid="home-brand-loader"');
+    expect(fs.existsSync(path.join(ROOT, 'src/components/HomeBrandLoader.jsx'))).toBe(false);
   });
 });

@@ -183,10 +183,13 @@ export default async function Article({ params }: Props) {
         </figure>
       </div>
 
-      {/* WoodMart 2-Column Editorial Layout (Sidebar + Paper Content) */}
-      <div className="container journal-reading-layout wm-reading-grid">
-        {/* Sticky Editorial Sidebar */}
-        <aside className="journal-toc wm-sidebar">
+      {/* WoodMart Article-First Editorial Layout
+          Order: article meta → cover → Table of Contents → full article text
+                 → related posts → remaining side widgets.
+          The article text is the primary column; no sidebar narrows it. */}
+      <div className="container journal-reading-layout wm-reading-grid wm-reading-grid--article-first">
+        {/* Table of Contents — placed above the article body */}
+        <aside className="journal-toc wm-sidebar wm-sidebar--toc">
           {/* Widget 1: Table of Contents */}
           <div className="wm-widget wm-widget--toc">
             <div className="wm-widget__head">
@@ -231,86 +234,6 @@ export default async function Article({ params }: Props) {
             </div>
           </div>
 
-          {/* Widget 2: Categories */}
-          {categoriesList.length > 0 && (
-            <div className="wm-widget">
-              <div className="wm-widget__head">
-                <span className="wm-widget__icon" aria-hidden="true">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
-                  </svg>
-                </span>
-                <div>
-                  <span className="journal-kicker">موضوعات</span>
-                  <h3 className="wm-widget__title">دسته‌بندی‌های مجله</h3>
-                </div>
-              </div>
-              <div className="wm-cat-list">
-                {categoriesList.map(([cat, count]) => {
-                  const isActive = cat === p.category;
-                  return (
-                    <Link
-                      key={cat}
-                      href={`/blog?category=${encodeURIComponent(cat)}`}
-                      className={`wm-cat-item ${isActive ? 'is-active' : ''}`}
-                    >
-                      <span>{cat}</span>
-                      <b className="num">{count.toLocaleString('fa-IR')}</b>
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Widget 3: Recent Posts (WoodMart Mini List) */}
-          {recentPosts.length > 0 && (
-            <div className="wm-widget">
-              <div className="wm-widget__head">
-                <span className="wm-widget__icon" aria-hidden="true">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                  </svg>
-                </span>
-                <div>
-                  <span className="journal-kicker">پیشنهاد مطالعه</span>
-                  <h3 className="wm-widget__title">تازه‌ترین مطالب مجله</h3>
-                </div>
-              </div>
-              <div className="wm-recent-list">
-                {recentPosts.map((rp) => (
-                  <Link key={rp.id} href={`/blog/${rp.slug}`} className="wm-recent-item">
-                    <Image
-                      src={`/images/blog/${rp.cover}.png`}
-                      alt={rp.coverAlt || rp.title}
-                      width={160}
-                      height={110}
-                      className="wm-recent-item__thumb"
-                    />
-                    <div className="wm-recent-item__body">
-                      <span className="wm-recent-item__cat">{rp.category}</span>
-                      <h4>{rp.title}</h4>
-                      <time dateTime={new Date(rp.publishedAt).toISOString()}>
-                        {dateFa(rp.publishedAt)}
-                      </time>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Widget 4: WoodMart Sidebar CTA Card */}
-          <div className="wm-widget wm-widget--cta">
-            <span className="wm-widget-cta__badge">پشتیبانی آموزشی نیمکت</span>
-            <h3>نیاز به راهنمایی مستقیم استاد دارید؟</h3>
-            <p>
-              با اساتید تأییدشدهٔ نیمکت جلسهٔ آزمایشی یا دورهٔ اختصاصی رزرو کنید و ابهام‌های درسی را ریشه‌ای برطرف کنید.
-            </p>
-            <Link href="/classes" className="btn btn-primary btn-sm btn-block">
-              مشاهده و رزرو کلاس‌ها ←
-            </Link>
-          </div>
         </aside>
 
         {/* Main Editorial Article Column */}
@@ -492,9 +415,9 @@ export default async function Article({ params }: Props) {
                 همه یادداشت‌ها ←
               </Link>
             </div>
-            <div className="journal-grid">
+            <div className="journal-grid journal-grid--related">
               {related.map((x) => (
-                <article className="journal-card" key={x.id}>
+                <article className="journal-card journal-card--row" key={x.id}>
                   <Link href={`/blog/${x.slug}`} className="journal-card-link">
                     <div className="journal-card-cover-wrap">
                       <Image
@@ -542,6 +465,92 @@ export default async function Article({ params }: Props) {
           <Link href="/classes" className="btn btn-primary btn-lg">
             مشاهده کلاس‌ها ←
           </Link>
+        </aside>
+      </div>
+
+      {/* Remaining side widgets — rendered AFTER the article text and related posts */}
+      <div className="container wm-after-article-widgets">
+        <aside className="journal-toc wm-sidebar wm-sidebar--after">
+          {/* Widget 2: Categories */}
+          {categoriesList.length > 0 && (
+            <div className="wm-widget">
+              <div className="wm-widget__head">
+                <span className="wm-widget__icon" aria-hidden="true">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+                  </svg>
+                </span>
+                <div>
+                  <span className="journal-kicker">موضوعات</span>
+                  <h3 className="wm-widget__title">دسته‌بندی‌های مجله</h3>
+                </div>
+              </div>
+              <div className="wm-cat-list">
+                {categoriesList.map(([cat, count]) => {
+                  const isActive = cat === p.category;
+                  return (
+                    <Link
+                      key={cat}
+                      href={`/blog?category=${encodeURIComponent(cat)}`}
+                      className={`wm-cat-item ${isActive ? 'is-active' : ''}`}
+                    >
+                      <span>{cat}</span>
+                      <b className="num">{count.toLocaleString('fa-IR')}</b>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Widget 3: Recent Posts (WoodMart Mini List) */}
+          {recentPosts.length > 0 && (
+            <div className="wm-widget">
+              <div className="wm-widget__head">
+                <span className="wm-widget__icon" aria-hidden="true">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                  </svg>
+                </span>
+                <div>
+                  <span className="journal-kicker">پیشنهاد مطالعه</span>
+                  <h3 className="wm-widget__title">تازه‌ترین مطالب مجله</h3>
+                </div>
+              </div>
+              <div className="wm-recent-list">
+                {recentPosts.map((rp) => (
+                  <Link key={rp.id} href={`/blog/${rp.slug}`} className="wm-recent-item">
+                    <Image
+                      src={`/images/blog/${rp.cover}.png`}
+                      alt={rp.coverAlt || rp.title}
+                      width={160}
+                      height={110}
+                      className="wm-recent-item__thumb"
+                    />
+                    <div className="wm-recent-item__body">
+                      <span className="wm-recent-item__cat">{rp.category}</span>
+                      <h4>{rp.title}</h4>
+                      <time dateTime={new Date(rp.publishedAt).toISOString()}>
+                        {dateFa(rp.publishedAt)}
+                      </time>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Widget 4: WoodMart Sidebar CTA Card */}
+          <div className="wm-widget wm-widget--cta">
+            <span className="wm-widget-cta__badge">پشتیبانی آموزشی نیمکت</span>
+            <h3>نیاز به راهنمایی مستقیم استاد دارید؟</h3>
+            <p>
+              با اساتید تأییدشدهٔ نیمکت جلسهٔ آزمایشی یا دورهٔ اختصاصی رزرو کنید و ابهام‌های درسی را ریشه‌ای برطرف کنید.
+            </p>
+            <Link href="/classes" className="btn btn-primary btn-sm btn-block">
+              مشاهده و رزرو کلاس‌ها ←
+            </Link>
+          </div>
         </aside>
       </div>
 
