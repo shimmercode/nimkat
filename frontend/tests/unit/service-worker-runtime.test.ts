@@ -12,7 +12,7 @@ type Handler = (event: any) => void;
 
 /* Minimal but faithful Service Worker host: implements only the APIs the
    worker actually uses, so the real handler logic is exercised end to end. */
-function createWorker() {
+function createWorker(onLine = true) {
   const listeners: Record<string, Handler[]> = {};
   const cacheStore = new Map<string, Map<string, Response>>();
   const deletedCaches: string[] = [];
@@ -66,15 +66,19 @@ function createWorker() {
     clients: { claim: async () => { self.__claimed = true; } },
   };
 
+  const navigator = { onLine };
+
   const ctx: any = {
     self,
     caches,
+    navigator,
     Request: class { constructor(public url: string, public opts: any = {}) {} },
     Response,
     URL,
     Promise,
     console,
     setTimeout,
+    clearTimeout,
   };
   ctx.globalThis = ctx;
   vm.createContext(ctx);
@@ -114,8 +118,8 @@ function navigateEvent(pathname: string, fetchImpl: (url: string) => Promise<Res
 }
 
 describe('service worker runtime behaviour', () => {
-  it('serves the offline page when the network genuinely fails', async () => {
-    const w = createWorker();
+  it('serves the offline page when the device really has no connectivity', async () => {
+    const w = createWorker(false); // navigator.onLine === false
     await w.fire('install', {});
     await w.fire('activate', {});
 
@@ -127,6 +131,21 @@ describe('service worker runtime behaviour', () => {
 
     expect(body).toContain('اتصال به نیمکت برقرار نیست');
     expect(body).toContain('اتصال اینترنت را بررسی');
+  });
+
+  it('serves the restarting page when the device is online but the request fails', async () => {
+    const w = createWorker(true); // navigator.onLine === true
+    await w.fire('install', {});
+    await w.fire('activate', {});
+
+    const nav = navigateEvent('/', async () => { throw new TypeError('Failed to fetch'); });
+    await w.fire('fetch', nav.event);
+    const res = await nav.result();
+    const body = await res.text();
+    nav.restore();
+
+    expect(body).toContain('در حال راه‌اندازی مجدد');
+    expect(body).not.toContain('اتصال اینترنت را بررسی');
   });
 
   it('serves the restarting page (not the offline page) on a 502', async () => {
@@ -224,4 +243,23 @@ describe('service worker runtime behaviour', () => {
     expect(w.self.__skipped).toBe(true);
     expect(w.self.__claimed).toBe(true);
   });
+
+  it('does not hang forever when the server never answers', async () => {
+    const w = createWorker(true);
+    await w.fire('install', {});
+    await w.fire('activate', {});
+
+    // A cold-starting server can hold the connection open indefinitely.
+    const nav = navigateEvent('/', () => new Promise<Response>(() => {}));
+    await w.fire('fetch', nav.event);
+    const res = await Promise.race([
+      nav.result(),
+      new Promise<string>(resolve => setTimeout(() => resolve('__timeout__'), 20000)),
+    ]);
+    nav.restore();
+
+    // The worker must have produced its own fallback rather than waiting.
+    expect(res).not.toBe('__timeout__');
+    expect(res).toBeInstanceOf(Response);
+  }, 25000);
 });

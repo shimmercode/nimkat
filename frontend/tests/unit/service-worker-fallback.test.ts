@@ -37,15 +37,19 @@ describe('service worker offline vs server-error fallback', () => {
     expect(navigateStart).toBeGreaterThan(-1);
     const handler = sw.slice(navigateStart);
 
+    // In the failure path the offline page is only reachable when the device
+    // reports no connectivity at all.
+    const onLineCheck = handler.indexOf('navigator.onLine === false');
+    const offlineMatch = handler.indexOf('/offline.html', onLineCheck);
+    const restartingMatch = handler.indexOf('/service-unavailable.html', onLineCheck);
     const statusCheck = handler.indexOf('response.status >= 500');
-    const unavailableMatch = handler.indexOf('/service-unavailable.html', statusCheck);
-    const catchBlock = handler.indexOf('catch (_)');
-    const offlineMatch = handler.indexOf('/offline.html', catchBlock);
+    const statusRestart = handler.indexOf('/service-unavailable.html', statusCheck);
 
+    expect(onLineCheck).toBeGreaterThan(-1);
+    expect(offlineMatch).toBeGreaterThan(onLineCheck);
+    expect(restartingMatch).toBeGreaterThan(onLineCheck);
     expect(statusCheck).toBeGreaterThan(-1);
-    expect(unavailableMatch).toBeGreaterThan(statusCheck);
-    expect(catchBlock).toBeGreaterThan(unavailableMatch);
-    expect(offlineMatch).toBeGreaterThan(catchBlock);
+    expect(statusRestart).toBeGreaterThan(statusCheck);
   });
 
   it('passes 4xx responses through untouched', () => {
@@ -68,6 +72,24 @@ describe('service worker offline vs server-error fallback', () => {
   it('never caches API, account, payment or private responses', () => {
     expect(sw).toContain("url.pathname.startsWith('/api/')");
     expect(sw).toContain('event.request.method !== \'GET\'');
+  });
+
+  it('uses the device connectivity state to pick the right message', () => {
+    // navigator.onLine distinguishes "no internet" from "server is down".
+    expect(sw).toContain('navigator.onLine === false');
+    expect(sw).toContain('/offline.html');
+    expect(sw).toContain('/service-unavailable.html');
+  });
+
+  it('bounds the navigation wait so a hanging server cannot block the page', () => {
+    expect(sw).toContain("setTimeout(() => reject(new Error('timeout')), 12000)");
+  });
+
+  it('asks the browser to refresh the worker on every page load', () => {
+    const comp = fs.readFileSync(path.join(root, 'src/components/ServiceWorker.tsx'), 'utf8');
+    expect(comp).toContain('registration.update()');
+    expect(comp).toContain("updateViaCache: 'none'");
+    expect(comp).toContain('visibilitychange');
   });
 
   it('serves the sw.js and fallback pages with no-cache headers', () => {
