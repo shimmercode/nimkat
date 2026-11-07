@@ -11,6 +11,11 @@ const config: NextConfig = {
           { key: 'Service-Worker-Allowed', value: '/' },
         ],
       },
+      {
+        // Fallback pages must never be served stale by an intermediary cache.
+        source: '/:fallback(offline|service-unavailable).html',
+        headers: [{ key: 'Cache-Control', value: 'no-cache' }],
+      },
     ];
   },
 };
